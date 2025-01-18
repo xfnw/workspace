@@ -13,7 +13,7 @@ struct ParsedErrors {
 struct Variant {
     ident: syn::Ident,
     fields: syn::Fields,
-    msg: Option<syn::Expr>,
+    msg: Option<String>,
 }
 
 struct AttrArg {
@@ -47,28 +47,55 @@ impl Parse for AttrArgs {
     }
 }
 
-fn parse_attr(a: syn::Attribute) -> Option<syn::Expr> {
+fn parse_attr_doc(a: &syn::Attribute) -> Option<&syn::Expr> {
     if !matches!(a.style, syn::AttrStyle::Outer) {
         return None;
     }
-    let syn::Meta::List(list) = a.meta else {
+    let syn::Meta::NameValue(ref nameval) = a.meta else {
+        return None;
+    };
+    if !nameval.path.is_ident("doc") {
+        return None;
+    }
+    Some(&nameval.value)
+}
+
+fn parse_attr(a: &syn::Attribute) -> Option<AttrArgs> {
+    if !matches!(a.style, syn::AttrStyle::Outer) {
+        return None;
+    }
+    let syn::Meta::List(ref list) = a.meta else {
         return None;
     };
     if !matches!(list.delimiter, syn::MacroDelimiter::Paren(_)) {
         return None;
     }
-    if list.path.get_ident()? != "err" {
+    if !list.path.is_ident("err") {
         return None;
     }
-    let args: AttrArgs = list.parse_args().expect("could not parse attr args");
-    args.0
-        .into_iter()
-        .find(|a| a.ident == "msg")
-        .map(|a| a.value)?
+    Some(list.parse_args().expect("could not parse attr args"))
+}
+
+fn expr_str(a: &syn::Expr) -> Option<String> {
+    match a {
+        syn::Expr::Lit(syn::ExprLit {
+            lit: syn::Lit::Str(s),
+            ..
+        }) => Some(s.value()),
+        _ => None,
+    }
+    .map(|s| s.strip_prefix(' ').unwrap_or(&s).to_string())
 }
 
 fn parse_variant(v: syn::Variant) -> Variant {
-    let msg = v.attrs.into_iter().flat_map(parse_attr).next();
+    let doc = v.attrs.iter().flat_map(parse_attr_doc).next();
+    let args = v.attrs.iter().flat_map(parse_attr).last();
+    let amsg = args.and_then(|a| {
+        a.0.into_iter()
+            .find(|a| a.ident == "msg")
+            .and_then(|a| a.value)
+    });
+    let msg = amsg.as_ref().or(doc).and_then(expr_str);
     Variant {
         ident: v.ident,
         fields: v.fields,
