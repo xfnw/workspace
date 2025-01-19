@@ -3,6 +3,8 @@ name = "foxerror"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
+description = "yet another proc macro for deriving Error on enums"
+repository = "https://github.com/xfnw/foxerror"
 
 [lib]
 proc-macro = true
