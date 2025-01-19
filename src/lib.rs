@@ -170,9 +170,7 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
                     let fo = format!(" {}: {{}}", fnm);
                     fmt.push(quote!(#fo));
                 }
-                if !get.is_empty() {
-                    set = quote!({#(#ids: #get),*});
-                }
+                set = quote!({#(#ids: #get),*});
             }
             syn::Fields::Unnamed(fields) => {
                 fmt.push(quote!(":"));
@@ -184,9 +182,7 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
                     }
                     fmt.push(quote!(" {}"));
                 }
-                if !get.is_empty() {
-                    set = quote!((#(#get),*));
-                }
+                set = quote!((#(#get),*));
             }
             syn::Fields::Unit => (),
         };
@@ -213,6 +209,7 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
 
 /// the derive macro itself
 ///
+/// # more in-depth example
 /// ```rust
 /// #[derive(Debug, foxerror::FoxError)]
 /// enum Error<'a> {
