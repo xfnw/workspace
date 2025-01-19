@@ -20,6 +20,7 @@ use syn::{
 
 struct ParsedErrors {
     ident: syn::Ident,
+    generics: syn::Generics,
     variants: Vec<Variant>,
 }
 
@@ -118,16 +119,25 @@ fn parse_variant(v: syn::Variant) -> Variant {
 
 fn parse_derive(ast: DeriveInput) -> ParsedErrors {
     let ident = ast.ident;
+    let generics = ast.generics;
     let syn::Data::Enum(body) = ast.data else {
         panic!("only enums are supported")
     };
     let variants = body.variants.into_iter().map(parse_variant).collect();
 
-    ParsedErrors { ident, variants }
+    ParsedErrors {
+        ident,
+        generics,
+        variants,
+    }
 }
 
 fn generate(parsed: ParsedErrors) -> TokenStream {
-    let ParsedErrors { ident, variants } = parsed;
+    let ParsedErrors {
+        ident,
+        generics,
+        variants,
+    } = parsed;
 
     let arms = variants.into_iter().map(|v| {
         let Variant {
@@ -188,7 +198,7 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
 
     quote! {
         #[automatically_derived]
-        impl ::core::fmt::Display for #ident {
+        impl #generics ::core::fmt::Display for #ident #generics {
             fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
                 match self {
                     #(#arms,)*
@@ -197,7 +207,7 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
         }
 
         #[automatically_derived]
-        impl ::core::error::Error for #ident {}
+        impl #generics ::core::error::Error for #ident #generics {}
     }
 }
 
@@ -205,18 +215,18 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
 ///
 /// ```rust
 /// #[derive(Debug, foxerror::FoxError)]
-/// enum Error {
+/// enum Error<'a> {
 ///     /// i am a doc comment
 ///     /// other lines get ignored
 ///     NoFields,
 ///     /// or override the message with an attribute
 ///     #[err(msg = "i have one field")]
-///     OneField(&'static str),
+///     OneField(&'a str),
 ///     /// my favorite numbers are
 ///     ManyFields(i8, i8, i8, i8),
 ///     // defaults to the variant name when no doc nor attr
 ///     NamedFields {
-///         species: &'static str,
+///         species: &'a str,
 ///         leggies: u64,
 ///     },
 /// }
