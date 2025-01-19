@@ -1,3 +1,16 @@
+//! derive macro for implementing Display and Error on enums
+//!
+//! ```rust
+//! #[derive(Debug, foxerror::FoxError)]
+//! enum Error {
+//!     NamedFields { a: i32, b: i32 },
+//!     #[err(msg = "a custom message")]
+//!     WithMessage(String),
+//!     /// or the first line of the doc comment
+//!     DocWorksToo,
+//! }
+//! ```
+
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::{
@@ -188,6 +201,40 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
     }
 }
 
+/// the derive macro itself
+///
+/// ```rust
+/// #[derive(Debug, foxerror::FoxError)]
+/// enum Error {
+///     /// i am a doc comment
+///     /// other lines get ignored
+///     NoFields,
+///     /// or override the message with an attribute
+///     #[err(msg = "i have one field")]
+///     OneField(&'static str),
+///     /// my favorite numbers are
+///     ManyFields(i8, i8, i8, i8),
+///     // defaults to the variant name when no doc nor attr
+///     NamedFields {
+///         species: &'static str,
+///         leggies: u64,
+///     },
+/// }
+///
+/// assert_eq!(format!("{}", Error::NoFields), "i am a doc comment");
+/// assert_eq!(
+///     format!("{}", Error::OneField("hello")),
+///     "i have one field: hello",
+/// );
+/// assert_eq!(
+///     format!("{}", Error::ManyFields(3, 6, 2, 1)),
+///     "my favorite numbers are: 3, 6, 2, 1",
+/// );
+/// assert_eq!(
+///     format!("{}", Error::NamedFields { species: "fox", leggies: 4 }),
+///     "NamedFields: species: fox, leggies: 4",
+/// );
+/// ```
 #[proc_macro_derive(FoxError, attributes(err))]
 pub fn foxerror(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = syn::parse(input).unwrap();
