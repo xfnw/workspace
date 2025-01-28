@@ -43,7 +43,7 @@ impl Parse for AttrArg {
         } else {
             None
         };
-        Ok(AttrArg { ident, value })
+        Ok(Self { ident, value })
     }
 }
 
