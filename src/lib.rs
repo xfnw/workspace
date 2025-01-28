@@ -102,8 +102,8 @@ fn expr_str(a: &syn::Expr) -> Option<String> {
 }
 
 fn parse_variant(v: syn::Variant) -> Variant {
-    let doc = v.attrs.iter().flat_map(parse_attr_doc).next();
-    let args = v.attrs.iter().flat_map(parse_attr).last();
+    let doc = v.attrs.iter().find_map(parse_attr_doc);
+    let args = v.attrs.iter().filter_map(parse_attr).last();
     let amsg = args.and_then(|a| {
         a.0.into_iter()
             .find(|a| a.ident == "msg")
