@@ -160,14 +160,14 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
                 fmt.push(quote!(":"));
                 let mut ids = vec![];
                 for (fnum, field) in fields.named.into_iter().enumerate() {
-                    let fid = syn::Ident::new(format!("arg_{}", fnum).as_ref(), Span::call_site());
+                    let fid = syn::Ident::new(format!("arg_{fnum}").as_ref(), Span::call_site());
                     get.push(quote!(#fid));
                     let fnm = field.ident.expect("missing ident");
                     ids.push(quote!(#fnm));
                     if fnum > 0 {
                         fmt.push(quote!(","));
                     }
-                    let fo = format!(" {}: {{}}", fnm);
+                    let fo = format!(" {fnm}: {{}}");
                     fmt.push(quote!(#fo));
                 }
                 set = quote!({#(#ids: #get),*});
@@ -175,7 +175,7 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
             syn::Fields::Unnamed(fields) => {
                 fmt.push(quote!(":"));
                 for fnum in 0..fields.unnamed.len() {
-                    let fid = syn::Ident::new(format!("arg_{}", fnum).as_ref(), Span::call_site());
+                    let fid = syn::Ident::new(format!("arg_{fnum}").as_ref(), Span::call_site());
                     get.push(quote!(#fid));
                     if fnum > 0 {
                         fmt.push(quote!(","));
