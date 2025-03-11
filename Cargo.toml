@@ -1,0 +1,13 @@
+[package]
+name = "maw"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+[profile.smol]
+inherits = "release"
+opt-level = "z"
+panic = "abort"
+strip = true
+lto = true
