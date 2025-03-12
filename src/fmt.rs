@@ -1,11 +1,21 @@
 use lazy_regex::regex_captures;
-use std::{convert::From, fmt, fs::read_to_string, path::PathBuf, process::exit};
+use std::{
+    convert::From,
+    fmt,
+    fs::File,
+    io::{Read, Seek, Write},
+    path::PathBuf,
+    process::exit,
+};
 
 #[derive(Debug, clap::Args)]
 pub struct Args {
     /// check if formatted
     #[arg(short)]
     check: bool,
+    /// overwrite with formatted
+    #[arg(short)]
+    fix: bool,
     #[arg(default_value = "/dev/stdin")]
     files: Vec<PathBuf>,
 }
@@ -95,13 +105,22 @@ impl fmt::Display for InfoFile {
 pub fn run(args: &Args) {
     let mut ret = 0;
     for name in &args.files {
-        let contents = read_to_string(name).unwrap();
+        let mut file = File::options()
+            .read(true)
+            .write(args.fix)
+            .open(name)
+            .unwrap();
+        let mut contents = String::new();
+        file.read_to_string(&mut contents).unwrap();
         let parsed = InfoFile::from(&contents);
         if args.check {
             if contents != parsed.to_string() {
                 eprintln!("{name:?} differs");
                 ret = 1;
             }
+        } else if args.fix {
+            file.rewind().unwrap();
+            write!(file, "{parsed}").unwrap();
         } else {
             print!("{parsed}");
         }
