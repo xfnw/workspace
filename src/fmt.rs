@@ -23,7 +23,7 @@ pub struct Args {
 #[derive(Debug)]
 struct InfoLine {
     key: Option<String>,
-    value: String,
+    value: Option<String>,
     indent: usize,
 }
 
@@ -42,7 +42,11 @@ impl InfoLine {
             } else {
                 Some(key.to_string())
             },
-            value: value.to_string(),
+            value: if value.is_empty() {
+                None
+            } else {
+                Some(value.to_string())
+            },
             indent: indent.try_into().unwrap_or(0),
         };
         (out, new)
@@ -90,12 +94,14 @@ impl fmt::Display for InfoFile {
                 written += k.len() + 1;
             }
 
-            while written < margin + line.indent {
-                f.write_char(' ')?;
-                written += 1;
+            if let Some(v) = &line.value {
+                while written < margin + line.indent {
+                    f.write_char(' ')?;
+                    written += 1;
+                }
+                f.write_str(v)?;
             }
 
-            f.write_str(&line.value)?;
             f.write_char('\n')?;
         }
         Ok(())
