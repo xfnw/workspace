@@ -125,6 +125,7 @@ pub fn run(args: &Args) {
                 ret = 1;
             }
         } else if args.fix {
+            file.set_len(0).unwrap();
             file.rewind().unwrap();
             write!(file, "{parsed}").unwrap();
         } else {
