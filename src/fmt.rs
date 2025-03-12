@@ -93,16 +93,18 @@ impl fmt::Display for InfoFile {
 }
 
 pub fn run(args: &Args) {
+    let mut ret = 0;
     for name in &args.files {
         let contents = read_to_string(name).unwrap();
         let parsed = InfoFile::from(&contents);
         if args.check {
             if contents != parsed.to_string() {
                 eprintln!("{name:?} differs");
-                exit(1);
+                ret = 1;
             }
         } else {
             print!("{parsed}");
         }
     }
+    exit(ret);
 }
