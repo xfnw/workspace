@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
 
+mod floater;
 mod fmt;
 mod uni;
 
@@ -11,6 +12,8 @@ struct Opt {
 
 #[derive(Debug, Subcommand)]
 enum Cmds {
+    /// show the error for floats
+    Floater(floater::Args),
     /// format tcz info-like files
     Fmt(fmt::Args),
     /// decode unicode characters
@@ -21,6 +24,7 @@ fn main() {
     let opt = Opt::parse();
 
     match &opt.command {
+        Cmds::Floater(args) => floater::run(args),
         Cmds::Fmt(args) => fmt::run(args),
         Cmds::Uni(args) => uni::run(args),
     }
