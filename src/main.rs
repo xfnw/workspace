@@ -25,3 +25,14 @@ fn main() {
         Cmds::Uni(args) => uni::run(args),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::*;
+
+    #[test]
+    fn verify_clap() {
+        use clap::CommandFactory;
+        Opt::command().debug_assert();
+    }
+}
