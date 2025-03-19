@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 
 mod floater;
 mod fmt;
+mod now;
 mod uni;
 
 #[derive(Debug, Parser)]
@@ -16,6 +17,8 @@ enum Cmds {
     Floater(floater::Args),
     /// format tcz info-like files
     Fmt(fmt::Args),
+    /// weird time format
+    Now(now::Args),
     /// decode unicode characters
     Uni(uni::Args),
 }
@@ -26,6 +29,7 @@ fn main() {
     match &opt.command {
         Cmds::Floater(args) => floater::run(args),
         Cmds::Fmt(args) => fmt::run(args),
+        Cmds::Now(args) => now::run(args),
         Cmds::Uni(args) => uni::run(args),
     }
 }
