@@ -53,7 +53,7 @@ fn fe(inp: u128, seed: u64) -> u128 {
         (left, right) = (right, left);
     }
 
-    ((left as u128) << BITS) + right as u128
+    (u128::from(left) << BITS) + u128::from(right)
 }
 
 fn unfe(inp: u128, seed: u64) -> u128 {
@@ -65,7 +65,7 @@ fn unfe(inp: u128, seed: u64) -> u128 {
         (left, right) = (right, left);
     }
 
-    ((left as u128) << BITS) + right as u128
+    (u128::from(left) << BITS) + u128::from(right)
 }
 
 fn b32(mut inp: u128) -> String {
