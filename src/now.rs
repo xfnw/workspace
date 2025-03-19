@@ -105,7 +105,7 @@ pub fn run(args: &Args) {
         }
         Action::Decode { timestamp } => {
             let ob = unb32(timestamp).expect("not in alphabet");
-            let unix = unfe(ob, args.seed) as u64;
+            let unix = unfe(ob, args.seed).try_into().expect("not a time");
             let time: DateTime<Utc> = (UNIX_EPOCH + Duration::from_secs(unix)).into();
             println!("{time}");
         }
