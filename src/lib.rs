@@ -244,7 +244,7 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
 ///
 /// # more in-depth example
 /// ```rust
-/// #[derive(Debug, foxerror::FoxError)]
+/// #[derive(Debug, PartialEq, foxerror::FoxError)]
 /// enum Error<'a> {
 ///     /// i am a doc comment
 ///     /// other lines get ignored
@@ -276,6 +276,7 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
 ///     format!("{}", Error::NamedFields { species: "fox", leggies: 4 }),
 ///     "NamedFields: species: fox, leggies: 4",
 /// );
+/// assert_eq!(Error::from("meow"), Error::OneField("meow"));
 /// ```
 #[proc_macro_derive(FoxError, attributes(err))]
 pub fn foxerror(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
