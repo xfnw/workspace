@@ -28,6 +28,7 @@ struct Variant {
     ident: syn::Ident,
     fields: syn::Fields,
     msg: Option<String>,
+    from: bool,
 }
 
 struct AttrArg {
@@ -103,17 +104,24 @@ fn expr_str(a: &syn::Expr) -> Option<String> {
 
 fn parse_variant(v: syn::Variant) -> Variant {
     let doc = v.attrs.iter().find_map(parse_attr_doc);
-    let args = v.attrs.iter().filter_map(parse_attr).last();
-    let amsg = args.and_then(|a| {
-        a.0.into_iter()
-            .find(|a| a.ident == "msg")
-            .and_then(|a| a.value)
-    });
+    let mut args = v.attrs.iter().filter_map(parse_attr);
+    let amsg = args
+        .clone()
+        .filter_map(|a| {
+            a.0.into_iter()
+                .find(|a| a.ident == "msg")
+                .and_then(|a| a.value)
+        })
+        .last();
     let msg = amsg.as_ref().or(doc).and_then(expr_str);
+    let from = args
+        .find_map(|a| a.0.into_iter().find(|a| a.ident == "from"))
+        .is_some();
     Variant {
         ident: v.ident,
         fields: v.fields,
         msg,
+        from,
     }
 }
 
@@ -139,11 +147,12 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
         variants,
     } = parsed;
 
-    let arms = variants.into_iter().map(|v| {
+    let arms = variants.iter().map(|v| {
         let Variant {
             ident: name,
             fields,
             msg,
+            ..
         } = v;
         let msg = if let Some(msg) = msg {
             quote!(#msg)
@@ -159,10 +168,10 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
             syn::Fields::Named(fields) => {
                 fmt.push(quote!(":"));
                 let mut ids = vec![];
-                for (fnum, field) in fields.named.into_iter().enumerate() {
+                for (fnum, field) in fields.named.iter().enumerate() {
                     let fid = syn::Ident::new(format!("arg_{fnum}").as_ref(), Span::call_site());
                     get.push(quote!(#fid));
-                    let fnm = field.ident.expect("missing ident");
+                    let fnm = field.ident.as_ref().expect("missing ident");
                     ids.push(quote!(#fnm));
                     if fnum > 0 {
                         fmt.push(quote!(","));
@@ -217,7 +226,9 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
 ///     /// other lines get ignored
 ///     NoFields,
 ///     /// or override the message with an attribute
+///     #[err(msg = "i also get overridden")]
 ///     #[err(msg = "i have one field")]
+///     #[err(from)]
 ///     OneField(&'a str),
 ///     /// my favorite numbers are
 ///     ManyFields(i8, i8, i8, i8),
