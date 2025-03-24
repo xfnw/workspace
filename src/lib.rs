@@ -236,7 +236,7 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
         #[automatically_derived]
         impl #generics ::core::error::Error for #ident #generics {}
 
-        #(#froms,)*
+        #(#froms)*
     }
 }
 
