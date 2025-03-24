@@ -201,6 +201,28 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
         }
     });
 
+    let froms = variants.iter().filter_map(|v| {
+        if !v.from {
+            return None;
+        }
+        let syn::Fields::Unnamed(ref fields) = v.fields else {
+            panic!("automatically deriving From is only supported for unnamed fields")
+        };
+        let [ref field] = fields.unnamed.iter().collect::<Vec<_>>()[..] else {
+            panic!("automatically deriving From is only supported with a single field")
+        };
+        let name = &v.ident;
+
+        Some(quote! {
+            #[automatically_derived]
+            impl #generics ::core::convert::From<#field> for #ident #generics {
+                fn from(inner: #field) -> Self {
+                    Self::#name(inner)
+                }
+            }
+        })
+    });
+
     quote! {
         #[automatically_derived]
         impl #generics ::core::fmt::Display for #ident #generics {
@@ -213,6 +235,8 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
 
         #[automatically_derived]
         impl #generics ::core::error::Error for #ident #generics {}
+
+        #(#froms,)*
     }
 }
 
