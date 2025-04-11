@@ -3,6 +3,7 @@ use clap::{Parser, Subcommand};
 mod floater;
 mod fmt;
 mod now;
+mod sort;
 mod uni;
 
 #[derive(Debug, Parser)]
@@ -19,6 +20,8 @@ enum Cmds {
     Fmt(fmt::Args),
     /// weird time format
     Now(now::Args),
+    /// sort urls in domain order
+    Sort(sort::Args),
     /// decode unicode characters
     Uni(uni::Args),
 }
@@ -30,6 +33,7 @@ fn main() {
         Cmds::Floater(args) => floater::run(args),
         Cmds::Fmt(args) => fmt::run(args),
         Cmds::Now(args) => now::run(args),
+        Cmds::Sort(args) => sort::run(args),
         Cmds::Uni(args) => uni::run(args),
     }
 }
