@@ -32,7 +32,25 @@ impl PartialOrd for ParsedUrl {
 }
 
 #[derive(Debug, Eq, PartialEq)]
-struct InfailableUrl(Result<ParsedUrl, String>);
+struct BareDomain {
+    raw: String,
+    domain_parts: Vec<String>,
+}
+
+impl Ord for BareDomain {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.domain_parts.cmp(&other.domain_parts)
+    }
+}
+
+impl PartialOrd for BareDomain {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+#[derive(Debug, Eq, PartialEq)]
+struct InfailableUrl(Result<ParsedUrl, BareDomain>);
 
 impl From<String> for InfailableUrl {
     fn from(inp: String) -> Self {
@@ -45,7 +63,11 @@ impl From<String> for InfailableUrl {
             };
             Ok(ParsedUrl { url, domain_parts })
         } else {
-            Err(inp)
+            let domain_parts = inp.rsplit('.').map(str::to_string).collect();
+            Err(BareDomain {
+                raw: inp,
+                domain_parts,
+            })
         };
         Self(parsed)
     }
@@ -67,7 +89,7 @@ impl fmt::Display for InfailableUrl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match &self.0 {
             Ok(p) => p.url.fmt(f),
-            Err(s) => s.fmt(f),
+            Err(s) => s.raw.fmt(f),
         }
     }
 }
