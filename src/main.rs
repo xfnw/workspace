@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 
 mod floater;
 mod fmt;
+mod human;
 mod now;
 mod sort;
 mod uni;
@@ -18,6 +19,8 @@ enum Cmds {
     Floater(floater::Args),
     /// format tcz info-like files
     Fmt(fmt::Args),
+    /// convert numbers to binary prefixes
+    Human(human::Args),
     /// weird time format
     Now(now::Args),
     /// sort urls in domain order
@@ -32,6 +35,7 @@ fn main() {
     match &opt.command {
         Cmds::Floater(args) => floater::run(args),
         Cmds::Fmt(args) => fmt::run(args),
+        Cmds::Human(args) => human::run(args),
         Cmds::Now(args) => now::run(args),
         Cmds::Sort(args) => sort::run(args),
         Cmds::Uni(args) => uni::run(args),
