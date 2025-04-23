@@ -57,13 +57,13 @@ impl From<String> for InfailableUrl {
         let parsed = if let Ok(url) = Url::parse(&inp, None) {
             let host = url.hostname();
             let domain_parts = if url.host_type() == HostType::Domain {
-                host.rsplit('.').map(str::to_string).collect()
+                host.rsplit('.').map(str::to_ascii_lowercase).collect()
             } else {
-                vec![host.to_string()]
+                vec![host.to_ascii_lowercase()]
             };
             Ok(ParsedUrl { url, domain_parts })
         } else {
-            let domain_parts = inp.rsplit('.').map(str::to_string).collect();
+            let domain_parts = inp.rsplit('.').map(str::to_ascii_lowercase).collect();
             Err(BareDomain {
                 raw: inp,
                 domain_parts,
