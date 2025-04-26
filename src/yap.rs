@@ -60,7 +60,7 @@ fn generate(ip: &IpAddr, difficulty: u8, time: Option<u64>) {
         eprintln!("i cut corners so difficulty > 128 is not supported");
         return;
     }
-    let time = time.unwrap_or(unixtime());
+    let time = time.unwrap_or_else(unixtime);
     let challenge: [u8; 24] = gen_challenge(ip, time).try_into().unwrap();
 
     assert_eq!(Sha256::output_size(), 32);
