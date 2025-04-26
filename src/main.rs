@@ -6,6 +6,7 @@ mod human;
 mod now;
 mod sort;
 mod uni;
+mod yap;
 
 #[derive(Debug, Parser)]
 struct Opt {
@@ -27,6 +28,8 @@ enum Cmds {
     Sort(sort::Args),
     /// decode unicode characters
     Uni(uni::Args),
+    /// helper tool for yap
+    Yap(yap::Args),
 }
 
 fn main() {
@@ -39,6 +42,7 @@ fn main() {
         Cmds::Now(args) => now::run(args),
         Cmds::Sort(args) => sort::run(args),
         Cmds::Uni(args) => uni::run(args),
+        Cmds::Yap(args) => yap::run(args),
     }
 }
 
