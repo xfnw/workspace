@@ -55,6 +55,13 @@ fn check(n: u64, challenge: [u8; 24], difficulty: u8) -> bool {
     high.leading_zeros() >= difficulty.into()
 }
 
+#[test]
+fn verify() {
+    assert_eq!(Sha256::digest(b"meow").len(), 32);
+    assert!(check(80, [0; 24], 6));
+    assert!(!check(80, [0; 24], 7));
+}
+
 fn generate(ip: &IpAddr, difficulty: u8, time: Option<u64>) {
     if difficulty > 128 {
         eprintln!("i cut corners so difficulty > 128 is not supported");
