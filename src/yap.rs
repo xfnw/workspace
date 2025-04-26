@@ -1,4 +1,5 @@
 use chrono::{DateTime, offset::Utc};
+use rayon::prelude::*;
 use sha2::{Digest, Sha256};
 use std::{
     net::{IpAddr, Ipv6Addr},
@@ -16,8 +17,7 @@ enum Actions {
     Generate {
         ip: IpAddr,
         difficulty: u8,
-        #[arg(default_value = "0")]
-        time: u64,
+        time: Option<u64>,
     },
     Show {
         token: String,
@@ -31,7 +31,49 @@ fn unixtime() -> u64 {
     duration.as_secs()
 }
 
-fn generate(ip: &IpAddr, difficulty: u8, time: u64) {}
+fn gen_challenge(ip: &IpAddr, time: u64) -> Vec<u8> {
+    let mut out = time.to_le_bytes().to_vec();
+    out.extend(
+        match &ip {
+            IpAddr::V4(ip) => ip.to_ipv6_mapped(),
+            IpAddr::V6(ip) => *ip,
+        }
+        .to_bits()
+        .to_le_bytes(),
+    );
+    out
+}
+
+#[inline]
+fn check(n: u64, challenge: [u8; 24], difficulty: u8) -> bool {
+    let hash = Sha256::new_with_prefix(n.to_be_bytes())
+        .chain_update(challenge)
+        .finalize();
+    // SAFETY: sha256 always returns 256 bits, so we can skip the bounds check
+    let high =
+        unsafe { u128::from_be_bytes(hash.get_unchecked(0..16).try_into().unwrap_unchecked()) };
+    high.leading_zeros() >= difficulty.into()
+}
+
+fn generate(ip: &IpAddr, difficulty: u8, time: Option<u64>) {
+    if difficulty > 128 {
+        eprintln!("i cut corners so difficulty > 128 is not supported");
+        return;
+    }
+    let time = time.unwrap_or(unixtime());
+    let challenge: [u8; 24] = gen_challenge(ip, time).try_into().unwrap();
+
+    assert_eq!(Sha256::output_size(), 32);
+    let result = (0..u64::MAX)
+        .into_par_iter()
+        .find_any(|n| check(*n, challenge, difficulty))
+        .unwrap();
+
+    let mut combined = result.to_be_bytes().to_vec();
+    combined.extend(challenge);
+    let encoded = base64_light::base64_encode_bytes(&combined);
+    println!("{encoded}");
+}
 
 fn show(token: &str) {
     let decoded = base64_light::base64_decode(token);
@@ -71,7 +113,7 @@ pub fn run(args: &Args) {
             ip,
             difficulty,
             time,
-        } => generate(&ip, *difficulty, *time),
-        Actions::Show { token } => show(&token),
+        } => generate(ip, *difficulty, *time),
+        Actions::Show { token } => show(token),
     }
 }
