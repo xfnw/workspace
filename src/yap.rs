@@ -51,7 +51,7 @@ fn check(n: u64, challenge: [u8; 24], difficulty: u8) -> bool {
         .finalize();
     // SAFETY: sha256 always returns 256 bits, so we can skip the bounds check
     let high =
-        unsafe { u128::from_be_bytes(hash.get_unchecked(0..16).try_into().unwrap_unchecked()) };
+        u128::from_be_bytes(unsafe { hash.get_unchecked(0..16).try_into().unwrap_unchecked() });
     high.leading_zeros() >= difficulty.into()
 }
 
