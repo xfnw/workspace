@@ -6,6 +6,7 @@ mod human;
 mod now;
 mod sort;
 mod uni;
+mod uwu;
 mod yap;
 
 #[derive(Debug, Parser)]
@@ -28,6 +29,8 @@ enum Cmds {
     Sort(sort::Args),
     /// decode unicode characters
     Uni(uni::Args),
+    /// uwu owo uwu owo
+    Uwu(uwu::Args),
     /// helper tool for yap
     Yap(yap::Args),
 }
@@ -42,6 +45,7 @@ fn main() {
         Cmds::Now(args) => now::run(args),
         Cmds::Sort(args) => sort::run(args),
         Cmds::Uni(args) => uni::run(args),
+        Cmds::Uwu(args) => uwu::run(args),
         Cmds::Yap(args) => yap::run(args),
     }
 }
