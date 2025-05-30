@@ -1,5 +1,5 @@
-use ada_url::{HostType, Url};
 use std::{cmp::Ord, convert::From, fmt, fs::read_to_string, path::PathBuf};
+use url::Url;
 
 #[derive(Debug, clap::Args)]
 pub struct Args {
@@ -17,10 +17,10 @@ impl Ord for ParsedUrl {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.domain_parts
             .cmp(&other.domain_parts)
-            .then(self.url.port().cmp(other.url.port()))
-            .then(self.url.pathname().cmp(other.url.pathname()))
-            .then(self.url.search().cmp(other.url.search()))
-            .then(self.url.hash().cmp(other.url.hash()))
+            .then(self.url.port().cmp(&other.url.port()))
+            .then(self.url.path().cmp(other.url.path()))
+            .then(self.url.query().cmp(&other.url.query()))
+            .then(self.url.fragment().cmp(&other.url.fragment()))
             .then(self.url.cmp(&other.url))
     }
 }
@@ -54,12 +54,13 @@ struct InfailableUrl(Result<ParsedUrl, BareDomain>);
 
 impl From<String> for InfailableUrl {
     fn from(inp: String) -> Self {
-        let parsed = if let Ok(url) = Url::parse(&inp, None) {
-            let host = url.hostname();
-            let domain_parts = if url.host_type() == HostType::Domain {
+        let parsed = if let Ok(url) = Url::parse(&inp) {
+            let domain_parts = if let Some(host) = url.domain() {
                 host.rsplit('.').map(str::to_ascii_lowercase).collect()
-            } else {
+            } else if let Some(host) = url.host_str() {
                 vec![host.to_ascii_lowercase()]
+            } else {
+                vec![]
             };
             Ok(ParsedUrl { url, domain_parts })
         } else {
