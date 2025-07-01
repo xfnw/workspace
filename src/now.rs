@@ -15,7 +15,7 @@ enum Action {
         accuracy: Accuracy,
     },
     Decode {
-        timestamp: String,
+        blob: String,
     },
 }
 
@@ -103,8 +103,8 @@ pub fn run(args: &Args) {
             let ob = fe(unix.into(), args.seed);
             println!("{}", b32(ob));
         }
-        Action::Decode { timestamp } => {
-            let ob = unb32(timestamp).expect("not in alphabet");
+        Action::Decode { blob } => {
+            let ob = unb32(blob).expect("not in alphabet");
             let unix = unfe(ob, args.seed).try_into().expect("not a time");
             let time: DateTime<Utc> = (UNIX_EPOCH + Duration::from_secs(unix)).into();
             println!("{time}");
