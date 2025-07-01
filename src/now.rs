@@ -108,7 +108,7 @@ pub fn run(args: &Args) {
         }
         Action::Convert { timestamp } => {
             let unix = timestamp.timestamp();
-            let ob = fe(unix as u128, args.seed);
+            let ob = fe(u128::from(unix as u64), args.seed);
             println!("{}", b32(ob));
         }
         Action::Decode { blob } => {
