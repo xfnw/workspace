@@ -14,6 +14,9 @@ enum Action {
         #[arg(value_enum)]
         accuracy: Accuracy,
     },
+    Convert {
+        timestamp: DateTime<Utc>,
+    },
     Decode {
         blob: String,
     },
@@ -101,6 +104,11 @@ pub fn run(args: &Args) {
                 .as_secs();
             let unix = unix / *accuracy as u64 * *accuracy as u64;
             let ob = fe(unix.into(), args.seed);
+            println!("{}", b32(ob));
+        }
+        Action::Convert { timestamp } => {
+            let unix = timestamp.timestamp();
+            let ob = fe(unix as u128, args.seed);
             println!("{}", b32(ob));
         }
         Action::Decode { blob } => {
