@@ -1,5 +1,5 @@
 use chrono::{DateTime, offset::Utc};
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, clap::Args)]
 pub struct Args {
@@ -113,8 +113,8 @@ pub fn run(args: &Args) {
         }
         Action::Decode { blob } => {
             let ob = unb32(blob).expect("not in alphabet");
-            let unix = unfe(ob, args.seed).try_into().expect("not a time");
-            let time: DateTime<Utc> = (UNIX_EPOCH + Duration::from_secs(unix)).into();
+            let unix: u64 = unfe(ob, args.seed).try_into().expect("not a time");
+            let time = DateTime::from_timestamp(unix as i64, 0).unwrap();
             println!("{time}");
         }
     }
