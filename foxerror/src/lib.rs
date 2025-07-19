@@ -112,7 +112,7 @@ fn parse_variant(v: syn::Variant) -> Variant {
                 .find(|a| a.ident == "msg")
                 .and_then(|a| a.value)
         })
-        .last();
+        .next_back();
     let msg = amsg.as_ref().or(doc).and_then(expr_str);
     let from = args
         .find_map(|a| a.0.into_iter().find(|a| a.ident == "from"))
