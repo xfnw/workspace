@@ -388,7 +388,7 @@ impl<'a> StreamBuilder<'a> {
         self
     }
 
-    pub async fn build(self) -> Result<Stream, Error> {
+    pub async fn connect(self) -> Result<Stream, Error> {
         let stream = match self.base {
             BaseParams::Tcp(addr) => BaseStream::Tcp {
                 inner: TcpStream::connect(addr).await?,
