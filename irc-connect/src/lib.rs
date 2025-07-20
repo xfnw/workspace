@@ -320,12 +320,12 @@ impl<'a> StreamBuilder<'a> {
         self.socks(SocksVersion::Socks4, target, None)
     }
 
-    pub fn socks4_with_userid(self, target: impl IntoTargetAddr<'a>, username: &'a str) -> Self {
+    pub fn socks4_with_userid(self, target: impl IntoTargetAddr<'a>, userid: &'a str) -> Self {
         self.socks(
             SocksVersion::Socks4,
             target,
             Some(SocksAuth {
-                username,
+                username: userid,
                 password: "h",
             }),
         )
