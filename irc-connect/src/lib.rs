@@ -1,3 +1,5 @@
+//! an abstraction over the kinds of connections useful for irc clients
+
 use pin_project_lite::pin_project;
 use std::{
     fmt,
@@ -29,6 +31,7 @@ pub use tokio_rustls;
 
 mod danger;
 
+/// error type returned by `irc_connect`
 #[derive(Debug, foxerror::FoxError)]
 #[non_exhaustive]
 pub enum Error {
@@ -46,6 +49,7 @@ pub enum Error {
 }
 
 pin_project! {
+    /// an open connection
     #[derive(Debug)]
     pub struct Stream {
         #[pin]
@@ -54,9 +58,28 @@ pin_project! {
 }
 
 impl Stream {
+    /// start building a new stream based on a tcp connection
+    ///
+    /// ```no_run
+    /// use irc_connect::Stream;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let stream = Stream::new_tcp(&"[::1]:6667".parse().unwrap()).connect().await.unwrap();
+    /// # }
+    /// ```
     pub fn new_tcp(addr: &SocketAddr) -> StreamBuilder<'_> {
         StreamBuilder::new(BaseParams::Tcp(addr))
     }
+    /// start building a new stream based on a unix socket
+    ///
+    /// ```no_run
+    /// use std::path::Path;
+    /// use irc_connect::Stream;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let stream = Stream::new_unix(Path::new("./my-unix-socket")).connect().await.unwrap();
+    /// # }
+    /// ```
     pub fn new_unix(path: &Path) -> StreamBuilder<'_> {
         StreamBuilder::new(BaseParams::Unix(path))
     }
@@ -284,6 +307,7 @@ impl AsyncWrite for BaseStream {
     }
 }
 
+/// a builder for [`Stream`]
 #[derive(Debug)]
 pub struct StreamBuilder<'a> {
     base: BaseParams<'a>,
@@ -316,10 +340,32 @@ impl<'a> StreamBuilder<'a> {
         self
     }
 
+    /// enable socks4 proxying
+    ///
+    /// ```
+    /// # use irc_connect::Stream;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # let addr = "[::1]:6667".parse().unwrap();
+    /// # let builder = Stream::new_tcp(&addr);
+    /// let builder = builder.socks4("127.0.0.1:9050");
+    /// # }
+    /// ```
     pub fn socks4(self, target: impl IntoTargetAddr<'a>) -> Self {
         self.socks(SocksVersion::Socks4, target, None)
     }
 
+    /// enable socks4 proxying with a userid
+    ///
+    /// ```
+    /// # use irc_connect::Stream;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # let addr = "[::1]:6667".parse().unwrap();
+    /// # let builder = Stream::new_tcp(&addr);
+    /// let builder = builder.socks4_with_userid("127.0.0.1:9050", "meow");
+    /// # }
+    /// ```
     pub fn socks4_with_userid(self, target: impl IntoTargetAddr<'a>, userid: &'a str) -> Self {
         self.socks(
             SocksVersion::Socks4,
@@ -331,10 +377,32 @@ impl<'a> StreamBuilder<'a> {
         )
     }
 
+    /// enable socks5 proxying
+    ///
+    /// ```
+    /// # use irc_connect::Stream;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # let addr = "[::1]:6667".parse().unwrap();
+    /// # let builder = Stream::new_tcp(&addr);
+    /// let builder = builder.socks5("127.0.0.1:9050");
+    /// # }
+    /// ```
     pub fn socks5(self, target: impl IntoTargetAddr<'a>) -> Self {
         self.socks(SocksVersion::Socks5, target, None)
     }
 
+    /// enable socks5 proxying with password authentication
+    ///
+    /// ```
+    /// # use irc_connect::Stream;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # let addr = "[::1]:6667".parse().unwrap();
+    /// # let builder = Stream::new_tcp(&addr);
+    /// let builder = builder.socks5_with_password("127.0.0.1:9050", "AzureDiamond", "hunter2");
+    /// # }
+    /// ```
     pub fn socks5_with_password(
         self,
         target: impl IntoTargetAddr<'a>,
@@ -356,10 +424,44 @@ impl<'a> StreamBuilder<'a> {
         self
     }
 
+    /// enable tls without any verification
+    ///
+    /// ```
+    /// use tokio_rustls::rustls::pki_types::ServerName;
+    /// # use irc_connect::Stream;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # let addr = "[::1]:6667".parse().unwrap();
+    /// # let builder = Stream::new_tcp(&addr);
+    /// let builder = builder.tls_danger_insecure(ServerName::try_from("google.com").unwrap());
+    /// # }
+    /// ```
     pub fn tls_danger_insecure(self, domain: ServerName<'static>) -> Self {
         self.tls(domain, TlsVerify::Insecure)
     }
 
+    /// enable tls with root certificate verification
+    ///
+    /// can also be used to pin a self-signed cert as long as it has a `CA:FALSE` constraint
+    ///
+    /// ```
+    /// use tokio_rustls::rustls::RootCertStore;
+    /// use tokio_rustls::rustls::pki_types::{CertificateDer, ServerName, pem::PemObject};
+    ///
+    /// # use irc_connect::Stream;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # let addr = "[::1]:6667".parse().unwrap();
+    /// # let builder = Stream::new_tcp(&addr);
+    /// let mut root = RootCertStore::empty();
+    /// root.add_parsable_certificates(
+    ///     CertificateDer::pem_file_iter("/etc/ssl/cert.pem")
+    ///         .unwrap()
+    ///         .flatten(),
+    /// );
+    /// let builder = builder.tls_with_root(ServerName::try_from("google.com").unwrap(), root);
+    /// # }
+    /// ```
     pub fn tls_with_root(
         self,
         domain: ServerName<'static>,
@@ -368,6 +470,7 @@ impl<'a> StreamBuilder<'a> {
         self.tls(domain, TlsVerify::CaStore(root.into()))
     }
 
+    /// enable tls with a webpki verifier
     pub fn tls_with_webpki(
         self,
         domain: ServerName<'static>,
@@ -376,6 +479,26 @@ impl<'a> StreamBuilder<'a> {
         self.tls(domain, TlsVerify::WebPki(webpki))
     }
 
+    /// use a tls client certificate
+    ///
+    /// requires tls to be enabled
+    ///
+    /// ```no_run
+    /// use irc_connect::Stream;
+    /// use tokio_rustls::rustls::pki_types::{CertificateDer, PrivateKeyDer, ServerName, pem::PemObject};
+    ///
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// let addr = "[::1]:6667".parse().unwrap();
+    /// let builder = Stream::new_tcp(&addr).tls_danger_insecure(ServerName::from(addr.ip()));
+    /// let cert = CertificateDer::pem_file_iter("cert.pem")
+    ///     .unwrap()
+    ///     .collect::<Result<Vec<_>, _>>()
+    ///     .unwrap();
+    /// let key = PrivateKeyDer::from_pem_file("cert.key").unwrap();
+    /// let builder = builder.client_cert(cert, key);
+    /// # }
+    /// ```
     pub fn client_cert(
         mut self,
         cert_chain: Vec<CertificateDer<'static>>,
@@ -388,6 +511,17 @@ impl<'a> StreamBuilder<'a> {
         self
     }
 
+    /// finish building and open the connection
+    ///
+    /// ```no_run
+    /// # use irc_connect::Stream;
+    /// # #[tokio::main]
+    /// # async fn main() {
+    /// # let addr = "[::1]:6667".parse().unwrap();
+    /// # let builder = Stream::new_tcp(&addr);
+    /// let stream = builder.connect().await.unwrap();
+    /// # }
+    /// ```
     pub async fn connect(self) -> Result<Stream, Error> {
         let stream = match self.base {
             BaseParams::Tcp(addr) => BaseStream::Tcp {
