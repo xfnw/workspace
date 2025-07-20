@@ -131,6 +131,7 @@ name = "irc-connect"
 version = "0.1.0"
 dependencies = [
  "foxerror",
+ "pin-project-lite",
  "tokio",
  "tokio-rustls",
  "tokio-socks",

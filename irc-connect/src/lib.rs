@@ -1,5 +1,16 @@
-use std::{fmt, net::SocketAddr, path::Path, sync::Arc};
-use tokio::net::{TcpStream, UnixStream};
+use pin_project_lite::pin_project;
+use std::{
+    fmt,
+    net::SocketAddr,
+    path::Path,
+    pin::Pin,
+    sync::Arc,
+    task::{Context, Poll},
+};
+use tokio::{
+    io::{AsyncRead, AsyncWrite, ReadBuf},
+    net::{TcpStream, UnixStream},
+};
 use tokio_rustls::{
     client::TlsStream,
     rustls::{
@@ -28,9 +39,12 @@ pub enum Error {
     Socks(tokio_socks::Error),
 }
 
-#[derive(Debug)]
-pub struct Stream {
-    inner: MaybeTls,
+pin_project! {
+    #[derive(Debug)]
+    pub struct Stream {
+        #[pin]
+        inner: MaybeTls,
+    }
 }
 
 impl Stream {
@@ -42,24 +56,226 @@ impl Stream {
     }
 }
 
-#[derive(Debug)]
-#[allow(clippy::large_enum_variant)] // you should use tls most of the time
-enum MaybeTls {
-    Plain(MaybeSocks),
-    Tls(TlsStream<MaybeSocks>),
+impl AsyncRead for Stream {
+    #[inline]
+    fn poll_read(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &mut ReadBuf<'_>,
+    ) -> Poll<std::io::Result<()>> {
+        self.project().inner.poll_read(cx, buf)
+    }
 }
 
-#[derive(Debug)]
-enum MaybeSocks {
-    Clear(BaseStream),
-    Socks4(Socks4Stream<BaseStream>),
-    Socks5(Socks5Stream<BaseStream>),
+impl AsyncWrite for Stream {
+    #[inline]
+    fn poll_write(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &[u8],
+    ) -> Poll<Result<usize, std::io::Error>> {
+        self.project().inner.poll_write(cx, buf)
+    }
+    #[inline]
+    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), std::io::Error>> {
+        self.project().inner.poll_flush(cx)
+    }
+    #[inline]
+    fn poll_shutdown(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Result<(), std::io::Error>> {
+        self.project().inner.poll_shutdown(cx)
+    }
 }
 
-#[derive(Debug)]
-enum BaseStream {
-    Tcp(TcpStream),
-    Unix(UnixStream),
+pin_project! {
+    #[project = MaybeTlsProj]
+    #[derive(Debug)]
+    #[allow(clippy::large_enum_variant)] // you should use tls most of the time
+    enum MaybeTls {
+        Plain {
+            #[pin]
+            inner: MaybeSocks,
+        },
+        Tls {
+            #[pin]
+            inner: TlsStream<MaybeSocks>,
+        },
+    }
+}
+
+impl AsyncRead for MaybeTls {
+    #[inline]
+    fn poll_read(
+        self: Pin<&mut Self>,
+        cx: &mut Context,
+        buf: &mut ReadBuf<'_>,
+    ) -> Poll<std::io::Result<()>> {
+        match self.project() {
+            MaybeTlsProj::Plain { inner } => inner.poll_read(cx, buf),
+            MaybeTlsProj::Tls { inner } => inner.poll_read(cx, buf),
+        }
+    }
+}
+
+impl AsyncWrite for MaybeTls {
+    #[inline]
+    fn poll_write(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &[u8],
+    ) -> Poll<Result<usize, std::io::Error>> {
+        match self.project() {
+            MaybeTlsProj::Plain { inner } => inner.poll_write(cx, buf),
+            MaybeTlsProj::Tls { inner } => inner.poll_write(cx, buf),
+        }
+    }
+    #[inline]
+    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), std::io::Error>> {
+        match self.project() {
+            MaybeTlsProj::Plain { inner } => inner.poll_flush(cx),
+            MaybeTlsProj::Tls { inner } => inner.poll_flush(cx),
+        }
+    }
+    #[inline]
+    fn poll_shutdown(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Result<(), std::io::Error>> {
+        match self.project() {
+            MaybeTlsProj::Plain { inner } => inner.poll_shutdown(cx),
+            MaybeTlsProj::Tls { inner } => inner.poll_shutdown(cx),
+        }
+    }
+}
+
+pin_project! {
+    #[project = MaybeSocksProj]
+    #[derive(Debug)]
+    enum MaybeSocks {
+        Clear {
+            #[pin]
+            inner: BaseStream,
+        },
+        Socks4 {
+            #[pin]
+            inner: Socks4Stream<BaseStream>,
+        },
+        Socks5 {
+            #[pin]
+            inner: Socks5Stream<BaseStream>,
+        },
+    }
+}
+
+impl AsyncRead for MaybeSocks {
+    #[inline]
+    fn poll_read(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &mut ReadBuf<'_>,
+    ) -> Poll<std::io::Result<()>> {
+        match self.project() {
+            MaybeSocksProj::Clear { inner } => inner.poll_read(cx, buf),
+            MaybeSocksProj::Socks4 { inner } => inner.poll_read(cx, buf),
+            MaybeSocksProj::Socks5 { inner } => inner.poll_read(cx, buf),
+        }
+    }
+}
+
+impl AsyncWrite for MaybeSocks {
+    #[inline]
+    fn poll_write(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &[u8],
+    ) -> Poll<Result<usize, std::io::Error>> {
+        match self.project() {
+            MaybeSocksProj::Clear { inner } => inner.poll_write(cx, buf),
+            MaybeSocksProj::Socks4 { inner } => inner.poll_write(cx, buf),
+            MaybeSocksProj::Socks5 { inner } => inner.poll_write(cx, buf),
+        }
+    }
+    #[inline]
+    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), std::io::Error>> {
+        match self.project() {
+            MaybeSocksProj::Clear { inner } => inner.poll_flush(cx),
+            MaybeSocksProj::Socks4 { inner } => inner.poll_flush(cx),
+            MaybeSocksProj::Socks5 { inner } => inner.poll_flush(cx),
+        }
+    }
+    #[inline]
+    fn poll_shutdown(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Result<(), std::io::Error>> {
+        match self.project() {
+            MaybeSocksProj::Clear { inner } => inner.poll_shutdown(cx),
+            MaybeSocksProj::Socks4 { inner } => inner.poll_shutdown(cx),
+            MaybeSocksProj::Socks5 { inner } => inner.poll_shutdown(cx),
+        }
+    }
+}
+
+pin_project! {
+    #[project = BaseStreamProj]
+    #[derive(Debug)]
+    enum BaseStream {
+        Tcp {
+            #[pin]
+            inner: TcpStream,
+        },
+        Unix {
+            #[pin]
+            inner: UnixStream,
+        },
+    }
+}
+
+impl AsyncRead for BaseStream {
+    #[inline]
+    fn poll_read(
+        self: Pin<&mut Self>,
+        cx: &mut Context,
+        buf: &mut ReadBuf<'_>,
+    ) -> Poll<std::io::Result<()>> {
+        match self.project() {
+            BaseStreamProj::Tcp { inner } => inner.poll_read(cx, buf),
+            BaseStreamProj::Unix { inner } => inner.poll_read(cx, buf),
+        }
+    }
+}
+
+impl AsyncWrite for BaseStream {
+    #[inline]
+    fn poll_write(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &[u8],
+    ) -> Poll<Result<usize, std::io::Error>> {
+        match self.project() {
+            BaseStreamProj::Tcp { inner } => inner.poll_write(cx, buf),
+            BaseStreamProj::Unix { inner } => inner.poll_write(cx, buf),
+        }
+    }
+    #[inline]
+    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), std::io::Error>> {
+        match self.project() {
+            BaseStreamProj::Tcp { inner } => inner.poll_flush(cx),
+            BaseStreamProj::Unix { inner } => inner.poll_flush(cx),
+        }
+    }
+    #[inline]
+    fn poll_shutdown(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Result<(), std::io::Error>> {
+        match self.project() {
+            BaseStreamProj::Tcp { inner } => inner.poll_shutdown(cx),
+            BaseStreamProj::Unix { inner } => inner.poll_shutdown(cx),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -170,24 +386,28 @@ impl<'a> StreamBuilder<'a> {
 
     pub async fn build(self) -> Result<Stream, Error> {
         let stream = match self.base {
-            BaseParams::Tcp(addr) => BaseStream::Tcp(TcpStream::connect(addr).await?),
-            BaseParams::Unix(path) => BaseStream::Unix(UnixStream::connect(path).await?),
+            BaseParams::Tcp(addr) => BaseStream::Tcp {
+                inner: TcpStream::connect(addr).await?,
+            },
+            BaseParams::Unix(path) => BaseStream::Unix {
+                inner: UnixStream::connect(path).await?,
+            },
         };
         let stream = if let Some(params) = self.socks {
             let target = params.target?;
             match params.version {
-                SocksVersion::Socks4 => MaybeSocks::Socks4(
-                    if let Some(SocksAuth { username, password }) = params.auth {
+                SocksVersion::Socks4 => MaybeSocks::Socks4 {
+                    inner: if let Some(SocksAuth { username, password }) = params.auth {
                         todo!()
                     } else {
                         //Socks4Stream::connect_with_socket(stream, target).await?
                         todo!()
                     },
-                ),
-                SocksVersion::Socks5 => MaybeSocks::Socks5(todo!()),
+                },
+                SocksVersion::Socks5 => MaybeSocks::Socks5 { inner: todo!() },
             }
         } else {
-            MaybeSocks::Clear(stream)
+            MaybeSocks::Clear { inner: stream }
         };
         todo!()
     }
