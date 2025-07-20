@@ -130,6 +130,7 @@ dependencies = [
 name = "irc-connect"
 version = "0.1.0"
 dependencies = [
+ "foxerror",
  "tokio",
  "tokio-rustls",
  "tokio-socks",

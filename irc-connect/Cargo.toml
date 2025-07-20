@@ -7,6 +7,7 @@ description = "builder for irc connections"
 repository = "https://github.com/xfnw/workspace"
 
 [dependencies]
+foxerror = { version = "0.1.1", path = "../foxerror" }
 tokio = { version = "1.46.1", features = ["net"] }
 tokio-rustls = { version = "0.26.2", default-features = false }
 tokio-socks = "0.5.2"
