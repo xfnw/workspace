@@ -27,6 +27,8 @@ use tokio_socks::{
 
 pub use tokio_rustls;
 
+mod danger;
+
 #[derive(Debug, foxerror::FoxError)]
 #[non_exhaustive]
 pub enum Error {
@@ -424,7 +426,10 @@ impl<'a> StreamBuilder<'a> {
             let config = ClientConfig::builder();
             let config = match params.verification {
                 TlsVerify::Insecure => {
-                    todo!()
+                    let provider = config.crypto_provider().clone();
+                    config
+                        .dangerous()
+                        .with_custom_certificate_verifier(danger::PhonyVerify::new(provider))
                 }
                 TlsVerify::CaStore(root) => config.with_root_certificates(root),
                 TlsVerify::WebPki(webpki) => config.with_webpki_verifier(webpki),
