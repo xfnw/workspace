@@ -16,8 +16,9 @@ use tokio_rustls::{
     rustls::{
         client::WebPkiServerVerifier,
         pki_types::{CertificateDer, PrivateKeyDer, ServerName},
-        RootCertStore,
+        ClientConfig, RootCertStore,
     },
+    TlsConnector,
 };
 use tokio_socks::{
     tcp::{socks4::Socks4Stream, socks5::Socks5Stream},
@@ -37,6 +38,9 @@ pub enum Error {
     /// could not sock
     #[err(from)]
     Socks(tokio_socks::Error),
+    /// could not rustls
+    #[err(from)]
+    Rustls(tokio_rustls::rustls::Error),
 }
 
 pin_project! {
@@ -282,7 +286,7 @@ impl AsyncWrite for BaseStream {
 pub struct StreamBuilder<'a> {
     base: BaseParams<'a>,
     socks: Option<SocksParams<'a>>,
-    tls: Option<TlsParams<'a>>,
+    tls: Option<TlsParams>,
     client_cert: Option<ClientCert>,
 }
 
@@ -314,20 +318,18 @@ impl<'a> StreamBuilder<'a> {
         self.socks(SocksVersion::Socks4, target, None)
     }
 
-    pub fn socks4_with_password(
-        self,
-        target: impl IntoTargetAddr<'a>,
-        username: &'a str,
-        password: &'a str,
-    ) -> Self {
+    pub fn socks4_with_userid(self, target: impl IntoTargetAddr<'a>, username: &'a str) -> Self {
         self.socks(
             SocksVersion::Socks4,
             target,
-            Some(SocksAuth { username, password }),
+            Some(SocksAuth {
+                username,
+                password: "h",
+            }),
         )
     }
 
-    pub fn socks5(mut self, target: impl IntoTargetAddr<'a>) -> Self {
+    pub fn socks5(self, target: impl IntoTargetAddr<'a>) -> Self {
         self.socks(SocksVersion::Socks5, target, None)
     }
 
@@ -344,7 +346,7 @@ impl<'a> StreamBuilder<'a> {
         )
     }
 
-    fn tls(mut self, domain: ServerName<'a>, verification: TlsVerify) -> Self {
+    fn tls(mut self, domain: ServerName<'static>, verification: TlsVerify) -> Self {
         self.tls = Some(TlsParams {
             domain,
             verification,
@@ -352,13 +354,13 @@ impl<'a> StreamBuilder<'a> {
         self
     }
 
-    pub fn tls_insecure(self, domain: ServerName<'a>) -> Self {
+    pub fn tls_insecure(self, domain: ServerName<'static>) -> Self {
         self.tls(domain, TlsVerify::Insecure)
     }
 
     pub fn tls_with_root(
         self,
-        domain: ServerName<'a>,
+        domain: ServerName<'static>,
         root: impl Into<Arc<RootCertStore>>,
     ) -> Self {
         self.tls(domain, TlsVerify::CaStore(root.into()))
@@ -366,7 +368,7 @@ impl<'a> StreamBuilder<'a> {
 
     pub fn tls_with_webpki(
         self,
-        domain: ServerName<'a>,
+        domain: ServerName<'static>,
         webpki: Arc<WebPkiServerVerifier>,
     ) -> Self {
         self.tls(domain, TlsVerify::WebPki(webpki))
@@ -397,19 +399,55 @@ impl<'a> StreamBuilder<'a> {
             let target = params.target?;
             match params.version {
                 SocksVersion::Socks4 => MaybeSocks::Socks4 {
-                    inner: if let Some(SocksAuth { username, password }) = params.auth {
-                        todo!()
+                    inner: if let Some(SocksAuth { username, .. }) = params.auth {
+                        Socks4Stream::connect_with_userid_and_socket(stream, target, username)
+                            .await?
                     } else {
-                        //Socks4Stream::connect_with_socket(stream, target).await?
-                        todo!()
+                        Socks4Stream::connect_with_socket(stream, target).await?
                     },
                 },
-                SocksVersion::Socks5 => MaybeSocks::Socks5 { inner: todo!() },
+                SocksVersion::Socks5 => MaybeSocks::Socks5 {
+                    inner: if let Some(SocksAuth { username, password }) = params.auth {
+                        Socks5Stream::connect_with_password_and_socket(
+                            stream, target, username, password,
+                        )
+                        .await?
+                    } else {
+                        Socks5Stream::connect_with_socket(stream, target).await?
+                    },
+                },
             }
         } else {
             MaybeSocks::Clear { inner: stream }
         };
-        todo!()
+        let stream = if let Some(params) = self.tls {
+            let config = ClientConfig::builder();
+            let config = match params.verification {
+                TlsVerify::Insecure => {
+                    todo!()
+                }
+                TlsVerify::CaStore(root) => config.with_root_certificates(root),
+                TlsVerify::WebPki(webpki) => config.with_webpki_verifier(webpki),
+            };
+            let config = if let Some(ClientCert {
+                cert_chain,
+                key_der,
+            }) = self.client_cert
+            {
+                config.with_client_auth_cert(cert_chain, key_der)?
+            } else {
+                config.with_no_client_auth()
+            };
+            let connector = TlsConnector::from(Arc::new(config));
+            let inner = connector.connect(params.domain, stream).await?;
+            MaybeTls::Tls { inner }
+        } else {
+            if self.client_cert.is_some() {
+                return Err(Error::ClientCertNoTls);
+            }
+            MaybeTls::Plain { inner: stream }
+        };
+        Ok(Stream { inner: stream })
     }
 }
 
@@ -444,8 +482,8 @@ enum SocksVersion {
 }
 
 #[derive(Debug)]
-struct TlsParams<'a> {
-    domain: ServerName<'a>,
+struct TlsParams {
+    domain: ServerName<'static>,
     verification: TlsVerify,
 }
 
