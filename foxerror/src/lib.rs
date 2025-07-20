@@ -194,7 +194,7 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
                 set = quote!((#(#get),*));
             }
             syn::Fields::Unit => (),
-        };
+        }
 
         quote! {
             #ident::#name #set => write!(f, concat!(#(#fmt),*), #msg, #(#get),*)
