@@ -356,7 +356,7 @@ impl<'a> StreamBuilder<'a> {
         self
     }
 
-    pub fn tls_insecure(self, domain: ServerName<'static>) -> Self {
+    pub fn tls_danger_insecure(self, domain: ServerName<'static>) -> Self {
         self.tls(domain, TlsVerify::Insecure)
     }
 
