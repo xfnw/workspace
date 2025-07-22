@@ -37,7 +37,7 @@ struct AttrArg {
 }
 
 impl Parse for AttrArg {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
+    fn parse(input: ParseStream<'_>) -> syn::Result<Self> {
         let ident = input.parse()?;
         let value = if input.parse::<Token![=]>().is_ok() {
             input.parse::<syn::Expr>().ok()
@@ -51,7 +51,7 @@ impl Parse for AttrArg {
 struct AttrArgs(Vec<AttrArg>);
 
 impl Parse for AttrArgs {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
+    fn parse(input: ParseStream<'_>) -> syn::Result<Self> {
         let mut args = vec![];
         loop {
             args.push(input.parse()?);
