@@ -134,50 +134,55 @@ pin_project! {
     }
 }
 
-impl AsyncRead for MaybeTls {
-    #[inline]
-    fn poll_read(
-        self: Pin<&mut Self>,
-        cx: &mut Context,
-        buf: &mut ReadBuf<'_>,
-    ) -> Poll<std::io::Result<()>> {
-        match self.project() {
-            MaybeTlsProj::Plain { inner } => inner.poll_read(cx, buf),
-            MaybeTlsProj::Tls { inner } => inner.poll_read(cx, buf),
+macro_rules! trivial_impl {
+    ($target:ty, ($($arm:path),*)) => {
+        impl AsyncRead for $target {
+            #[inline]
+            fn poll_read(
+                self: Pin<&mut Self>,
+                cx: &mut Context<'_>,
+                buf: &mut ReadBuf<'_>,
+            ) -> Poll<std::io::Result<()>> {
+                match self.project() {
+                    $($arm { inner } => inner.poll_read(cx, buf),)*
+                }
+            }
         }
-    }
+
+        impl AsyncWrite for $target {
+            #[inline]
+            fn poll_write(
+                self: Pin<&mut Self>,
+                cx: &mut Context<'_>,
+                buf: &[u8],
+            ) -> Poll<Result<usize, std::io::Error>> {
+                match self.project() {
+                    $($arm { inner } => inner.poll_write(cx, buf),)*
+                }
+            }
+            #[inline]
+            fn poll_flush(
+                self: Pin<&mut Self>,
+                cx: &mut Context<'_>,
+            ) -> Poll<Result<(), std::io::Error>> {
+                match self.project() {
+                    $($arm { inner } => inner.poll_flush(cx),)*
+                }
+            }
+            #[inline]
+            fn poll_shutdown(
+                self: Pin<&mut Self>,
+                cx: &mut Context<'_>,
+            ) -> Poll<Result<(), std::io::Error>> {
+                match self.project() {
+                    $($arm { inner } => inner.poll_shutdown(cx),)*
+                }
+            }
+        }
+    };
 }
 
-impl AsyncWrite for MaybeTls {
-    #[inline]
-    fn poll_write(
-        self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-        buf: &[u8],
-    ) -> Poll<Result<usize, std::io::Error>> {
-        match self.project() {
-            MaybeTlsProj::Plain { inner } => inner.poll_write(cx, buf),
-            MaybeTlsProj::Tls { inner } => inner.poll_write(cx, buf),
-        }
-    }
-    #[inline]
-    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), std::io::Error>> {
-        match self.project() {
-            MaybeTlsProj::Plain { inner } => inner.poll_flush(cx),
-            MaybeTlsProj::Tls { inner } => inner.poll_flush(cx),
-        }
-    }
-    #[inline]
-    fn poll_shutdown(
-        self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-    ) -> Poll<Result<(), std::io::Error>> {
-        match self.project() {
-            MaybeTlsProj::Plain { inner } => inner.poll_shutdown(cx),
-            MaybeTlsProj::Tls { inner } => inner.poll_shutdown(cx),
-        }
-    }
-}
+trivial_impl!(MaybeTls, (MaybeTlsProj::Plain, MaybeTlsProj::Tls));
 
 pin_project! {
     #[project = MaybeSocksProj]
@@ -198,54 +203,14 @@ pin_project! {
     }
 }
 
-impl AsyncRead for MaybeSocks {
-    #[inline]
-    fn poll_read(
-        self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-        buf: &mut ReadBuf<'_>,
-    ) -> Poll<std::io::Result<()>> {
-        match self.project() {
-            MaybeSocksProj::Clear { inner } => inner.poll_read(cx, buf),
-            MaybeSocksProj::Socks4 { inner } => inner.poll_read(cx, buf),
-            MaybeSocksProj::Socks5 { inner } => inner.poll_read(cx, buf),
-        }
-    }
-}
-
-impl AsyncWrite for MaybeSocks {
-    #[inline]
-    fn poll_write(
-        self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-        buf: &[u8],
-    ) -> Poll<Result<usize, std::io::Error>> {
-        match self.project() {
-            MaybeSocksProj::Clear { inner } => inner.poll_write(cx, buf),
-            MaybeSocksProj::Socks4 { inner } => inner.poll_write(cx, buf),
-            MaybeSocksProj::Socks5 { inner } => inner.poll_write(cx, buf),
-        }
-    }
-    #[inline]
-    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), std::io::Error>> {
-        match self.project() {
-            MaybeSocksProj::Clear { inner } => inner.poll_flush(cx),
-            MaybeSocksProj::Socks4 { inner } => inner.poll_flush(cx),
-            MaybeSocksProj::Socks5 { inner } => inner.poll_flush(cx),
-        }
-    }
-    #[inline]
-    fn poll_shutdown(
-        self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-    ) -> Poll<Result<(), std::io::Error>> {
-        match self.project() {
-            MaybeSocksProj::Clear { inner } => inner.poll_shutdown(cx),
-            MaybeSocksProj::Socks4 { inner } => inner.poll_shutdown(cx),
-            MaybeSocksProj::Socks5 { inner } => inner.poll_shutdown(cx),
-        }
-    }
-}
+trivial_impl!(
+    MaybeSocks,
+    (
+        MaybeSocksProj::Clear,
+        MaybeSocksProj::Socks4,
+        MaybeSocksProj::Socks5
+    )
+);
 
 pin_project! {
     #[project = BaseStreamProj]
@@ -262,50 +227,7 @@ pin_project! {
     }
 }
 
-impl AsyncRead for BaseStream {
-    #[inline]
-    fn poll_read(
-        self: Pin<&mut Self>,
-        cx: &mut Context,
-        buf: &mut ReadBuf<'_>,
-    ) -> Poll<std::io::Result<()>> {
-        match self.project() {
-            BaseStreamProj::Tcp { inner } => inner.poll_read(cx, buf),
-            BaseStreamProj::Unix { inner } => inner.poll_read(cx, buf),
-        }
-    }
-}
-
-impl AsyncWrite for BaseStream {
-    #[inline]
-    fn poll_write(
-        self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-        buf: &[u8],
-    ) -> Poll<Result<usize, std::io::Error>> {
-        match self.project() {
-            BaseStreamProj::Tcp { inner } => inner.poll_write(cx, buf),
-            BaseStreamProj::Unix { inner } => inner.poll_write(cx, buf),
-        }
-    }
-    #[inline]
-    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), std::io::Error>> {
-        match self.project() {
-            BaseStreamProj::Tcp { inner } => inner.poll_flush(cx),
-            BaseStreamProj::Unix { inner } => inner.poll_flush(cx),
-        }
-    }
-    #[inline]
-    fn poll_shutdown(
-        self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-    ) -> Poll<Result<(), std::io::Error>> {
-        match self.project() {
-            BaseStreamProj::Tcp { inner } => inner.poll_shutdown(cx),
-            BaseStreamProj::Unix { inner } => inner.poll_shutdown(cx),
-        }
-    }
-}
+trivial_impl!(BaseStream, (BaseStreamProj::Tcp, BaseStreamProj::Unix));
 
 /// a builder for [`Stream`]
 #[derive(Debug)]
