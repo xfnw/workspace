@@ -268,11 +268,12 @@ impl<'a> StreamBuilder<'a> {
     /// # use irc_connect::Stream;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # let addr = "[::1]:6667".parse().unwrap();
-    /// # let builder = Stream::new_tcp(&addr);
-    /// let builder = builder.socks4("127.0.0.1:9050");
+    /// let addr = "127.0.0.1:9050".parse().unwrap();
+    /// let builder = Stream::new_tcp(&addr);
+    /// let builder = builder.socks4("irc.example.com:6667");
     /// # }
     /// ```
+    #[deprecated(note = "the current behavior is unintentional and will be replaced for v0.2.0")]
     pub fn socks4(self, target: impl IntoTargetAddr<'a>) -> Self {
         self.socks(SocksVersion::Socks4, target, None)
     }
@@ -283,11 +284,12 @@ impl<'a> StreamBuilder<'a> {
     /// # use irc_connect::Stream;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # let addr = "[::1]:6667".parse().unwrap();
-    /// # let builder = Stream::new_tcp(&addr);
-    /// let builder = builder.socks4_with_userid("127.0.0.1:9050", "meow");
+    /// let addr = "127.0.0.1:9050".parse().unwrap();
+    /// let builder = Stream::new_tcp(&addr);
+    /// let builder = builder.socks4_with_userid("irc.example.com:6667", "meow");
     /// # }
     /// ```
+    #[deprecated(note = "the current behavior is unintentional and will be replaced for v0.2.0")]
     pub fn socks4_with_userid(self, target: impl IntoTargetAddr<'a>, userid: &'a str) -> Self {
         self.socks(
             SocksVersion::Socks4,
@@ -305,11 +307,12 @@ impl<'a> StreamBuilder<'a> {
     /// # use irc_connect::Stream;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # let addr = "[::1]:6667".parse().unwrap();
-    /// # let builder = Stream::new_tcp(&addr);
-    /// let builder = builder.socks5("127.0.0.1:9050");
+    /// let addr = "127.0.0.1:9050".parse().unwrap();
+    /// let builder = Stream::new_tcp(&addr);
+    /// let builder = builder.socks5("irc.example.com:6667");
     /// # }
     /// ```
+    #[deprecated(note = "the current behavior is unintentional and will be replaced for v0.2.0")]
     pub fn socks5(self, target: impl IntoTargetAddr<'a>) -> Self {
         self.socks(SocksVersion::Socks5, target, None)
     }
@@ -320,11 +323,12 @@ impl<'a> StreamBuilder<'a> {
     /// # use irc_connect::Stream;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # let addr = "[::1]:6667".parse().unwrap();
-    /// # let builder = Stream::new_tcp(&addr);
-    /// let builder = builder.socks5_with_password("127.0.0.1:9050", "AzureDiamond", "hunter2");
+    /// let addr = "127.0.0.1:9050".parse().unwrap();
+    /// let builder = Stream::new_tcp(&addr);
+    /// let builder = builder.socks5_with_password("irc.example.com:6667", "AzureDiamond", "hunter2");
     /// # }
     /// ```
+    #[deprecated(note = "the current behavior is unintentional and will be replaced for v0.2.0")]
     pub fn socks5_with_password(
         self,
         target: impl IntoTargetAddr<'a>,
