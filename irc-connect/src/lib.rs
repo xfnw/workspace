@@ -64,10 +64,10 @@ impl Stream {
     /// use irc_connect::Stream;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// let stream = Stream::new_tcp(&"[::1]:6667".parse().unwrap()).connect().await.unwrap();
+    /// let stream = Stream::new_tcp("[::1]:6667".parse().unwrap()).connect().await.unwrap();
     /// # }
     /// ```
-    pub fn new_tcp(addr: &SocketAddr) -> StreamBuilder<'_> {
+    pub fn new_tcp(addr: SocketAddr) -> StreamBuilder<'static> {
         StreamBuilder::new(BaseParams::Tcp(addr))
     }
     /// start building a new stream based on a unix socket
@@ -269,7 +269,7 @@ impl<'a> StreamBuilder<'a> {
     /// # #[tokio::main]
     /// # async fn main() {
     /// # let addr = "[::1]:6667".parse().unwrap();
-    /// # let builder = Stream::new_tcp(&addr);
+    /// # let builder = Stream::new_tcp(addr);
     /// let builder = builder.socks4("127.0.0.1:9050");
     /// # }
     /// ```
@@ -284,7 +284,7 @@ impl<'a> StreamBuilder<'a> {
     /// # #[tokio::main]
     /// # async fn main() {
     /// # let addr = "[::1]:6667".parse().unwrap();
-    /// # let builder = Stream::new_tcp(&addr);
+    /// # let builder = Stream::new_tcp(addr);
     /// let builder = builder.socks4_with_userid("127.0.0.1:9050", "meow");
     /// # }
     /// ```
@@ -306,7 +306,7 @@ impl<'a> StreamBuilder<'a> {
     /// # #[tokio::main]
     /// # async fn main() {
     /// # let addr = "[::1]:6667".parse().unwrap();
-    /// # let builder = Stream::new_tcp(&addr);
+    /// # let builder = Stream::new_tcp(addr);
     /// let builder = builder.socks5("127.0.0.1:9050");
     /// # }
     /// ```
@@ -321,7 +321,7 @@ impl<'a> StreamBuilder<'a> {
     /// # #[tokio::main]
     /// # async fn main() {
     /// # let addr = "[::1]:6667".parse().unwrap();
-    /// # let builder = Stream::new_tcp(&addr);
+    /// # let builder = Stream::new_tcp(addr);
     /// let builder = builder.socks5_with_password("127.0.0.1:9050", "AzureDiamond", "hunter2");
     /// # }
     /// ```
@@ -354,7 +354,7 @@ impl<'a> StreamBuilder<'a> {
     /// # #[tokio::main]
     /// # async fn main() {
     /// # let addr = "[::1]:6667".parse().unwrap();
-    /// # let builder = Stream::new_tcp(&addr);
+    /// # let builder = Stream::new_tcp(addr);
     /// let builder = builder.tls_danger_insecure(ServerName::try_from("google.com").unwrap());
     /// # }
     /// ```
@@ -374,7 +374,7 @@ impl<'a> StreamBuilder<'a> {
     /// # #[tokio::main]
     /// # async fn main() {
     /// # let addr = "[::1]:6667".parse().unwrap();
-    /// # let builder = Stream::new_tcp(&addr);
+    /// # let builder = Stream::new_tcp(addr);
     /// let mut root = RootCertStore::empty();
     /// root.add_parsable_certificates(
     ///     CertificateDer::pem_file_iter("/etc/ssl/cert.pem")
@@ -412,7 +412,7 @@ impl<'a> StreamBuilder<'a> {
     /// # #[tokio::main]
     /// # async fn main() {
     /// let addr = "[::1]:6667".parse().unwrap();
-    /// let builder = Stream::new_tcp(&addr).tls_danger_insecure(ServerName::from(addr.ip()));
+    /// let builder = Stream::new_tcp(addr).tls_danger_insecure(ServerName::from(addr.ip()));
     /// let cert = CertificateDer::pem_file_iter("cert.pem")
     ///     .unwrap()
     ///     .collect::<Result<Vec<_>, _>>()
@@ -440,7 +440,7 @@ impl<'a> StreamBuilder<'a> {
     /// # #[tokio::main]
     /// # async fn main() {
     /// # let addr = "[::1]:6667".parse().unwrap();
-    /// # let builder = Stream::new_tcp(&addr);
+    /// # let builder = Stream::new_tcp(addr);
     /// let stream = builder.connect().await.unwrap();
     /// # }
     /// ```
@@ -514,8 +514,7 @@ impl<'a> StreamBuilder<'a> {
 
 #[derive(Debug)]
 enum BaseParams<'a> {
-    // we cannot use [`tokio::net::ToSocketAddrs`] because they dont expose it :(
-    Tcp(&'a SocketAddr),
+    Tcp(SocketAddr),
     Unix(&'a Path),
 }
 
