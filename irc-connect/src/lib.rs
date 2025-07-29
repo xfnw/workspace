@@ -230,6 +230,7 @@ trivial_impl!(BaseStream, (BaseStreamProj::Tcp, BaseStreamProj::Unix));
 
 /// a builder for [`Stream`]
 #[derive(Debug)]
+#[must_use = "this does nothing unless you finish building"]
 pub struct StreamBuilder<'a> {
     base: BaseParams<'a>,
     socks: Option<SocksParams<'a>>,
