@@ -22,10 +22,7 @@ use tokio_rustls::{
     },
     TlsConnector,
 };
-use tokio_socks::{
-    tcp::{socks4::Socks4Stream, socks5::Socks5Stream},
-    IntoTargetAddr, TargetAddr,
-};
+use tokio_socks::tcp::{socks4::Socks4Stream, socks5::Socks5Stream};
 
 pub use tokio_rustls;
 
@@ -46,6 +43,8 @@ pub enum Error {
     /// could not rustls
     #[err(from)]
     Rustls(tokio_rustls::rustls::Error),
+    /// socks cannot connect to unix sockets
+    SocksToUnsupported,
 }
 
 pin_project! {
@@ -251,12 +250,12 @@ impl<'a> StreamBuilder<'a> {
     fn socks(
         mut self,
         version: SocksVersion,
-        target: impl IntoTargetAddr<'a>,
+        proxy: SocketAddr,
         auth: Option<SocksAuth<'a>>,
     ) -> Self {
         self.socks = Some(SocksParams {
             version,
-            target: target.into_target_addr(),
+            proxy,
             auth,
         });
         self
@@ -270,11 +269,11 @@ impl<'a> StreamBuilder<'a> {
     /// # async fn main() {
     /// # let addr = "[::1]:6667".parse().unwrap();
     /// # let builder = Stream::new_tcp(addr);
-    /// let builder = builder.socks4("127.0.0.1:9050");
+    /// let builder = builder.socks4("127.0.0.1:9050".parse().unwrap());
     /// # }
     /// ```
-    pub fn socks4(self, target: impl IntoTargetAddr<'a>) -> Self {
-        self.socks(SocksVersion::Socks4, target, None)
+    pub fn socks4(self, proxy: SocketAddr) -> Self {
+        self.socks(SocksVersion::Socks4, proxy, None)
     }
 
     /// enable socks4 proxying with a userid
@@ -285,13 +284,13 @@ impl<'a> StreamBuilder<'a> {
     /// # async fn main() {
     /// # let addr = "[::1]:6667".parse().unwrap();
     /// # let builder = Stream::new_tcp(addr);
-    /// let builder = builder.socks4_with_userid("127.0.0.1:9050", "meow");
+    /// let builder = builder.socks4_with_userid("127.0.0.1:9050".parse().unwrap(), "meow");
     /// # }
     /// ```
-    pub fn socks4_with_userid(self, target: impl IntoTargetAddr<'a>, userid: &'a str) -> Self {
+    pub fn socks4_with_userid(self, proxy: SocketAddr, userid: &'a str) -> Self {
         self.socks(
             SocksVersion::Socks4,
-            target,
+            proxy,
             Some(SocksAuth {
                 username: userid,
                 password: "h",
@@ -307,11 +306,11 @@ impl<'a> StreamBuilder<'a> {
     /// # async fn main() {
     /// # let addr = "[::1]:6667".parse().unwrap();
     /// # let builder = Stream::new_tcp(addr);
-    /// let builder = builder.socks5("127.0.0.1:9050");
+    /// let builder = builder.socks5("127.0.0.1:9050".parse().unwrap());
     /// # }
     /// ```
-    pub fn socks5(self, target: impl IntoTargetAddr<'a>) -> Self {
-        self.socks(SocksVersion::Socks5, target, None)
+    pub fn socks5(self, proxy: SocketAddr) -> Self {
+        self.socks(SocksVersion::Socks5, proxy, None)
     }
 
     /// enable socks5 proxying with password authentication
@@ -322,18 +321,19 @@ impl<'a> StreamBuilder<'a> {
     /// # async fn main() {
     /// # let addr = "[::1]:6667".parse().unwrap();
     /// # let builder = Stream::new_tcp(addr);
-    /// let builder = builder.socks5_with_password("127.0.0.1:9050", "AzureDiamond", "hunter2");
+    /// let builder =
+    ///     builder.socks5_with_password("127.0.0.1:9050".parse().unwrap(), "AzureDiamond", "hunter2");
     /// # }
     /// ```
     pub fn socks5_with_password(
         self,
-        target: impl IntoTargetAddr<'a>,
+        proxy: SocketAddr,
         username: &'a str,
         password: &'a str,
     ) -> Self {
         self.socks(
             SocksVersion::Socks5,
-            target,
+            proxy,
             Some(SocksAuth { username, password }),
         )
     }
@@ -445,16 +445,13 @@ impl<'a> StreamBuilder<'a> {
     /// # }
     /// ```
     pub async fn connect(self) -> Result<Stream, Error> {
-        let stream = match self.base {
-            BaseParams::Tcp(addr) => BaseStream::Tcp {
-                inner: TcpStream::connect(addr).await?,
-            },
-            BaseParams::Unix(path) => BaseStream::Unix {
-                inner: UnixStream::connect(path).await?,
-            },
-        };
         let stream = if let Some(params) = self.socks {
-            let target = params.target?;
+            let BaseParams::Tcp(target) = self.base else {
+                return Err(Error::SocksToUnsupported);
+            };
+            let stream = BaseStream::Tcp {
+                inner: TcpStream::connect(params.proxy).await?,
+            };
             match params.version {
                 SocksVersion::Socks4 => MaybeSocks::Socks4 {
                     inner: if let Some(SocksAuth { username, .. }) = params.auth {
@@ -476,6 +473,14 @@ impl<'a> StreamBuilder<'a> {
                 },
             }
         } else {
+            let stream = match self.base {
+                BaseParams::Tcp(addr) => BaseStream::Tcp {
+                    inner: TcpStream::connect(addr).await?,
+                },
+                BaseParams::Unix(path) => BaseStream::Unix {
+                    inner: UnixStream::connect(path).await?,
+                },
+            };
             MaybeSocks::Clear { inner: stream }
         };
         let stream = if let Some(params) = self.tls {
@@ -520,7 +525,7 @@ enum BaseParams<'a> {
 
 struct SocksParams<'a> {
     version: SocksVersion,
-    target: tokio_socks::Result<TargetAddr<'a>>,
+    proxy: SocketAddr,
     auth: Option<SocksAuth<'a>>,
 }
 
