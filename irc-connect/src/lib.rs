@@ -22,7 +22,10 @@ use tokio_rustls::{
     },
     TlsConnector,
 };
-use tokio_socks::tcp::{socks4::Socks4Stream, socks5::Socks5Stream};
+use tokio_socks::{
+    tcp::{socks4::Socks4Stream, socks5::Socks5Stream},
+    IntoTargetAddr, TargetAddr,
+};
 
 pub use tokio_rustls;
 
@@ -45,6 +48,8 @@ pub enum Error {
     Rustls(tokio_rustls::rustls::Error),
     /// socks cannot connect to unix sockets
     SocksToUnsupported,
+    /// invalid target address
+    InvalidTarget(tokio_socks::Error),
 }
 
 pin_project! {
@@ -63,11 +68,11 @@ impl Stream {
     /// use irc_connect::Stream;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// let stream = Stream::new_tcp("[::1]:6667".parse().unwrap()).connect().await.unwrap();
+    /// let stream = Stream::new_tcp("[::1]:6667").connect().await.unwrap();
     /// # }
     /// ```
-    pub fn new_tcp(addr: SocketAddr) -> StreamBuilder<'static> {
-        StreamBuilder::new(BaseParams::Tcp(addr))
+    pub fn new_tcp<'a>(addr: impl IntoTargetAddr<'a>) -> StreamBuilder<'a> {
+        StreamBuilder::new(BaseParams::Tcp(addr.into_target_addr()))
     }
     /// start building a new stream based on a unix socket
     ///
@@ -268,8 +273,7 @@ impl<'a> StreamBuilder<'a> {
     /// # use irc_connect::Stream;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # let addr = "[::1]:6667".parse().unwrap();
-    /// # let builder = Stream::new_tcp(addr);
+    /// # let builder = Stream::new_tcp("[::1]:6667");
     /// let builder = builder.socks4("127.0.0.1:9050".parse().unwrap());
     /// # }
     /// ```
@@ -283,8 +287,7 @@ impl<'a> StreamBuilder<'a> {
     /// # use irc_connect::Stream;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # let addr = "[::1]:6667".parse().unwrap();
-    /// # let builder = Stream::new_tcp(addr);
+    /// # let builder = Stream::new_tcp("[::1]:6667");
     /// let builder = builder.socks4_with_userid("127.0.0.1:9050".parse().unwrap(), "meow");
     /// # }
     /// ```
@@ -305,8 +308,7 @@ impl<'a> StreamBuilder<'a> {
     /// # use irc_connect::Stream;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # let addr = "[::1]:6667".parse().unwrap();
-    /// # let builder = Stream::new_tcp(addr);
+    /// # let builder = Stream::new_tcp("[::1]:6667");
     /// let builder = builder.socks5("127.0.0.1:9050".parse().unwrap());
     /// # }
     /// ```
@@ -320,8 +322,7 @@ impl<'a> StreamBuilder<'a> {
     /// # use irc_connect::Stream;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # let addr = "[::1]:6667".parse().unwrap();
-    /// # let builder = Stream::new_tcp(addr);
+    /// # let builder = Stream::new_tcp("[::1]:6667");
     /// let builder =
     ///     builder.socks5_with_password("127.0.0.1:9050".parse().unwrap(), "AzureDiamond", "hunter2");
     /// # }
@@ -354,8 +355,7 @@ impl<'a> StreamBuilder<'a> {
     /// # use irc_connect::Stream;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # let addr = "[::1]:6667".parse().unwrap();
-    /// # let builder = Stream::new_tcp(addr);
+    /// # let builder = Stream::new_tcp("[::1]:6667");
     /// let builder = builder.tls_danger_insecure(ServerName::try_from("google.com").unwrap());
     /// # }
     /// ```
@@ -374,8 +374,7 @@ impl<'a> StreamBuilder<'a> {
     /// # use irc_connect::Stream;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # let addr = "[::1]:6667".parse().unwrap();
-    /// # let builder = Stream::new_tcp(addr);
+    /// # let builder = Stream::new_tcp("[::1]:6667");
     /// let mut root = RootCertStore::empty();
     /// root.add_parsable_certificates(
     ///     CertificateDer::pem_file_iter("/etc/ssl/cert.pem")
@@ -408,11 +407,12 @@ impl<'a> StreamBuilder<'a> {
     ///
     /// ```no_run
     /// use irc_connect::Stream;
+    /// use std::net::SocketAddr;
     /// use tokio_rustls::rustls::pki_types::{CertificateDer, PrivateKeyDer, ServerName, pem::PemObject};
     ///
     /// # #[tokio::main]
     /// # async fn main() {
-    /// let addr = "[::1]:6667".parse().unwrap();
+    /// let addr: SocketAddr = "[::1]:6667".parse().unwrap();
     /// let builder = Stream::new_tcp(addr).tls_danger_insecure(ServerName::from(addr.ip()));
     /// let cert = CertificateDer::pem_file_iter("cert.pem")
     ///     .unwrap()
@@ -440,8 +440,7 @@ impl<'a> StreamBuilder<'a> {
     /// # use irc_connect::Stream;
     /// # #[tokio::main]
     /// # async fn main() {
-    /// # let addr = "[::1]:6667".parse().unwrap();
-    /// # let builder = Stream::new_tcp(addr);
+    /// # let builder = Stream::new_tcp("[::1]:6667");
     /// let stream = builder.connect().await.unwrap();
     /// # }
     /// ```
@@ -454,6 +453,7 @@ impl<'a> StreamBuilder<'a> {
             let BaseParams::Tcp(target) = self.base else {
                 return Err(Error::SocksToUnsupported);
             };
+            let target = target.map_err(Error::InvalidTarget)?;
             let stream = BaseStream::Tcp {
                 inner: TcpStream::connect(params.proxy).await?,
             };
@@ -479,9 +479,17 @@ impl<'a> StreamBuilder<'a> {
             }
         } else {
             let stream = match self.base {
-                BaseParams::Tcp(addr) => BaseStream::Tcp {
-                    inner: TcpStream::connect(addr).await?,
-                },
+                BaseParams::Tcp(addr) => {
+                    // FIXME: stick addr into connect directly, once tokio's ToSocketAddrs
+                    // stabilizes and TargetAddr implements it
+                    let inner = match addr.map_err(Error::InvalidTarget)? {
+                        TargetAddr::Ip(addr) => TcpStream::connect(addr).await?,
+                        TargetAddr::Domain(domain, port) => {
+                            TcpStream::connect((domain.as_ref(), port)).await?
+                        }
+                    };
+                    BaseStream::Tcp { inner }
+                }
                 BaseParams::Unix(path) => BaseStream::Unix {
                     inner: UnixStream::connect(path).await?,
                 },
@@ -524,7 +532,7 @@ impl<'a> StreamBuilder<'a> {
 
 #[derive(Debug)]
 enum BaseParams<'a> {
-    Tcp(SocketAddr),
+    Tcp(tokio_socks::Result<TargetAddr<'a>>),
     Unix(&'a Path),
 }
 

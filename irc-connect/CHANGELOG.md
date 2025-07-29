@@ -1,8 +1,7 @@
 # changelog
 
 ## unreleased
-- `Stream::new_tcp` now requires a `SocketAddr` instead of a
-  `&SocketAddr`, since it is `Copy`
+- `Stream::new_tcp` now accepts anything implementing `IntoTargetAddr`
 - socks behavior switched around and now requires a `SocketAddr`
 - `StreamBuilder` has been marked as `must_use`
 
