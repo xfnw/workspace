@@ -50,6 +50,8 @@ pub enum Error {
     SocksToUnsupported,
     /// invalid target address
     InvalidTarget(tokio_socks::Error),
+    /// no tls servername provided and failed to guess it
+    NoServerName,
 }
 
 pin_project! {
@@ -340,7 +342,7 @@ impl<'a> StreamBuilder<'a> {
         )
     }
 
-    fn tls(mut self, domain: ServerName<'static>, verification: TlsVerify) -> Self {
+    fn tls(mut self, domain: Option<ServerName<'static>>, verification: TlsVerify) -> Self {
         self.tls = Some(TlsParams {
             domain,
             verification,
@@ -356,10 +358,10 @@ impl<'a> StreamBuilder<'a> {
     /// # #[tokio::main]
     /// # async fn main() {
     /// # let builder = Stream::new_tcp("[::1]:6667");
-    /// let builder = builder.tls_danger_insecure(ServerName::try_from("google.com").unwrap());
+    /// let builder = builder.tls_danger_insecure(Some(ServerName::try_from("google.com").unwrap()));
     /// # }
     /// ```
-    pub fn tls_danger_insecure(self, domain: ServerName<'static>) -> Self {
+    pub fn tls_danger_insecure(self, domain: Option<ServerName<'static>>) -> Self {
         self.tls(domain, TlsVerify::Insecure)
     }
 
@@ -381,12 +383,12 @@ impl<'a> StreamBuilder<'a> {
     ///         .unwrap()
     ///         .flatten(),
     /// );
-    /// let builder = builder.tls_with_root(ServerName::try_from("google.com").unwrap(), root);
+    /// let builder = builder.tls_with_root(None, root);
     /// # }
     /// ```
     pub fn tls_with_root(
         self,
-        domain: ServerName<'static>,
+        domain: Option<ServerName<'static>>,
         root: impl Into<Arc<RootCertStore>>,
     ) -> Self {
         self.tls(domain, TlsVerify::CaStore(root.into()))
@@ -395,7 +397,7 @@ impl<'a> StreamBuilder<'a> {
     /// enable tls with a webpki verifier
     pub fn tls_with_webpki(
         self,
-        domain: ServerName<'static>,
+        domain: Option<ServerName<'static>>,
         webpki: Arc<WebPkiServerVerifier>,
     ) -> Self {
         self.tls(domain, TlsVerify::WebPki(webpki))
@@ -412,8 +414,7 @@ impl<'a> StreamBuilder<'a> {
     ///
     /// # #[tokio::main]
     /// # async fn main() {
-    /// let addr: SocketAddr = "[::1]:6667".parse().unwrap();
-    /// let builder = Stream::new_tcp(addr).tls_danger_insecure(ServerName::from(addr.ip()));
+    /// let builder = Stream::new_tcp("[::1]:6667").tls_danger_insecure(None);
     /// let cert = CertificateDer::pem_file_iter("cert.pem")
     ///     .unwrap()
     ///     .collect::<Result<Vec<_>, _>>()
@@ -449,6 +450,17 @@ impl<'a> StreamBuilder<'a> {
     /// will return [`Error`] if an invalid combination of options has been
     /// given to the builder, or if it is unable to connect
     pub async fn connect(self) -> Result<Stream, Error> {
+        let domain = if self.tls.is_some() {
+            match &self.base {
+                BaseParams::Tcp(Ok(TargetAddr::Ip(addr))) => Some(ServerName::from(addr.ip())),
+                BaseParams::Tcp(Ok(TargetAddr::Domain(d, _))) => {
+                    ServerName::try_from(d.as_ref()).map(|s| s.to_owned()).ok()
+                }
+                _ => None,
+            }
+        } else {
+            None
+        };
         let stream = if let Some(params) = self.socks {
             let BaseParams::Tcp(target) = self.base else {
                 return Err(Error::SocksToUnsupported);
@@ -518,7 +530,8 @@ impl<'a> StreamBuilder<'a> {
                 config.with_no_client_auth()
             };
             let connector = TlsConnector::from(Arc::new(config));
-            let inner = connector.connect(params.domain, stream).await?;
+            let domain = params.domain.or(domain).ok_or(Error::NoServerName)?;
+            let inner = connector.connect(domain, stream).await?;
             MaybeTls::Tls { inner }
         } else {
             if self.client_cert.is_some() {
@@ -561,7 +574,7 @@ enum SocksVersion {
 
 #[derive(Debug)]
 struct TlsParams {
-    domain: ServerName<'static>,
+    domain: Option<ServerName<'static>>,
     verification: TlsVerify,
 }
 

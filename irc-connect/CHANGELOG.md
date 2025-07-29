@@ -4,6 +4,7 @@
 - `Stream::new_tcp` now accepts anything implementing `IntoTargetAddr`
 - socks behavior switched around and now requires a `SocketAddr`
 - `StreamBuilder` has been marked as `must_use`
+- giving tls builder methods a `ServerName` is now optional
 
 ## 0.1.1 - 2025-07-28
 - fix documentation for socks
