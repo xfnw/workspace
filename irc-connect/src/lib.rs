@@ -445,6 +445,10 @@ impl<'a> StreamBuilder<'a> {
     /// let stream = builder.connect().await.unwrap();
     /// # }
     /// ```
+    ///
+    /// # Errors
+    /// will return [`Error`] if an invalid combination of options has been
+    /// given to the builder, or if it is unable to connect
     pub async fn connect(self) -> Result<Stream, Error> {
         let stream = if let Some(params) = self.socks {
             let BaseParams::Tcp(target) = self.base else {
