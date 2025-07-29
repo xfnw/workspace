@@ -1,6 +1,6 @@
 # changelog
 
-## unreleased
+## 0.2.0 - 2025-07-29
 - `Stream::new_tcp` now accepts anything implementing `IntoTargetAddr`
 - socks behavior switched around and now requires a `SocketAddr`
 - `StreamBuilder` has been marked as `must_use`
