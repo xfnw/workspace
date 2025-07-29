@@ -278,6 +278,7 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
 /// );
 /// assert_eq!(Error::from("meow"), Error::OneField("meow"));
 /// ```
+#[allow(clippy::missing_panics_doc)]
 #[proc_macro_derive(FoxError, attributes(err))]
 pub fn foxerror(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let input = syn::parse(input).unwrap();
