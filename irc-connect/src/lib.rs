@@ -450,14 +450,15 @@ impl<'a> StreamBuilder<'a> {
     /// will return [`Error`] if an invalid combination of options has been
     /// given to the builder, or if it is unable to connect
     pub async fn connect(self) -> Result<Stream, Error> {
-        let domain = if self.tls.is_some() {
-            match &self.base {
+        let tls = if let Some(mut params) = self.tls {
+            params.domain = params.domain.or_else(|| match &self.base {
                 BaseParams::Tcp(Ok(TargetAddr::Ip(addr))) => Some(ServerName::from(addr.ip())),
                 BaseParams::Tcp(Ok(TargetAddr::Domain(d, _))) => {
                     ServerName::try_from(d.as_ref()).map(|s| s.to_owned()).ok()
                 }
                 _ => None,
-            }
+            });
+            Some(params)
         } else {
             None
         };
@@ -508,7 +509,7 @@ impl<'a> StreamBuilder<'a> {
             };
             MaybeSocks::Clear { inner: stream }
         };
-        let stream = if let Some(params) = self.tls {
+        let stream = if let Some(params) = tls {
             let config = ClientConfig::builder();
             let config = match params.verification {
                 TlsVerify::Insecure => {
@@ -530,7 +531,7 @@ impl<'a> StreamBuilder<'a> {
                 config.with_no_client_auth()
             };
             let connector = TlsConnector::from(Arc::new(config));
-            let domain = params.domain.or(domain).ok_or(Error::NoServerName)?;
+            let domain = params.domain.ok_or(Error::NoServerName)?;
             let inner = connector.connect(domain, stream).await?;
             MaybeTls::Tls { inner }
         } else {
