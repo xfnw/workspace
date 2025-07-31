@@ -28,6 +28,7 @@ struct InfoLine {
 }
 
 impl InfoLine {
+    #[allow(clippy::cast_possible_wrap)]
     fn parse_line(inp: &str, prev: isize) -> (Self, isize) {
         let (_, key, whitespace, value) =
             regex_captures!(r"^(?:([^ \t]*):)?([ \t]*)((?:[^ \t].*)?)$", inp).unwrap();
@@ -121,7 +122,7 @@ pub fn run(args: &Args) {
         let parsed = InfoFile::from(&contents);
         if args.check {
             if contents != parsed.to_string() {
-                eprintln!("{name:?} differs");
+                eprintln!("{} differs", name.display());
                 ret = 1;
             }
         } else if args.fix {

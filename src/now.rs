@@ -1,3 +1,6 @@
+#![allow(clippy::cast_possible_truncation)]
+#![allow(clippy::unreadable_literal)]
+
 use chrono::{DateTime, offset::Utc};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -108,12 +111,14 @@ pub fn run(args: &Args) {
         }
         Action::Convert { timestamp } => {
             let unix = timestamp.timestamp();
+            #[allow(clippy::cast_sign_loss)]
             let ob = fe(u128::from(unix as u64), args.seed);
             println!("{}", b32(ob));
         }
         Action::Decode { blob } => {
             let ob = unb32(blob).expect("not in alphabet");
             let unix: u64 = unfe(ob, args.seed).try_into().expect("not a time");
+            #[allow(clippy::cast_possible_wrap)]
             let time = DateTime::from_timestamp(unix as i64, 0).unwrap();
             println!("{time}");
         }

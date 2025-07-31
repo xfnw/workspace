@@ -25,6 +25,7 @@ pub fn run(args: &Args) {
                 new - float
             }
             Size::F32 => {
+                #[allow(clippy::cast_possible_truncation)]
                 let float = args.number as f32;
                 let new = f32::from_bits(float.to_bits() + 1);
                 (new - float).into()

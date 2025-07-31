@@ -34,6 +34,7 @@ fn uwu_byte(byte: u8) -> [&'static str; 2] {
 }
 
 fn unuwu_nibble(word: &str) -> Option<u8> {
+    #[allow(clippy::cast_possible_truncation)]
     UWUS.iter().position(|i| *i == word).map(|n| n as u8)
 }
 
