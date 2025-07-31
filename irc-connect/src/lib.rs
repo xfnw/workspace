@@ -379,7 +379,7 @@ impl<'a> StreamBuilder<'a> {
     /// # let builder = Stream::new_tcp("[::1]:6667");
     /// let mut root = RootCertStore::empty();
     /// root.add_parsable_certificates(
-    ///     CertificateDer::pem_file_iter("/etc/ssl/cert.pem")
+    ///     CertificateDer::pem_file_iter("/etc/ssl/certs/ca-bundle.crt")
     ///         .unwrap()
     ///         .flatten(),
     /// );
