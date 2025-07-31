@@ -1,0 +1,22 @@
+[package]
+name = "maw"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+base64_light = "0.1.5"
+chrono = { version = "0.4.40", default-features = false, features = ["std"] }
+clap = { version = "4.5.32", default-features = false, features = ["derive", "std", "help", "usage"] }
+half = "2.4.1"
+lazy-regex = { version = "3.4.1", default-features = false, features = ["std"] }
+rayon = "1.10.0"
+sha2 = "0.10.8"
+unicode_names2 = "2"
+url = { version = "2.5.4", default-features = false }
+
+[profile.smol]
+inherits = "release"
+opt-level = "z"
+panic = "abort"
+strip = true
+lto = true
