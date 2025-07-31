@@ -369,7 +369,7 @@ impl<'a> StreamBuilder<'a> {
     ///
     /// can also be used to pin a self-signed cert as long as it has a `CA:FALSE` constraint
     ///
-    /// ```
+    /// ```no_run
     /// use tokio_rustls::rustls::RootCertStore;
     /// use tokio_rustls::rustls::pki_types::{CertificateDer, ServerName, pem::PemObject};
     ///
