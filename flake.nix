@@ -11,13 +11,44 @@
         pkgs = (import nixpkgs) { inherit system; };
         inherit (pkgs.lib) map listToAttrs attrValues;
         crane' = crane.mkLib pkgs;
+        # simplified crane'.buildDepsOnly that allows artifacts
+        buildDepsOnly =
+          {
+            pname,
+            version,
+            cargoExtraArgs ? "--locked",
+            cargoBuildCommand ? "cargoWithProfile build",
+            cargoCheckCommand ? "cargoWithProfile check",
+            cargoCheckExtraArgs ? "--all-targets",
+            cargoTestCommand ? "cargoWithProfile test",
+            cargoTestExtraArgs ? "--no-run",
+            ...
+          }@args: let
+            src = crane'.mkDummySrc args;
+            dargs = args // { inherit src; };
+            doCheck = args.doCheck or true;
+          in crane'.mkCargoDerivation (args // {
+            inherit src doCheck;
+            pnameSuffix = "-deps";
+            cargoArtifacts = args.cargoArtifacts or null;
+            cargoVendorDir = args.cargoVendorDir or (crane'.vendorCargoDeps dargs);
+            env.CRANE_BUILD_DEPS_ONLY = 1;
+            buildPhaseCargoCommand = ''
+              ${cargoCheckCommand} ${cargoExtraArgs} ${cargoCheckExtraArgs}
+              ${cargoBuildCommand} ${cargoExtraArgs}
+            '';
+            checkPhaseCargoCommand = ''
+              ${cargoTestCommand} ${cargoExtraArgs} ${cargoTestExtraArgs}
+            '';
+            doInstallCargoArtifacts = true;
+          });
         src = crane'.cleanCargoSource ./.;
         common = {
           pname = "workspace";
           version = "0";
           inherit src;
         };
-        cargoArtifacts = crane'.buildDepsOnly common;
+        cargoArtifacts = buildDepsOnly common;
         buildPackage = pname: crane'.buildPackage (common // {
           inherit pname src cargoArtifacts;
           inherit (crane'.crateNameFromCargoToml {
