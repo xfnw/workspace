@@ -9,7 +9,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = (import nixpkgs) { inherit system; };
-        inherit (pkgs.lib) map listToAttrs attrValues;
+        inherit (pkgs.lib) map listToAttrs attrValues optionalString;
         crane' = crane.mkLib pkgs;
         # simplified crane'.buildDepsOnly that allows artifacts
         buildDepsOnly =
@@ -34,7 +34,7 @@
             cargoVendorDir = args.cargoVendorDir or (crane'.vendorCargoDeps dargs);
             env.CRANE_BUILD_DEPS_ONLY = 1;
             buildPhaseCargoCommand = ''
-              ${cargoCheckCommand} ${cargoExtraArgs} ${cargoCheckExtraArgs}
+              ${optionalString doCheck "${cargoCheckCommand} ${cargoExtraArgs} ${cargoCheckExtraArgs}"}
               ${cargoBuildCommand} ${cargoExtraArgs}
             '';
             checkPhaseCargoCommand = ''
@@ -49,12 +49,17 @@
           inherit src;
         };
         cargoArtifacts = buildDepsOnly common;
-        buildPackage = pname: crane'.buildPackage (common // {
-          inherit pname src cargoArtifacts;
+        buildPackage = pname: let
           inherit (crane'.crateNameFromCargoToml {
             src = "${src}/${pname}";
           }) version;
           cargoExtraArgs = "--locked -p ${pname}";
+        in crane'.buildPackage (common // {
+          inherit pname version src cargoExtraArgs;
+          cargoArtifacts = buildDepsOnly (common // {
+            inherit pname version src cargoExtraArgs cargoArtifacts;
+            doCheck = false; # the workspace deps build checks deps already
+          });
           doCheck = false; # tests are run as a flake check
         });
         # this feels like something that should already exist in lib
