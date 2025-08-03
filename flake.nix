@@ -23,7 +23,7 @@
           inherit (crane'.crateNameFromCargoToml {
             src = "${src}/${pname}";
           }) version;
-          cargoExtraArgs = "-p ${pname}";
+          cargoExtraArgs = "--locked -p ${pname}";
           doCheck = false; # tests are run as a flake check
         });
         # this feels like something that should already exist in lib
