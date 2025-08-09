@@ -8,7 +8,7 @@
   outputs = { self, crane, flake-utils, nixpkgs }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = (import nixpkgs) { inherit system; };
+        pkgs = import nixpkgs { inherit system; };
         inherit (pkgs.lib) map listToAttrs attrValues optionalString;
         crane' = crane.mkLib pkgs;
         # simplified crane'.buildDepsOnly that allows artifacts
