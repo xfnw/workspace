@@ -9,7 +9,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        inherit (pkgs.lib) map listToAttrs attrValues optionalString;
+        inherit (pkgs.lib) attrValues genAttrs optionalString;
         crane' = crane.mkLib pkgs;
         # simplified crane'.buildDepsOnly that allows artifacts
         buildDepsOnly =
@@ -62,12 +62,9 @@
           });
           doCheck = false; # tests are run as a flake check
         });
-        # this feels like something that should already exist in lib
-        # and i just dont know the name of...
-        mapToAttrs = f: l: listToAttrs (map (n: { name = n; value = f n; }) l);
-        members = mapToAttrs buildPackage [
+        members = genAttrs [
           "maw"
-        ];
+        ] buildPackage;
       in {
         checks = {
           clippy = crane'.cargoClippy (common // {
