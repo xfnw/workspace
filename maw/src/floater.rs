@@ -23,10 +23,10 @@ impl std::str::FromStr for Size {
     type Err = &'static str;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
-            "f64" => Size::F64,
-            "f32" => Size::F32,
-            "f16" => Size::F16,
-            "bf16" => Size::BF16,
+            "f64" => Self::F64,
+            "f32" => Self::F32,
+            "f16" => Self::F16,
+            "bf16" => Self::BF16,
             _ => {
                 return Err("size should be f64, f32, f16, or bf16");
             }

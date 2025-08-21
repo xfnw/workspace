@@ -26,8 +26,8 @@ impl std::str::FromStr for Action {
     type Err = &'static str;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "encode" | "e" => Ok(Action::Encode),
-            "decode" | "d" => Ok(Action::Decode),
+            "encode" | "e" => Ok(Self::Encode),
+            "decode" | "d" => Ok(Self::Decode),
             _ => Err("action should be encode or decode"),
         }
     }

@@ -65,11 +65,11 @@ impl std::str::FromStr for Accuracy {
     type Err = &'static str;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
-            "second" | "s" => Accuracy::Second,
-            "minute" | "m" => Accuracy::Minute,
-            "hour" | "h" => Accuracy::Hour,
-            "day" | "d" => Accuracy::Day,
-            "week" | "w" => Accuracy::Week,
+            "second" | "s" => Self::Second,
+            "minute" | "m" => Self::Minute,
+            "hour" | "h" => Self::Hour,
+            "day" | "d" => Self::Day,
+            "week" | "w" => Self::Week,
             _ => {
                 return Err("accuracy should be second, minute, hour, day, or week");
             }

@@ -62,37 +62,37 @@ impl MarkTree {
     pub fn mark(&mut self, mut bits: impl Iterator<Item = bool>) {
         let new = if let Some(bit) = bits.next() {
             match self {
-                MarkTree::AllMarked => {
+                Self::AllMarked => {
                     return;
                 }
-                MarkTree::AllUnmarked => {
-                    let mut deeper = MarkTree::new();
+                Self::AllUnmarked => {
+                    let mut deeper = Self::new();
                     deeper.mark(bits);
-                    let mut other = MarkTree::new();
+                    let mut other = Self::new();
 
                     if bit {
                         std::mem::swap(&mut deeper, &mut other);
                     }
-                    MarkTree::Branch(Box::new(deeper), Box::new(other))
+                    Self::Branch(Box::new(deeper), Box::new(other))
                 }
-                MarkTree::Branch(a, b) => {
+                Self::Branch(a, b) => {
                     let deeper = if bit { b } else { a };
                     deeper.mark(bits);
                     return;
                 }
             }
         } else {
-            MarkTree::AllMarked
+            Self::AllMarked
         };
         _ = std::mem::replace(self, new);
     }
 
     /// clean up branches that are entirely marked or unmarked
     pub fn optimize(&mut self) {
-        if let MarkTree::Branch(a, b) = self {
+        if let Self::Branch(a, b) = self {
             a.optimize();
             b.optimize();
-            if matches!(&**a, MarkTree::AllUnmarked | MarkTree::AllMarked) && a == b {
+            if matches!(&**a, Self::AllUnmarked | Self::AllMarked) && a == b {
                 // this is only reachable when cheap to clone since this is a leaf
                 let new = (**a).clone();
                 _ = std::mem::replace(self, new);
@@ -103,7 +103,7 @@ impl MarkTree {
     fn walk(&self, path: &mut Vec<bool>, callback: &mut impl FnMut(&Self, &[bool])) {
         callback(self, path);
 
-        if let MarkTree::Branch(a, b) = self {
+        if let Self::Branch(a, b) = self {
             path.push(false);
             a.walk(path, callback);
             path.pop();
