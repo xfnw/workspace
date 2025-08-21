@@ -7,7 +7,6 @@ use url::Url;
 #[argh(help_triggers("-h", "--help"))]
 pub struct Args {
     #[argh(positional, greedy)]
-    // TODO do default stuff somewhere else since argh doesnt support it "vec![PathBuf::from(\"/dev/stdin\")]")]
     files: Vec<PathBuf>,
 }
 
@@ -101,7 +100,12 @@ impl fmt::Display for InfailableUrl {
 
 pub fn run(args: &Args) {
     let mut urls = Vec::new();
-    for name in &args.files {
+    let files = if args.files.is_empty() {
+        &vec![PathBuf::from("/dev/stdin")]
+    } else {
+        &args.files
+    };
+    for name in files {
         for line in read_to_string(name).unwrap().lines() {
             urls.push(InfailableUrl::from(line.to_string()));
         }

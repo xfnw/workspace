@@ -19,7 +19,7 @@ pub struct Args {
     /// overwrite with formatted
     #[argh(option, short = 'f')]
     fix: bool,
-    #[argh(positional, greedy)] // TODO set default elsewhere (default_value = "/dev/stdin")]
+    #[argh(positional, greedy)]
     files: Vec<PathBuf>,
 }
 
@@ -114,7 +114,12 @@ impl fmt::Display for InfoFile {
 
 pub fn run(args: &Args) {
     let mut ret = 0;
-    for name in &args.files {
+    let files = if args.files.is_empty() {
+        &vec![PathBuf::from("/dev/stdin")]
+    } else {
+        &args.files
+    };
+    for name in files {
         let mut file = File::options()
             .read(true)
             .write(args.fix)
