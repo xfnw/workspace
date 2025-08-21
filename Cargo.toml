@@ -2,7 +2,9 @@
 resolver = "3"
 members = [
     "foxerror",
-    "irc-connect", "mark-tree",
+    "irc-connect",
+    "mark-tree",
+    "markov",
     "maw",
 ]
 
