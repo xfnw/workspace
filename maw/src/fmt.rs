@@ -11,6 +11,7 @@ use std::{
 /// format tcz info-like files
 #[derive(Debug, argh::FromArgs)]
 #[argh(subcommand, name = "fmt")]
+#[argh(help_triggers("-h", "--help"))]
 pub struct Args {
     /// check if formatted
     #[argh(option, short = 'c')]

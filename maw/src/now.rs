@@ -7,6 +7,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// cursed time format
 #[derive(Debug, argh::FromArgs)]
 #[argh(subcommand, name = "now")]
+#[argh(help_triggers("-h", "--help"))]
 pub struct Args {
     #[argh(positional)]
     seed: u64,
@@ -26,6 +27,7 @@ enum Action {
 /// format the current time
 #[derive(Clone, Debug, argh::FromArgs)]
 #[argh(subcommand, name = "encode")]
+#[argh(help_triggers("-h", "--help"))]
 struct EncodeAction {
     /// unit of time to round to
     #[argh(positional)]
@@ -35,6 +37,7 @@ struct EncodeAction {
 /// format a specified time
 #[derive(Clone, Debug, argh::FromArgs)]
 #[argh(subcommand, name = "convert")]
+#[argh(help_triggers("-h", "--help"))]
 struct ConvertAction {
     #[argh(positional)]
     timestamp: DateTime<Utc>,
@@ -43,6 +46,7 @@ struct ConvertAction {
 /// decode the time to a normal format
 #[derive(Clone, Debug, argh::FromArgs)]
 #[argh(subcommand, name = "decode")]
+#[argh(help_triggers("-h", "--help"))]
 struct DecodeAction {
     #[argh(positional)]
     blob: String,

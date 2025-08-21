@@ -3,6 +3,7 @@ use half::{bf16, f16};
 /// show the error for floats
 #[derive(Debug, argh::FromArgs)]
 #[argh(subcommand, name = "floater")]
+#[argh(help_triggers("-h", "--help"))]
 pub struct Args {
     #[argh(positional)]
     size: Size,

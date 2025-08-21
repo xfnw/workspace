@@ -5,6 +5,7 @@ use std::fmt;
 /// convert numbers to binary prefixes
 #[derive(Debug, argh::FromArgs)]
 #[argh(subcommand, name = "human")]
+#[argh(help_triggers("-h", "--help"))]
 pub struct Args {
     #[argh(positional)]
     number: u128,

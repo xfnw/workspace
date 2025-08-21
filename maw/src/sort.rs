@@ -4,6 +4,7 @@ use url::Url;
 /// sort urls in domain order
 #[derive(Debug, argh::FromArgs)]
 #[argh(subcommand, name = "sort")]
+#[argh(help_triggers("-h", "--help"))]
 pub struct Args {
     #[argh(positional, greedy)]
     // TODO do default stuff somewhere else since argh doesnt support it "vec![PathBuf::from(\"/dev/stdin\")]")]

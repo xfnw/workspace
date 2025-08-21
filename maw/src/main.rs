@@ -11,6 +11,7 @@ mod yap;
 
 /// some random utilities
 #[derive(Debug, FromArgs)]
+#[argh(help_triggers("-h", "--help"))]
 struct Opt {
     #[argh(subcommand)]
     command: Cmds,

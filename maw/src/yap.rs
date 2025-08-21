@@ -9,6 +9,7 @@ use std::{
 /// helper tool for yap
 #[derive(Debug, argh::FromArgs)]
 #[argh(subcommand, name = "yap")]
+#[argh(help_triggers("-h", "--help"))]
 pub struct Args {
     #[argh(subcommand)]
     action: Actions,
@@ -24,6 +25,7 @@ enum Actions {
 /// generate a yap token
 #[derive(Debug, argh::FromArgs)]
 #[argh(subcommand, name = "generate")]
+#[argh(help_triggers("-h", "--help"))]
 struct GenerateAction {
     #[argh(positional)]
     ip: IpAddr,
@@ -36,6 +38,7 @@ struct GenerateAction {
 /// show the metadata of a yap token
 #[derive(Debug, argh::FromArgs)]
 #[argh(subcommand, name = "show")]
+#[argh(help_triggers("-h", "--help"))]
 struct ShowAction {
     #[argh(positional)]
     token: String,

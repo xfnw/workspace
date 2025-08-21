@@ -7,6 +7,7 @@ use std::{
 /// uwu owo uwu owo
 #[derive(Debug, argh::FromArgs)]
 #[argh(subcommand, name = "uwu")]
+#[argh(help_triggers("-h", "--help"))]
 pub struct Args {
     /// the action to do (encode or decode)
     #[argh(positional)]

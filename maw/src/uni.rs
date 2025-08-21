@@ -3,6 +3,7 @@ use unicode_names2::{character, name};
 /// decode unicode characters
 #[derive(Debug, argh::FromArgs)]
 #[argh(subcommand, name = "uni")]
+#[argh(help_triggers("-h", "--help"))]
 pub struct Args {
     /// reverse mode
     #[argh(option, short = 'r')]
