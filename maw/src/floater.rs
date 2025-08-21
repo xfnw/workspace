@@ -1,18 +1,36 @@
 use half::{bf16, f16};
 
-#[derive(Debug, clap::Args)]
+/// show the error for floats
+#[derive(Debug, argh::FromArgs)]
+#[argh(subcommand, name = "floater")]
 pub struct Args {
-    #[arg(value_enum)]
+    #[argh(positional)]
     size: Size,
+    #[argh(positional)]
     number: f64,
 }
 
-#[derive(Clone, Copy, Debug, clap::ValueEnum)]
+#[derive(Clone, Copy, Debug)]
 enum Size {
     F64,
     F32,
     F16,
     BF16,
+}
+
+impl std::str::FromStr for Size {
+    type Err = &'static str;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "f64" => Size::F64,
+            "f32" => Size::F32,
+            "f16" => Size::F16,
+            "bf16" => Size::BF16,
+            _ => {
+                return Err("size should be f64, f32, f16, or bf16");
+            }
+        })
+    }
 }
 
 pub fn run(args: &Args) {

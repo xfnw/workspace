@@ -1,9 +1,12 @@
 use std::{cmp::Ord, convert::From, fmt, fs::read_to_string, path::PathBuf};
 use url::Url;
 
-#[derive(Debug, clap::Args)]
+/// sort urls in domain order
+#[derive(Debug, argh::FromArgs)]
+#[argh(subcommand, name = "sort")]
 pub struct Args {
-    #[arg(default_value = "/dev/stdin")]
+    #[argh(positional, greedy)]
+    // TODO do default stuff somewhere else since argh doesnt support it "vec![PathBuf::from(\"/dev/stdin\")]")]
     files: Vec<PathBuf>,
 }
 

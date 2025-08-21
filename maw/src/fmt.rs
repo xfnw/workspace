@@ -8,15 +8,17 @@ use std::{
     process::exit,
 };
 
-#[derive(Debug, clap::Args)]
+/// format tcz info-like files
+#[derive(Debug, argh::FromArgs)]
+#[argh(subcommand, name = "fmt")]
 pub struct Args {
     /// check if formatted
-    #[arg(short)]
+    #[argh(option, short = 'c')]
     check: bool,
     /// overwrite with formatted
-    #[arg(short)]
+    #[argh(option, short = 'f')]
     fix: bool,
-    #[arg(default_value = "/dev/stdin")]
+    #[argh(positional, greedy)] // TODO set default elsewhere (default_value = "/dev/stdin")]
     files: Vec<PathBuf>,
 }
 

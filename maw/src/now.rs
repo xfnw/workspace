@@ -4,34 +4,73 @@
 use chrono::{DateTime, offset::Utc};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-#[derive(Debug, clap::Args)]
+/// cursed time format
+#[derive(Debug, argh::FromArgs)]
+#[argh(subcommand, name = "now")]
 pub struct Args {
+    #[argh(positional)]
     seed: u64,
-    #[command(subcommand)]
+    #[argh(subcommand)]
     action: Action,
 }
 
-#[derive(Clone, Debug, clap::Subcommand)]
+/// what action to do
+#[derive(Clone, Debug, argh::FromArgs)]
+#[argh(subcommand)]
 enum Action {
-    Encode {
-        #[arg(value_enum)]
-        accuracy: Accuracy,
-    },
-    Convert {
-        timestamp: DateTime<Utc>,
-    },
-    Decode {
-        blob: String,
-    },
+    Encode(EncodeAction),
+    Convert(ConvertAction),
+    Decode(DecodeAction),
 }
 
-#[derive(Clone, Copy, Debug, clap::ValueEnum)]
+/// format the current time
+#[derive(Clone, Debug, argh::FromArgs)]
+#[argh(subcommand, name = "encode")]
+struct EncodeAction {
+    /// unit of time to round to
+    #[argh(positional)]
+    accuracy: Accuracy,
+}
+
+/// format a specified time
+#[derive(Clone, Debug, argh::FromArgs)]
+#[argh(subcommand, name = "convert")]
+struct ConvertAction {
+    #[argh(positional)]
+    timestamp: DateTime<Utc>,
+}
+
+/// decode the time to a normal format
+#[derive(Clone, Debug, argh::FromArgs)]
+#[argh(subcommand, name = "decode")]
+struct DecodeAction {
+    #[argh(positional)]
+    blob: String,
+}
+
+#[derive(Clone, Copy, Debug)]
 enum Accuracy {
     Second = 1,
     Minute = 60,
     Hour = 3600,
     Day = 86400,
     Week = 604800,
+}
+
+impl std::str::FromStr for Accuracy {
+    type Err = &'static str;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "second" | "s" => Accuracy::Second,
+            "minute" | "m" => Accuracy::Minute,
+            "hour" | "h" => Accuracy::Hour,
+            "day" | "d" => Accuracy::Day,
+            "week" | "w" => Accuracy::Week,
+            _ => {
+                return Err("accuracy should be second, minute, hour, day, or week");
+            }
+        })
+    }
 }
 
 const ALPHABET: &[u8] = b"[\\]^_abcdefghijklmnopqrstuvwxyz|";
@@ -100,7 +139,7 @@ fn unb32(inp: &str) -> Option<u128> {
 
 pub fn run(args: &Args) {
     match &args.action {
-        Action::Encode { accuracy } => {
+        Action::Encode(EncodeAction { accuracy }) => {
             let unix = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
@@ -109,13 +148,13 @@ pub fn run(args: &Args) {
             let ob = fe(unix.into(), args.seed);
             println!("{}", b32(ob));
         }
-        Action::Convert { timestamp } => {
+        Action::Convert(ConvertAction { timestamp }) => {
             let unix = timestamp.timestamp();
             #[allow(clippy::cast_sign_loss)]
             let ob = fe(u128::from(unix as u64), args.seed);
             println!("{}", b32(ob));
         }
-        Action::Decode { blob } => {
+        Action::Decode(DecodeAction { blob }) => {
             let ob = unb32(blob).expect("not in alphabet");
             let unix: u64 = unfe(ob, args.seed).try_into().expect("not a time");
             #[allow(clippy::cast_possible_wrap)]

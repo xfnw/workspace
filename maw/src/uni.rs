@@ -1,10 +1,13 @@
 use unicode_names2::{character, name};
 
-#[derive(Debug, clap::Args)]
+/// decode unicode characters
+#[derive(Debug, argh::FromArgs)]
+#[argh(subcommand, name = "uni")]
 pub struct Args {
     /// reverse mode
-    #[arg(short)]
+    #[argh(option, short = 'r')]
     reverse: bool,
+    #[argh(positional, greedy)]
     input: Vec<String>,
 }
 

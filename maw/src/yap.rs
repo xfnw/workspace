@@ -6,22 +6,39 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
-#[derive(Debug, clap::Args)]
+/// helper tool for yap
+#[derive(Debug, argh::FromArgs)]
+#[argh(subcommand, name = "yap")]
 pub struct Args {
-    #[command(subcommand)]
+    #[argh(subcommand)]
     action: Actions,
 }
 
-#[derive(Debug, clap::Subcommand)]
+#[derive(Debug, argh::FromArgs)]
+#[argh(subcommand)]
 enum Actions {
-    Generate {
-        ip: IpAddr,
-        difficulty: u8,
-        time: Option<u64>,
-    },
-    Show {
-        token: String,
-    },
+    Generate(GenerateAction),
+    Show(ShowAction),
+}
+
+/// generate a yap token
+#[derive(Debug, argh::FromArgs)]
+#[argh(subcommand, name = "generate")]
+struct GenerateAction {
+    #[argh(positional)]
+    ip: IpAddr,
+    #[argh(positional)]
+    difficulty: u8,
+    #[argh(positional)]
+    time: Option<u64>,
+}
+
+/// show the metadata of a yap token
+#[derive(Debug, argh::FromArgs)]
+#[argh(subcommand, name = "show")]
+struct ShowAction {
+    #[argh(positional)]
+    token: String,
 }
 
 fn unixtime() -> u64 {
@@ -116,11 +133,11 @@ fn show(token: &str) {
 
 pub fn run(args: &Args) {
     match &args.action {
-        Actions::Generate {
+        Actions::Generate(GenerateAction {
             ip,
             difficulty,
             time,
-        } => generate(ip, *difficulty, *time),
-        Actions::Show { token } => show(token),
+        }) => generate(ip, *difficulty, *time),
+        Actions::Show(ShowAction { token }) => show(token),
     }
 }

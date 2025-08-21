@@ -2,8 +2,11 @@
 
 use std::fmt;
 
-#[derive(Debug, clap::Args)]
+/// convert numbers to binary prefixes
+#[derive(Debug, argh::FromArgs)]
+#[argh(subcommand, name = "human")]
 pub struct Args {
+    #[argh(positional)]
     number: u128,
 }
 

@@ -4,22 +4,32 @@ use std::{
     path::PathBuf,
 };
 
-#[derive(Debug, clap::Args)]
+/// uwu owo uwu owo
+#[derive(Debug, argh::FromArgs)]
+#[argh(subcommand, name = "uwu")]
 pub struct Args {
-    #[command(subcommand)]
+    /// the action to do (encode or decode)
+    #[argh(positional)]
     action: Action,
+    #[argh(positional, greedy)]
+    files: Vec<PathBuf>,
 }
 
-#[derive(Clone, Debug, clap::Subcommand)]
+#[derive(Clone, Debug)]
 enum Action {
-    Encode {
-        #[arg(default_value = "/dev/stdin")]
-        files: Vec<PathBuf>,
-    },
-    Decode {
-        #[arg(default_value = "/dev/stdin")]
-        files: Vec<PathBuf>,
-    },
+    Encode,
+    Decode,
+}
+
+impl std::str::FromStr for Action {
+    type Err = &'static str;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "encode" | "e" => Ok(Action::Encode),
+            "decode" | "d" => Ok(Action::Decode),
+            _ => Err("action should be encode or decode"),
+        }
+    }
 }
 
 static UWUS: [&str; 16] = [
@@ -48,8 +58,13 @@ fn unuwu_string(s: &str) -> Vec<u8> {
 }
 
 pub fn run(args: &Args) {
+    let files = if args.files.is_empty() {
+        &vec![PathBuf::from("/dev/stdin")]
+    } else {
+        &args.files
+    };
     match &args.action {
-        Action::Encode { files } => {
+        Action::Encode => {
             for name in files {
                 println!(
                     "{}",
@@ -62,7 +77,7 @@ pub fn run(args: &Args) {
                 );
             }
         }
-        Action::Decode { files } => {
+        Action::Decode => {
             for name in files {
                 let s = read_to_string(name).unwrap();
                 stdout().write_all(&unuwu_string(&s)).unwrap();
