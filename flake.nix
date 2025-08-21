@@ -71,6 +71,10 @@
             inherit cargoArtifacts;
             cargoClippyExtraArgs = "--all-targets -- -D warnings";
           });
+          doc = crane'.cargoDoc (common // {
+            inherit cargoArtifacts;
+            env.RUSTDOCFLAGS = "-D warnings";
+          });
           test = crane'.cargoTest (common // {
             inherit cargoArtifacts;
           });
