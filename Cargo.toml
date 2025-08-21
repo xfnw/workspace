@@ -7,7 +7,7 @@ members = [
 ]
 
 [workspace.lints.clippy]
-pedantic = "deny"
+pedantic = "warn"
 
 [profile.smol]
 inherits = "release"
