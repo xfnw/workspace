@@ -1,7 +1,7 @@
 //! questionable tree-shaped thing
 #![allow(clippy::precedence)]
 
-/// an [`iterator`] over a number of the most significant bits in an unsigned integer
+/// an [`Iterator`] over a number of the most significant bits in an unsigned integer
 ///
 /// this goes most significant to least significant. if the range is larger than the number of
 /// bits, it will act like the remaining items are unset bits
