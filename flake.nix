@@ -51,7 +51,7 @@
         cargoArtifacts = buildDepsOnly common;
         buildPackage = pname: let
           inherit (crane'.crateNameFromCargoToml {
-            src = "${src}/${pname}";
+            src = "${src}/crates/${pname}";
           }) version;
           cargoExtraArgs = "--locked -p ${pname}";
         in crane'.buildPackage (common // {

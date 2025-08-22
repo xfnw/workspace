@@ -1,12 +1,6 @@
 [workspace]
 resolver = "3"
-members = [
-    "foxerror",
-    "irc-connect",
-    "mark-tree",
-    "markov",
-    "maw",
-]
+members = ["crates/*"]
 
 [workspace.lints.clippy]
 pedantic = "warn"
