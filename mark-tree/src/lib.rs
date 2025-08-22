@@ -119,6 +119,72 @@ impl MarkTree {
     pub fn traverse(&self, mut callback: impl FnMut(&Self, &[bool])) {
         self.walk(&mut vec![], &mut callback);
     }
+
+    pub fn iter(&self) -> MarkTreeIter<'_> {
+        MarkTreeIter {
+            stack: vec![(self, TreePos::Root)],
+            path: vec![],
+        }
+    }
+}
+
+impl<'a> IntoIterator for &'a MarkTree {
+    type Item = (&'a MarkTree, Vec<bool>);
+    type IntoIter = MarkTreeIter<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+#[derive(Debug, Clone)]
+enum TreePos {
+    Root,
+    Branched { position: bool, level: usize },
+}
+
+#[derive(Debug, Clone)]
+#[must_use = "iterators do not do anything until consumed"]
+pub struct MarkTreeIter<'a> {
+    stack: Vec<(&'a MarkTree, TreePos)>,
+    path: Vec<bool>,
+}
+
+impl<'a> Iterator for MarkTreeIter<'a> {
+    // FIXME: returning a cloned vec every iteration is wasteful
+    type Item = (&'a MarkTree, Vec<bool>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let (tree, treepos) = self.stack.pop()?;
+        if let TreePos::Branched { position, level } = treepos {
+            self.path.truncate(level);
+            self.path.push(position);
+        }
+
+        if let MarkTree::Branch(a, b) = tree {
+            let level = if let TreePos::Branched { level, .. } = treepos {
+                level + 1
+            } else {
+                0
+            };
+            self.stack.push((
+                b,
+                TreePos::Branched {
+                    position: true,
+                    level,
+                },
+            ));
+            self.stack.push((
+                a,
+                TreePos::Branched {
+                    position: false,
+                    level,
+                },
+            ));
+        }
+
+        Some((tree, self.path.clone()))
+    }
 }
 
 #[cfg(test)]
@@ -183,5 +249,20 @@ mod tests {
                 assert_ne!(path, [true, false, true, false]);
             }
         });
+    }
+
+    #[test]
+    fn iter_traverse() {
+        let mut tree = MarkTree::new();
+        tree.mark(BitRangeIter::from((7882829279673712640u64, 32)));
+        tree.mark(BitRangeIter::from((7523377975159973992u64, 64)));
+        let mut iter = tree.iter();
+        tree.traverse(|tree, path| {
+            let (itree, ipath) = iter.next().unwrap();
+            assert_eq!(tree, itree);
+            assert_eq!(path, ipath);
+        });
+
+        assert_eq!(iter.next(), None);
     }
 }
