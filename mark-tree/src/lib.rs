@@ -120,6 +120,12 @@ impl MarkTree {
         self.walk(&mut vec![], &mut callback);
     }
 
+    /// create an [`Iterator`] over the tree
+    /// 
+    /// the generic `T` is the type for expressing the path to the
+    /// current node: since normal iterators do not allow returning
+    /// references to themselves, we cannot give a slice like
+    /// [`MarkTree::traverse`] does.
     pub fn iter<T>(&self) -> MarkTreeIter<'_, T>
     where
         T: for<'a> From<&'a [bool]>,
@@ -138,6 +144,10 @@ enum TreePos {
     Branched { position: bool, level: usize },
 }
 
+/// an [`Iterator`] over [`MarkTree`]
+///
+/// this has the same behavior as [`MarkTree::traverse`], but
+/// implemented without recursion
 #[derive(Debug, Clone)]
 #[must_use = "iterators do not do anything until consumed"]
 pub struct MarkTreeIter<'a, T> {
