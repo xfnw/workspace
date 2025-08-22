@@ -120,20 +120,15 @@ impl MarkTree {
         self.walk(&mut vec![], &mut callback);
     }
 
-    pub fn iter(&self) -> MarkTreeIter<'_> {
-        MarkTreeIter {
+    pub fn iter<T>(&self) -> MarkTreeIter<'_, T>
+    where
+        T: for<'a> From<&'a [bool]>,
+    {
+        MarkTreeIter::<T> {
             stack: vec![(self, TreePos::Root)],
             path: vec![],
+            phantom: std::marker::PhantomData,
         }
-    }
-}
-
-impl<'a> IntoIterator for &'a MarkTree {
-    type Item = (&'a MarkTree, Vec<bool>);
-    type IntoIter = MarkTreeIter<'a>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
     }
 }
 
@@ -145,14 +140,17 @@ enum TreePos {
 
 #[derive(Debug, Clone)]
 #[must_use = "iterators do not do anything until consumed"]
-pub struct MarkTreeIter<'a> {
+pub struct MarkTreeIter<'a, T> {
     stack: Vec<(&'a MarkTree, TreePos)>,
     path: Vec<bool>,
+    phantom: std::marker::PhantomData<T>,
 }
 
-impl<'a> Iterator for MarkTreeIter<'a> {
-    // FIXME: returning a cloned vec every iteration is wasteful
-    type Item = (&'a MarkTree, Vec<bool>);
+impl<'a, T> Iterator for MarkTreeIter<'a, T>
+where
+    T: for<'b> From<&'b [bool]>,
+{
+    type Item = (&'a MarkTree, T);
 
     fn next(&mut self) -> Option<Self::Item> {
         let (tree, treepos) = self.stack.pop()?;
@@ -183,7 +181,7 @@ impl<'a> Iterator for MarkTreeIter<'a> {
             ));
         }
 
-        Some((tree, self.path.clone()))
+        Some((tree, T::from(&self.path)))
     }
 }
 
@@ -256,7 +254,7 @@ mod tests {
         let mut tree = MarkTree::new();
         tree.mark(BitRangeIter::from((7882829279673712640u64, 32)));
         tree.mark(BitRangeIter::from((7523377975159973992u64, 64)));
-        let mut iter = tree.iter();
+        let mut iter = tree.iter::<Vec<bool>>();
         tree.traverse(|tree, path| {
             let (itree, ipath) = iter.next().unwrap();
             assert_eq!(tree, itree);
