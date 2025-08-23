@@ -9,7 +9,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        inherit (pkgs.lib) attrValues genAttrs optionalString;
+        inherit (pkgs.lib) attrValues concatLines fileset genAttrs map optionalString;
         crane' = crane.mkLib pkgs;
         # simplified crane'.buildDepsOnly that allows artifacts
         buildDepsOnly =
@@ -49,15 +49,41 @@
           inherit src;
         };
         cargoArtifacts = buildDepsOnly common;
+        commonCrates = [
+          "foxerror"
+        ];
+        commonFileSet = fileset.unions ([
+          ./Cargo.toml
+          ./Cargo.lock
+        ] ++ map (p: crane'.fileset.commonCargoSources ./crates/${p}) commonCrates);
+        commonSrc = fileset.toSource {
+          root = ./.;
+          fileset = commonFileSet;
+        };
         buildPackage = pname: let
           inherit (crane'.crateNameFromCargoToml {
             src = "${src}/crates/${pname}";
           }) version;
-          cargoExtraArgs = "--locked -p ${pname}";
+          cargoExtraArgs = "--offline -p ${pname}";
+          src = fileset.toSource {
+            root = ./.;
+            fileset = fileset.union
+              commonFileSet
+              (crane'.fileset.commonCargoSources ./crates/${pname});
+          };
         in crane'.buildPackage (common // {
           inherit pname version src cargoExtraArgs;
           cargoArtifacts = buildDepsOnly (common // {
             inherit pname version src cargoExtraArgs cargoArtifacts;
+            extraDummyScript = ''
+              # mkDummySrc tries to eat workspace lints. put them back
+              cp -f --no-preserve=mode,ownership ${commonSrc}/Cargo.toml $out/Cargo.toml
+
+              ${concatLines (map (crate: ''
+                rm -r $out/crates/${crate}
+                cp -r --no-preserve=mode,ownership ${commonSrc}/crates/${crate} $out/crates
+              '') commonCrates)}
+            '';
             doCheck = false; # the workspace deps build checks deps already
           });
           doCheck = false; # tests are run as a flake check
