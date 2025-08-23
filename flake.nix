@@ -77,7 +77,7 @@
             inherit pname version src cargoExtraArgs cargoArtifacts;
             extraDummyScript = ''
               # mkDummySrc tries to eat workspace lints. put them back
-              cp -f --no-preserve=mode,ownership ${commonSrc}/Cargo.toml $out/Cargo.toml
+              ln -sf ${commonSrc}/Cargo.toml $out/Cargo.toml
 
               ${concatLines (map (crate: ''
                 rm -r $out/crates/${crate}
