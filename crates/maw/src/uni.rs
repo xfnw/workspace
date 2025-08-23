@@ -6,7 +6,7 @@ use unicode_names2::{character, name};
 #[argh(help_triggers("-h", "--help"))]
 pub struct Args {
     /// reverse mode
-    #[argh(option, short = 'r')]
+    #[argh(switch, short = 'r')]
     reverse: bool,
     #[argh(positional, greedy)]
     input: Vec<String>,

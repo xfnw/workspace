@@ -14,10 +14,10 @@ use std::{
 #[argh(help_triggers("-h", "--help"))]
 pub struct Args {
     /// check if formatted
-    #[argh(option, short = 'c')]
+    #[argh(switch, short = 'c')]
     check: bool,
     /// overwrite with formatted
-    #[argh(option, short = 'f')]
+    #[argh(switch, short = 'f')]
     fix: bool,
     #[argh(positional, greedy)]
     files: Vec<PathBuf>,
