@@ -81,7 +81,7 @@
 
               ${concatLines (map (crate: ''
                 rm -r $out/crates/${crate}
-                cp -r --no-preserve=mode,ownership ${commonSrc}/crates/${crate} $out/crates
+                ln -s ${commonSrc}/crates/${crate} $out/crates
               '') commonCrates)}
             '';
             doCheck = false; # the workspace deps build checks deps already
