@@ -7,7 +7,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 /// cursed time format
 #[derive(Debug, argh::FromArgs)]
 #[argh(subcommand, name = "now")]
-#[argh(help_triggers("-h", "--help"))]
+#[argh(help_triggers("-h", "--help", "help"))]
 pub struct Args {
     #[argh(positional)]
     seed: u64,

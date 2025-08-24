@@ -9,7 +9,7 @@ use std::{
 /// helper tool for yap
 #[derive(Debug, argh::FromArgs)]
 #[argh(subcommand, name = "yap")]
-#[argh(help_triggers("-h", "--help"))]
+#[argh(help_triggers("-h", "--help", "help"))]
 pub struct Args {
     #[argh(subcommand)]
     action: Actions,
