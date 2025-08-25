@@ -1,0 +1,11 @@
+[package]
+name = "vasm"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+argh = { version = "0.1.13", default-features = false, features = ["help"] }
+foxerror = { version = "0.1.1", path = "../foxerror" }
+
+[lints]
+workspace = true
