@@ -279,7 +279,7 @@ impl Const {
 }
 
 #[derive(Debug, Clone)]
-pub enum Opcode {
+pub enum Instruction {
     /// no operation
     ///
     /// the name is a lie, it actually yields for around 100ms

@@ -112,7 +112,7 @@ fn comment(inp: &str) -> IResult<&str, ()> {
 }
 
 #[allow(clippy::redundant_closure_for_method_calls)]
-pub fn parse(inp: &str) -> Result<Vec<repr::Opcode>, Error> {
+pub fn parse(inp: &str) -> Result<Vec<repr::Instruction>, Error> {
     dbg!(operand(inp).map_err(|e| e.to_owned())?);
     todo!()
 }
