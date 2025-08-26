@@ -364,4 +364,8 @@ pub enum Opcode {
     Skgt(TwoOpnd<Src, Src>),
     /// get most significant bit
     Msb(TwoOpnd<Dst, Src>),
+    /// global label definition
+    ///
+    /// not a real opcode, will not show up in the assembled output
+    LabelDef(String),
 }
