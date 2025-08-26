@@ -1,11 +1,11 @@
 use nom::{
     IResult, Parser,
     branch::alt,
-    bytes::complete::tag,
-    character::complete::{alpha1, alphanumeric1, one_of},
+    bytes::complete::{is_not, tag},
+    character::complete::{alpha1, alphanumeric1, char, one_of},
     combinator::{map, map_res, opt, recognize, value},
     multi::{many0, many1},
-    sequence::{delimited, pair, preceded},
+    sequence::{delimited, pair, preceded, terminated},
 };
 
 use crate::repr::{LabelOffset, Operand};
@@ -101,6 +101,14 @@ fn operand(inp: &str) -> IResult<&str, Operand> {
         map(label_offset, Operand::Rel2),
     ))
     .parse(inp)
+}
+
+fn label_def(inp: &str) -> IResult<&str, &str> {
+    terminated(label_name, tag(":")).parse(inp)
+}
+
+fn comment(inp: &str) -> IResult<&str, ()> {
+    value((), pair(char(';'), is_not("\r\n"))).parse(inp)
 }
 
 #[allow(clippy::redundant_closure_for_method_calls)]
