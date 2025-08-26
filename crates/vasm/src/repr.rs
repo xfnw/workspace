@@ -11,10 +11,10 @@ pub enum Error {
 }
 
 #[derive(Debug, Clone)]
-pub struct Immediate(i16);
+pub struct Immediate(u16);
 
 impl Immediate {
-    pub fn value(&self) -> i16 {
+    pub fn value(&self) -> u16 {
         self.0
     }
 }
@@ -127,7 +127,7 @@ pub enum Operand {
 }
 
 impl Operand {
-    pub fn new_immediate(n: i16) -> Self {
+    pub fn new_immediate(n: u16) -> Self {
         match n {
             0 => Self::Const0,
             1 => Self::Const1,
