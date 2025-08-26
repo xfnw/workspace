@@ -2,17 +2,22 @@
 
 use std::marker::PhantomData;
 
+#[derive(Debug)]
 pub struct Immediate(i16);
 
+#[derive(Debug)]
 pub struct MemoryAddress(u16);
 
+#[derive(Debug)]
 pub struct Offset(i16);
 
+#[derive(Debug)]
 pub struct LabelOffset {
     name: Option<String>,
     offset: Offset,
 }
 
+#[derive(Debug)]
 pub enum Operand {
     /// data register `A`
     A,
@@ -75,28 +80,34 @@ pub enum Operand {
 }
 
 /// the left operand
+#[derive(Debug)]
 pub struct Opnd1(Operand);
 
 /// the right operand
+#[derive(Debug)]
 pub struct Opnd2(Operand);
 
 /// generic argument for source operands
 ///
 /// source operands may have immediates
+#[derive(Debug)]
 pub struct Src;
 
 /// generic argument for destination operands
 ///
 /// destination operands cannot have immediates
+#[derive(Debug)]
 pub struct Dst;
 
 /// a single operand
+#[derive(Debug)]
 pub struct Opnd<Kind> {
     left: Opnd1,
     phantom_kind: PhantomData<Kind>,
 }
 
 /// two operands
+#[derive(Debug)]
 pub struct TwoOpnd<LeftKind, RightKind> {
     left: Opnd1,
     right: Opnd2,
@@ -105,8 +116,10 @@ pub struct TwoOpnd<LeftKind, RightKind> {
 }
 
 /// a 10 bit number
+#[derive(Debug)]
 pub struct Const(u16);
 
+#[derive(Debug)]
 pub enum Opcode {
     /// no operation
     ///
