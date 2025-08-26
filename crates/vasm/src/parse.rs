@@ -2,7 +2,7 @@ use nom::{
     IResult, Parser,
     branch::alt,
     bytes::complete::{is_not, tag},
-    character::complete::{alpha1, alphanumeric1, multispace0, one_of},
+    character::complete::{alpha1, alphanumeric1, multispace0, one_of, space0},
     combinator::{map, map_res, opt, recognize, value},
     multi::{many0, many1},
     sequence::{delimited, pair, preceded, terminated},
@@ -110,6 +110,10 @@ fn label_def(inp: &str) -> IResult<&str, Instruction> {
     .parse(inp)
 }
 
+fn instruction(inp: &str) -> IResult<&str, Instruction> {
+    todo!()
+}
+
 fn comment(inp: &str) -> IResult<&str, Instruction> {
     map(preceded(tag(";"), is_not("\r\n")), |c: &str| {
         Instruction::Comment(c.to_string())
@@ -117,8 +121,20 @@ fn comment(inp: &str) -> IResult<&str, Instruction> {
     .parse(inp)
 }
 
+fn document(inp: &str) -> IResult<&str, Vec<Instruction>> {
+    many0(terminated(
+        alt((
+            label_def,
+            preceded(space0, instruction),
+            preceded(space0, comment),
+        )),
+        multispace0,
+    ))
+    .parse(inp)
+}
+
 #[allow(clippy::redundant_closure_for_method_calls)]
 pub fn parse(inp: &str) -> Result<Vec<Instruction>, Error> {
-    dbg!(operand(inp).map_err(|e| e.to_owned())?);
+    dbg!(document(inp).map_err(|e| e.to_owned())?);
     todo!()
 }
