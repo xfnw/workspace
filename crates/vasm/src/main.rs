@@ -1,5 +1,26 @@
+use argh::{FromArgs, from_env};
+use std::path::PathBuf;
+
 mod repr;
 
-fn main() {
-    println!("Hello, world!");
+/// a toy vm16 assembler
+#[derive(Debug, FromArgs)]
+#[argh(help_triggers("-h", "--help"))]
+struct Opt {
+    #[argh(positional)]
+    file: PathBuf,
+}
+
+#[derive(Debug, foxerror::FoxError)]
+enum Error {
+    /// io error
+    #[err(from)]
+    IoError(std::io::Error),
+}
+
+fn main() -> Result<(), Error> {
+    let opt: Opt = from_env();
+    let _input = std::fs::read_to_string(&opt.file)?;
+
+    Ok(())
 }
