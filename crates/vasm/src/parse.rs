@@ -8,7 +8,7 @@ use nom::{
     sequence::{delimited, pair, preceded, terminated},
 };
 
-use crate::repr::{LabelOffset, Operand};
+use crate::repr::{Instruction, LabelOffset, Operand};
 
 use super::repr;
 
@@ -103,8 +103,11 @@ fn operand(inp: &str) -> IResult<&str, Operand> {
     .parse(inp)
 }
 
-fn label_def(inp: &str) -> IResult<&str, &str> {
-    terminated(label_name, tag(":")).parse(inp)
+fn label_def(inp: &str) -> IResult<&str, Instruction> {
+    map(terminated(label_name, tag(":")), |l| {
+        Instruction::LabelDef(l.to_string())
+    })
+    .parse(inp)
 }
 
 fn comment(inp: &str) -> IResult<&str, ()> {
@@ -112,7 +115,7 @@ fn comment(inp: &str) -> IResult<&str, ()> {
 }
 
 #[allow(clippy::redundant_closure_for_method_calls)]
-pub fn parse(inp: &str) -> Result<Vec<repr::Instruction>, Error> {
+pub fn parse(inp: &str) -> Result<Vec<Instruction>, Error> {
     dbg!(operand(inp).map_err(|e| e.to_owned())?);
     todo!()
 }
