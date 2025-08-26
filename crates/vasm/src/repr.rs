@@ -50,17 +50,17 @@ pub struct LabelOffset {
 }
 
 impl LabelOffset {
-    pub fn new(name: Option<String>, offset: i16) -> Self {
+    pub fn new(name: Option<String>, offset: Offset) -> Self {
         Self {
             name,
-            offset: Offset::new(offset),
+            offset,
         }
     }
     pub fn name(&self) -> Option<&str> {
         self.name.as_deref()
     }
-    pub fn offset(&self) -> i16 {
-        self.offset.value()
+    pub fn offset(&self) -> &Offset {
+        &self.offset
     }
 }
 
