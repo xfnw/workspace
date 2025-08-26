@@ -2,7 +2,7 @@
 
 use std::marker::PhantomData;
 
-#[derive(Debug, foxerror::FoxError)]
+#[derive(Debug, Clone, foxerror::FoxError)]
 pub enum Error {
     /// const operands should fit in 10 bits
     BiggerThan10Bits(u16),
@@ -10,7 +10,7 @@ pub enum Error {
     DstImmediate,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Immediate(i16);
 
 impl Immediate {
@@ -19,7 +19,7 @@ impl Immediate {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MemoryAddress(u16);
 
 impl MemoryAddress {
@@ -31,7 +31,7 @@ impl MemoryAddress {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Offset(i16);
 
 impl Offset {
@@ -43,7 +43,7 @@ impl Offset {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LabelOffset {
     name: Option<String>,
     offset: Offset,
@@ -64,7 +64,7 @@ impl LabelOffset {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Operand {
     /// data register `A`
     A,
@@ -140,7 +140,7 @@ impl Operand {
 }
 
 /// the left operand
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Opnd1(Operand);
 
 impl Opnd1 {
@@ -150,7 +150,7 @@ impl Opnd1 {
 }
 
 /// the right operand
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Opnd2(Operand);
 
 impl Opnd2 {
@@ -162,17 +162,17 @@ impl Opnd2 {
 /// generic argument for source operands
 ///
 /// source operands may have immediates
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Src;
 
 /// generic argument for destination operands
 ///
 /// destination operands cannot have immediates
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Dst;
 
 /// a single operand
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Opnd<Kind> {
     left: Opnd1,
     phantom_kind: PhantomData<Kind>,
@@ -206,7 +206,7 @@ impl Opnd<Dst> {
 }
 
 /// two operands
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TwoOpnd<LeftKind, RightKind> {
     left: Opnd1,
     right: Opnd2,
@@ -263,7 +263,7 @@ impl TwoOpnd<Dst, Dst> {
 }
 
 /// a 10 bit number
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Const(u16);
 
 impl Const {
@@ -278,7 +278,7 @@ impl Const {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Opcode {
     /// no operation
     ///
