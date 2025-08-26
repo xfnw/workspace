@@ -5,10 +5,10 @@ use nom::{
     character::complete::{alpha1, alphanumeric1, multispace0, one_of, space0},
     combinator::{map, map_res, opt, recognize, value},
     multi::{many0, many1},
-    sequence::{delimited, pair, preceded, terminated},
+    sequence::{delimited, pair, preceded, separated_pair, terminated},
 };
 
-use crate::repr::{Instruction, LabelOffset, Operand};
+use crate::repr::{Dst, Instruction, LabelOffset, Operand, Src, TwoOpnd};
 
 use super::repr;
 
@@ -110,8 +110,19 @@ fn label_def(inp: &str) -> IResult<&str, Instruction> {
     .parse(inp)
 }
 
+fn one_opnd(inp: &str) -> IResult<&str, Operand> {
+    delimited(space0, operand, space0).parse(inp)
+}
+
+fn two_opnd(inp: &str) -> IResult<&str, (Operand, Operand)> {
+    separated_pair(one_opnd, tag(","), one_opnd).parse(inp)
+}
+
 fn instruction(inp: &str) -> IResult<&str, Instruction> {
-    todo!()
+    alt([map_res(preceded(tag("move"), two_opnd), |(left, right)| {
+        TwoOpnd::<Dst, Src>::new(left, right).map(Instruction::Move)
+    })])
+    .parse(inp)
 }
 
 fn comment(inp: &str) -> IResult<&str, Instruction> {
