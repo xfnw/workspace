@@ -8,6 +8,11 @@ pub struct MemoryAddress(u16);
 
 pub struct Offset(i16);
 
+pub struct LabelOffset {
+    name: Option<String>,
+    offset: Offset,
+}
+
 pub enum Operand {
     /// data register `A`
     A,
@@ -51,10 +56,10 @@ pub enum Operand {
     ///
     /// takes an extra word
     AtSPn(Offset),
-    /// `+n`/`-n` relative address
+    /// `+n`/`-n` relative address or label
     ///
     /// takes an extra word
-    Rel2(Offset),
+    Rel2(LabelOffset),
     /// `[X+n]` value at address `X` plus offset
     ///
     /// takes an extra word
