@@ -2,7 +2,7 @@ use nom::{
     IResult, Parser,
     branch::alt,
     bytes::complete::{is_not, tag},
-    character::complete::{alpha1, alphanumeric1, char, one_of},
+    character::complete::{alpha1, alphanumeric1, multispace0, one_of},
     combinator::{map, map_res, opt, recognize, value},
     multi::{many0, many1},
     sequence::{delimited, pair, preceded, terminated},
@@ -111,7 +111,7 @@ fn label_def(inp: &str) -> IResult<&str, Instruction> {
 }
 
 fn comment(inp: &str) -> IResult<&str, Instruction> {
-    map(preceded(tag(";"), is_not("\r\n")), |c| {
+    map(preceded(tag(";"), is_not("\r\n")), |c: &str| {
         Instruction::Comment(c.to_string())
     })
     .parse(inp)
