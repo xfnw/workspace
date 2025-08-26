@@ -20,6 +20,8 @@ pub enum Error {
     /// could not parse
     #[err(from)]
     Parse(nom::Err<nom::error::Error<String>>),
+    /// parser gave up
+    Trailing(String),
 }
 
 fn hexadecimal_value(inp: &str) -> IResult<&str, u16> {
@@ -265,8 +267,13 @@ fn document(inp: &str) -> IResult<&str, Vec<Instruction>> {
     .parse(inp)
 }
 
-#[allow(clippy::redundant_closure_for_method_calls)]
 pub fn parse(inp: &str) -> Result<Vec<Instruction>, Error> {
-    dbg!(document(inp).map_err(|e| e.to_owned())?);
-    todo!()
+    #[allow(clippy::redundant_closure_for_method_calls)]
+    let (tail, out) = document(inp).map_err(|e| e.to_owned())?;
+    // TODO: replace with nom-supreme's final_parser once it supports nom v8
+    // it'll also get less useless error messages and map_res_cut
+    if !tail.is_empty() {
+        return Err(Error::Trailing(tail.to_string()));
+    }
+    Ok(out)
 }
