@@ -368,4 +368,8 @@ pub enum Instruction {
     ///
     /// not a real opcode, will not show up in the assembled output
     LabelDef(String),
+    /// a comment
+    ///
+    /// not a real opcode, will not show up in the assembled output
+    Comment(String),
 }

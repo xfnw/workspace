@@ -110,8 +110,11 @@ fn label_def(inp: &str) -> IResult<&str, Instruction> {
     .parse(inp)
 }
 
-fn comment(inp: &str) -> IResult<&str, ()> {
-    value((), pair(char(';'), is_not("\r\n"))).parse(inp)
+fn comment(inp: &str) -> IResult<&str, Instruction> {
+    map(preceded(tag(";"), is_not("\r\n")), |c| {
+        Instruction::Comment(c.to_string())
+    })
+    .parse(inp)
 }
 
 #[allow(clippy::redundant_closure_for_method_calls)]
