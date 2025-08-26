@@ -2,19 +2,66 @@
 
 use std::marker::PhantomData;
 
+#[derive(Debug, foxerror::FoxError)]
+pub enum Error {
+    /// const operands should fit in 10 bits
+    BiggerThan10Bits(u16),
+    /// destination operands may not have immediates
+    DstImmediate,
+}
+
 #[derive(Debug)]
 pub struct Immediate(i16);
+
+impl Immediate {
+    pub fn value(&self) -> i16 {
+        self.0
+    }
+}
 
 #[derive(Debug)]
 pub struct MemoryAddress(u16);
 
+impl MemoryAddress {
+    pub fn new(n: u16) -> Self {
+        Self(n)
+    }
+    pub fn value(&self) -> u16 {
+        self.0
+    }
+}
+
 #[derive(Debug)]
 pub struct Offset(i16);
+
+impl Offset {
+    pub fn new(n: i16) -> Self {
+        Self(n)
+    }
+    pub fn value(&self) -> i16 {
+        self.0
+    }
+}
 
 #[derive(Debug)]
 pub struct LabelOffset {
     name: Option<String>,
     offset: Offset,
+}
+
+impl LabelOffset {
+    pub fn new(name: Option<String>, offset: i16) -> Self {
+        Self {
+            name,
+            offset: Offset::new(offset),
+        }
+    }
+    pub fn name(&self) -> Option<&str> {
+        self.name.as_deref()
+    }
+    pub fn offset(&self) -> i16 {
+        self.offset.value()
+    }
 }
 
 #[derive(Debug)]
@@ -79,13 +126,38 @@ pub enum Operand {
     SPn(Offset),
 }
 
+impl Operand {
+    pub fn new_immediate(n: i16) -> Self {
+        match n {
+            0 => Self::Const0,
+            1 => Self::Const1,
+            _ => Self::Immediate(Immediate(n)),
+        }
+    }
+    fn is_immediate(&self) -> bool {
+        matches!(self, Self::Const0 | Self::Const1 | Self::Immediate(_))
+    }
+}
+
 /// the left operand
 #[derive(Debug)]
 pub struct Opnd1(Operand);
 
+impl Opnd1 {
+    pub fn value(&self) -> &Operand {
+        &self.0
+    }
+}
+
 /// the right operand
 #[derive(Debug)]
 pub struct Opnd2(Operand);
+
+impl Opnd2 {
+    pub fn value(&self) -> &Operand {
+        &self.0
+    }
+}
 
 /// generic argument for source operands
 ///
@@ -106,6 +178,33 @@ pub struct Opnd<Kind> {
     phantom_kind: PhantomData<Kind>,
 }
 
+impl<Kind> Opnd<Kind> {
+    pub fn left(&self) -> &Opnd1 {
+        &self.left
+    }
+}
+
+impl Opnd<Src> {
+    pub fn new(operand: Operand) -> Self {
+        Self {
+            left: Opnd1(operand),
+            phantom_kind: PhantomData,
+        }
+    }
+}
+
+impl Opnd<Dst> {
+    pub fn new(operand: Operand) -> Result<Self, Error> {
+        if operand.is_immediate() {
+            return Err(Error::DstImmediate);
+        }
+        Ok(Self {
+            left: Opnd1(operand),
+            phantom_kind: PhantomData,
+        })
+    }
+}
+
 /// two operands
 #[derive(Debug)]
 pub struct TwoOpnd<LeftKind, RightKind> {
@@ -115,9 +214,69 @@ pub struct TwoOpnd<LeftKind, RightKind> {
     phantom_right: PhantomData<RightKind>,
 }
 
+impl<LeftKind, RightKind> TwoOpnd<LeftKind, RightKind> {
+    pub fn left(&self) -> &Opnd1 {
+        &self.left
+    }
+    pub fn right(&self) -> &Opnd2 {
+        &self.right
+    }
+}
+
+impl TwoOpnd<Src, Src> {
+    pub fn new(left: Operand, right: Operand) -> Self {
+        Self {
+            left: Opnd1(left),
+            right: Opnd2(right),
+            phantom_left: PhantomData,
+            phantom_right: PhantomData,
+        }
+    }
+}
+
+impl TwoOpnd<Dst, Src> {
+    pub fn new(left: Operand, right: Operand) -> Result<Self, Error> {
+        if left.is_immediate() {
+            return Err(Error::DstImmediate);
+        }
+        Ok(Self {
+            left: Opnd1(left),
+            right: Opnd2(right),
+            phantom_left: PhantomData,
+            phantom_right: PhantomData,
+        })
+    }
+}
+
+impl TwoOpnd<Dst, Dst> {
+    pub fn new(left: Operand, right: Operand) -> Result<Self, Error> {
+        if left.is_immediate() || right.is_immediate() {
+            return Err(Error::DstImmediate);
+        }
+        Ok(Self {
+            left: Opnd1(left),
+            right: Opnd2(right),
+            phantom_left: PhantomData,
+            phantom_right: PhantomData,
+        })
+    }
+}
+
 /// a 10 bit number
 #[derive(Debug)]
 pub struct Const(u16);
+
+impl Const {
+    pub fn new(n: u16) -> Result<Self, Error> {
+        if n >= 1 << 10 {
+            return Err(Error::BiggerThan10Bits(n));
+        }
+        Ok(Self(n))
+    }
+    pub fn value(&self) -> u16 {
+        self.0
+    }
+}
 
 #[derive(Debug)]
 pub enum Opcode {
