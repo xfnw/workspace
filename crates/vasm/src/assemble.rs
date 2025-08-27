@@ -110,11 +110,15 @@ pub enum Error {
     SkMisalignment(Instruction),
     /// label defined multiple times
     DuplicateLabel(String),
+    /// instruction takes up more than 65535 words!?
+    InstructionTooBig(Instruction),
+    /// your code is too big to fit in vm16's entire memory space
+    CodeTooLong,
     /// could not find label
     LabelNotFound(String),
 }
 
-fn label_offset(label: &str, loc: usize, labels: &BTreeMap<String, usize>) -> Result<usize, Error> {
+fn label_offset(label: &str, loc: u16, labels: &BTreeMap<String, u16>) -> Result<u16, Error> {
     if let Some(l) = labels.get(label) {
         // TODO: explicitly use wrapping subtraction
         return Ok(l - loc);
@@ -130,25 +134,25 @@ enum Extra {
 }
 
 trait AssPart {
-    fn part(&self, loc: usize, labels: &BTreeMap<String, usize>) -> Result<(u16, Extra), Error>;
+    fn part(&self, loc: u16, labels: &BTreeMap<String, u16>) -> Result<(u16, Extra), Error>;
 }
 
 impl AssPart for Opnd1 {
-    fn part(&self, loc: usize, labels: &BTreeMap<String, usize>) -> Result<(u16, Extra), Error> {
+    fn part(&self, loc: u16, labels: &BTreeMap<String, u16>) -> Result<(u16, Extra), Error> {
         todo!()
     }
 }
 
 impl AssPart for Opnd2 {
-    fn part(&self, loc: usize, labels: &BTreeMap<String, usize>) -> Result<(u16, Extra), Error> {
+    fn part(&self, loc: u16, labels: &BTreeMap<String, u16>) -> Result<(u16, Extra), Error> {
         todo!()
     }
 }
 
 fn assemble_one(
-    loc: usize,
+    loc: u16,
     instruction: &Instruction,
-    labels: &BTreeMap<String, usize>,
+    labels: &BTreeMap<String, u16>,
 ) -> Result<Vec<u16>, Error> {
     todo!()
 }
@@ -157,10 +161,16 @@ pub fn assemble(rep: Vec<Instruction>) -> Result<Vec<u16>, Error> {
     let mut labels = BTreeMap::new();
     let loc = rep
         .into_iter()
-        .scan((0, None), |(statepos, skt), i| {
+        .scan((0u16, None), |(statepos, skt), i| {
             let pos = *statepos;
-            let size = i.size();
-            *statepos += size;
+            let Ok(size) = u16::try_from(i.size()) else {
+                return Some(Err(Error::InstructionTooBig(i)));
+            };
+            *statepos = if let Some(new) = (*statepos).checked_add(size) {
+                new
+            } else {
+                return Some(Err(Error::CodeTooLong));
+            };
 
             if let Some(skt) = skt
                 && pos < *skt
@@ -192,7 +202,11 @@ pub fn assemble(rep: Vec<Instruction>) -> Result<Vec<u16>, Error> {
     let mut out = vec![];
 
     for (l, ins) in loc {
-        assert_eq!(l, out.len(), "instruction before {ins} has incorrect size");
+        assert_eq!(
+            l as usize,
+            out.len(),
+            "instruction before {ins} has incorrect size"
+        );
 
         out.append(&mut assemble_one(l, &ins, &labels)?);
     }
