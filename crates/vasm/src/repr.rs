@@ -89,15 +89,15 @@ pub enum Operand {
     AtXInc,
     /// `[Y]+` value at address `Y`, post-increment `Y`
     AtYInc,
-    /// `#0` a more compact representation of immediate 0
+    /// `0` a more compact representation of immediate 0
     Const0,
-    /// `#1` a more compact representation of immediate 1
+    /// `1` a more compact representation of immediate 1
     Const1,
-    /// `#n` an immediate value
+    /// `n` an immediate value
     ///
     /// takes an extra word
     Immediate(Immediate),
-    /// `n` value at address
+    /// `[n]` value at address
     ///
     /// takes an extra word
     Mem(MemoryAddress),

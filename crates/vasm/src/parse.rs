@@ -83,8 +83,10 @@ fn operand(inp: &str) -> IResult<&str, Operand> {
         value(Operand::AtYInc, tag("[Y]+")),
         value(Operand::AtX, tag("[X]")),
         value(Operand::AtY, tag("[Y]")),
-        map(preceded(tag("#"), number_value), Operand::new_immediate),
-        map(number_value, |v| Operand::Mem(repr::MemoryAddress::new(v))),
+        map(number_value, Operand::new_immediate),
+        map(delimited(tag("["), number_value, tag("]")), |v| {
+            Operand::Mem(repr::MemoryAddress::new(v))
+        }),
         map(
             delimited(tag("[SP"), number_offset, tag("]")),
             Operand::AtSPn,
