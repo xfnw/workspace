@@ -133,19 +133,122 @@ enum Extra {
     Two(u16, u16),
 }
 
+fn extra(operand: &Operand, loc: u16, labels: &BTreeMap<String, u16>) -> Result<Extra, Error> {
+    Ok(match operand {
+        Operand::A
+        | Operand::B
+        | Operand::C
+        | Operand::D
+        | Operand::X
+        | Operand::Y
+        | Operand::PC
+        | Operand::SP
+        | Operand::AtX
+        | Operand::AtY
+        | Operand::AtXInc
+        | Operand::AtYInc
+        | Operand::Immed0
+        | Operand::Immed1 => Extra::None,
+        Operand::Immediate(immed) => Extra::One(immed.value()),
+        Operand::Mem(mem) => Extra::One(mem.value()),
+        Operand::AtSPn(off) | Operand::AtXn(off) | Operand::AtYn(off) | Operand::SPn(off) =>
+        {
+            #[allow(clippy::cast_sign_loss)]
+            Extra::One(off.value() as u16)
+        }
+        Operand::Rel2(rel) => Extra::One(
+            if let Some(label) = rel.name() {
+                label_offset(label, loc, labels)?
+            } else {
+                0
+            }
+            .wrapping_add_signed(rel.offset().value()),
+        ),
+    })
+}
+
 trait AssPart {
     fn part(&self, loc: u16, labels: &BTreeMap<String, u16>) -> Result<(u16, Extra), Error>;
 }
 
 impl AssPart for Opnd1 {
     fn part(&self, loc: u16, labels: &BTreeMap<String, u16>) -> Result<(u16, Extra), Error> {
-        todo!()
+        let opnd = self.value();
+        let flags = match opnd {
+            Operand::A => 0x0000,
+            Operand::B => 0x0020,
+            Operand::C => 0x0040,
+            Operand::D => 0x0060,
+            Operand::X => 0x0080,
+            Operand::Y => 0x00a0,
+            Operand::PC => 0x00c0,
+            Operand::SP => 0x00e0,
+            Operand::AtX => 0x0100,
+            Operand::AtY => 0x0120,
+            Operand::AtXInc => 0x0140,
+            Operand::AtYInc => 0x0160,
+            Operand::Immed0 => 0x0180,
+            Operand::Immed1 => 0x01a0,
+            Operand::Immediate(_) => 0x0200,
+            Operand::Mem(_) => 0x0220,
+            Operand::AtSPn(_) => 0x0260,
+            Operand::Rel2(_) => 0x0280,
+            Operand::AtXn(_) => 0x02a0,
+            Operand::AtYn(_) => 0x02c0,
+            Operand::SPn(_) => 0x02e0,
+        };
+        Ok((flags, extra(opnd, loc, labels)?))
     }
 }
 
 impl AssPart for Opnd2 {
     fn part(&self, loc: u16, labels: &BTreeMap<String, u16>) -> Result<(u16, Extra), Error> {
-        todo!()
+        let opnd = self.value();
+        let flags = match opnd {
+            Operand::A => 0x0000,
+            Operand::B => 0x0001,
+            Operand::C => 0x0002,
+            Operand::D => 0x0003,
+            Operand::X => 0x0004,
+            Operand::Y => 0x0005,
+            Operand::PC => 0x0006,
+            Operand::SP => 0x0007,
+            Operand::AtX => 0x0008,
+            Operand::AtY => 0x0009,
+            Operand::AtXInc => 0x000a,
+            Operand::AtYInc => 0x000b,
+            Operand::Immed0 => 0x000c,
+            Operand::Immed1 => 0x000d,
+            Operand::Immediate(_) => 0x0010,
+            Operand::Mem(_) => 0x0011,
+            Operand::AtSPn(_) => 0x0013,
+            Operand::Rel2(_) => 0x0014,
+            Operand::AtXn(_) => 0x0015,
+            Operand::AtYn(_) => 0x0016,
+            Operand::SPn(_) => 0x0017,
+        };
+        Ok((flags, extra(opnd, loc, labels)?))
+    }
+}
+
+impl<T> AssPart for Opnd<T> {
+    fn part(&self, loc: u16, labels: &BTreeMap<String, u16>) -> Result<(u16, Extra), Error> {
+        self.left().part(loc, labels)
+    }
+}
+
+impl<L, R> AssPart for TwoOpnd<L, R> {
+    fn part(&self, loc: u16, labels: &BTreeMap<String, u16>) -> Result<(u16, Extra), Error> {
+        let (ln, lext) = self.left().part(loc, labels)?;
+        let (rn, rext) = self.right().part(loc, labels)?;
+        assert!(ln & rn == 0 && ln + rn < 1 << 10, "nonsensical flags");
+        let ext = match (lext, rext) {
+            (Extra::None, Extra::None) => Extra::None,
+            (Extra::One(e), Extra::None) | (Extra::None, Extra::One(e)) => Extra::One(e),
+            (Extra::One(l), Extra::One(r)) => Extra::Two(l, r),
+            _ => panic!("single operand should not have more than one extra word"),
+        };
+        Ok((ln + rn, ext))
     }
 }
 
