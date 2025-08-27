@@ -1,6 +1,5 @@
-use crate::repr::{Instruction, Opnd, Opnd1, Opnd2, TwoOpnd};
-
-use super::repr::Operand;
+use crate::repr::{Instruction, Operand, Opnd, Opnd1, Opnd2, TwoOpnd};
+use std::collections::BTreeMap;
 
 /// helper trait for calculating relative offsets
 pub trait AssSize {
@@ -102,5 +101,33 @@ impl AssSize for Instruction {
 }
 
 pub fn assemble(rep: Vec<Instruction>) -> Vec<u16> {
+    let mut labels = BTreeMap::new();
+    let loc: Vec<_> = rep
+        .into_iter()
+        .scan((0, None), |(statepos, skt), i| {
+            let pos = *statepos;
+            let size = i.size();
+            *statepos += size;
+
+            if let Some(skt) = skt && pos < *skt && *statepos > *skt && !matches!(i, Instruction::Dw(_)) {
+                eprintln!("sk misalignment at {i:?}\nif you're intentionally making a program that has different behavior than the assembly suggests, consider using dw to make it more obvious there is more going on.");
+            }
+
+            match i {
+                Instruction::LabelDef(ref def) => {
+                    if labels .insert(def.clone(), pos).is_some() {
+                        eprintln!("label {def} redefined!");
+                    }
+                }
+                Instruction::Skne(_) | Instruction::Skeq(_) | Instruction::Sklt(_) | Instruction::Skgt(_) => {
+                    *skt = Some(*statepos + 2);
+                }
+                _ => (),
+            }
+
+            Some((pos, i))
+        })
+        .collect();
+    dbg!(&loc);
     todo!()
 }
