@@ -110,6 +110,39 @@ pub enum Error {
     SkMisalignment(Instruction),
     /// label defined multiple times
     DuplicateLabel(String),
+    /// could not find label
+    LabelNotFound(String),
+}
+
+fn label_offset(label: &str, loc: usize, labels: &BTreeMap<String, usize>) -> Result<usize, Error> {
+    if let Some(l) = labels.get(label) {
+        // TODO: explicitly use wrapping subtraction
+        return Ok(l - loc);
+    }
+
+    Err(Error::LabelNotFound(label.to_string()))
+}
+
+enum Extra {
+    None,
+    One(u16),
+    Two(u16, u16),
+}
+
+trait AssPart {
+    fn part(&self, loc: usize, labels: &BTreeMap<String, usize>) -> Result<(u16, Extra), Error>;
+}
+
+impl AssPart for Opnd1 {
+    fn part(&self, loc: usize, labels: &BTreeMap<String, usize>) -> Result<(u16, Extra), Error> {
+        todo!()
+    }
+}
+
+impl AssPart for Opnd2 {
+    fn part(&self, loc: usize, labels: &BTreeMap<String, usize>) -> Result<(u16, Extra), Error> {
+        todo!()
+    }
 }
 
 fn assemble_one(
