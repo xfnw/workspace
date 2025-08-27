@@ -369,4 +369,8 @@ pub enum Instruction {
     ///
     /// not a real opcode, will not show up in the assembled output
     Comment(String),
+    /// define word
+    ///
+    /// not a real opcode, will output the data untouched
+    Dw(Vec<u16>),
 }

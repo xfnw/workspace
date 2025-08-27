@@ -4,7 +4,7 @@ use nom::{
     bytes::complete::{is_not, tag},
     character::complete::{alpha1, alphanumeric1, multispace0, one_of, space0},
     combinator::{map, map_res, opt, recognize, value},
-    multi::{many0, many1},
+    multi::{many0, many1, separated_list1},
     sequence::{delimited, pair, preceded, separated_pair, terminated},
 };
 
@@ -245,6 +245,13 @@ fn instruction(inp: &str) -> IResult<&str, Instruction> {
             map_res(preceded(tag("msb"), two_opnd), |(l, r)| {
                 TwoOpnd::<Dst, Src>::new(l, r).map(Instruction::Msb)
             }),
+            map(
+                preceded(
+                    tag("dw"),
+                    separated_list1(tag(","), delimited(space0, number_value, space0)),
+                ),
+                Instruction::Dw,
+            ),
         )),
     ))
     .parse(inp)
