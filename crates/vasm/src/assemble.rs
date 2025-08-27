@@ -112,6 +112,14 @@ pub enum Error {
     DuplicateLabel(String),
 }
 
+fn assemble_one(
+    loc: usize,
+    instruction: &Instruction,
+    labels: &BTreeMap<String, usize>,
+) -> Result<Vec<u16>, Error> {
+    todo!()
+}
+
 pub fn assemble(rep: Vec<Instruction>) -> Result<Vec<u16>, Error> {
     let mut labels = BTreeMap::new();
     let loc = rep
@@ -147,6 +155,14 @@ pub fn assemble(rep: Vec<Instruction>) -> Result<Vec<u16>, Error> {
             Some(Ok((pos, i)))
         })
         .collect::<Result<Vec<_>, _>>()?;
-    dbg!(&loc);
-    todo!()
+
+    let mut out = vec![];
+
+    for (l, ins) in loc {
+        assert_eq!(l, out.len(), "instruction before {ins} has incorrect size");
+
+        out.append(&mut assemble_one(l, &ins, &labels)?);
+    }
+
+    Ok(out)
 }
