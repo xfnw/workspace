@@ -90,9 +90,9 @@ pub enum Operand {
     /// `[Y++]` value at address `Y`, post-increment `Y`
     AtYInc,
     /// `0` a more compact representation of immediate 0
-    Const0,
+    Immed0,
     /// `1` a more compact representation of immediate 1
-    Const1,
+    Immed1,
     /// `n` an immediate value
     ///
     /// takes an extra word
@@ -126,13 +126,13 @@ pub enum Operand {
 impl Operand {
     pub fn new_immediate(n: u16) -> Self {
         match n {
-            0 => Self::Const0,
-            1 => Self::Const1,
+            0 => Self::Immed0,
+            1 => Self::Immed1,
             _ => Self::Immediate(Immediate(n)),
         }
     }
     fn is_immediate(&self) -> bool {
-        matches!(self, Self::Const0 | Self::Const1 | Self::Immediate(_))
+        matches!(self, Self::Immed0 | Self::Immed1 | Self::Immediate(_))
     }
 }
 
