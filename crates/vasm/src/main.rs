@@ -20,16 +20,19 @@ struct Opt {
 enum Error {
     /// io error
     #[err(from)]
-    IoError(std::io::Error),
+    Io(std::io::Error),
     /// parse error
     #[err(from)]
-    ParseError(parse::Error),
+    Parse(parse::Error),
+    /// assemble error
+    #[err(from)]
+    Assemble(assemble::Error),
 }
 
 fn main() -> Result<(), Error> {
     let opt: Opt = from_env();
     let input = std::fs::read_to_string(&opt.file)?;
-    let assembled = assemble::assemble(parse::parse(&input)?);
+    let assembled = assemble::assemble(parse::parse(&input)?)?;
 
     if let Some(output) = opt.output {
         let bytes: Vec<_> = assembled.into_iter().flat_map(u16::to_be_bytes).collect();

@@ -100,34 +100,53 @@ impl AssSize for Instruction {
     }
 }
 
-pub fn assemble(rep: Vec<Instruction>) -> Vec<u16> {
+#[derive(Debug, foxerror::FoxError)]
+pub enum Error {
+    /// likely incorrect usage of sk* instructions will misalign
+    ///
+    /// if you're intentionally making a program that has different
+    /// behavior than the assembly suggests, consider using dw to make
+    /// it more obvious there is more going on.
+    SkMisalignment(Instruction),
+    /// label defined multiple times
+    DuplicateLabel(String),
+}
+
+pub fn assemble(rep: Vec<Instruction>) -> Result<Vec<u16>, Error> {
     let mut labels = BTreeMap::new();
-    let loc: Vec<_> = rep
+    let loc = rep
         .into_iter()
         .scan((0, None), |(statepos, skt), i| {
             let pos = *statepos;
             let size = i.size();
             *statepos += size;
 
-            if let Some(skt) = skt && pos < *skt && *statepos > *skt && !matches!(i, Instruction::Dw(_)) {
-                eprintln!("sk misalignment at {i:?}\nif you're intentionally making a program that has different behavior than the assembly suggests, consider using dw to make it more obvious there is more going on.");
+            if let Some(skt) = skt
+                && pos < *skt
+                && *statepos > *skt
+                && !matches!(i, Instruction::Dw(_))
+            {
+                return Some(Err(Error::SkMisalignment(i)));
             }
 
             match i {
                 Instruction::LabelDef(ref def) => {
-                    if labels .insert(def.clone(), pos).is_some() {
-                        eprintln!("label {def} redefined!");
+                    if labels.insert(def.clone(), pos).is_some() {
+                        return Some(Err(Error::DuplicateLabel(def.clone())));
                     }
                 }
-                Instruction::Skne(_) | Instruction::Skeq(_) | Instruction::Sklt(_) | Instruction::Skgt(_) => {
+                Instruction::Skne(_)
+                | Instruction::Skeq(_)
+                | Instruction::Sklt(_)
+                | Instruction::Skgt(_) => {
                     *skt = Some(*statepos + 2);
                 }
                 _ => (),
             }
 
-            Some((pos, i))
+            Some(Ok((pos, i)))
         })
-        .collect();
+        .collect::<Result<Vec<_>, _>>()?;
     dbg!(&loc);
     todo!()
 }

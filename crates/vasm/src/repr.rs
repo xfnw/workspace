@@ -374,3 +374,10 @@ pub enum Instruction {
     /// not a real opcode, will output the data untouched
     Dw(Vec<u16>),
 }
+
+// TODO: pretty print instead of just using debug
+impl std::fmt::Display for Instruction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{self:?}")
+    }
+}
