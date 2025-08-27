@@ -1,6 +1,7 @@
 use argh::{FromArgs, from_env};
 use std::path::PathBuf;
 
+mod assemble;
 mod parse;
 mod repr;
 
