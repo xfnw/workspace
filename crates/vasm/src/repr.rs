@@ -85,9 +85,9 @@ pub enum Operand {
     AtX,
     /// `[Y]` value at address `Y`
     AtY,
-    /// `[X]+` value at address `X`, post-increment `X`
+    /// `[X++]` value at address `X`, post-increment `X`
     AtXInc,
-    /// `[Y]+` value at address `Y`, post-increment `Y`
+    /// `[Y++]` value at address `Y`, post-increment `Y`
     AtYInc,
     /// `0` a more compact representation of immediate 0
     Const0,

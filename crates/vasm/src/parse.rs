@@ -79,10 +79,10 @@ fn label_offset(inp: &str) -> IResult<&str, LabelOffset> {
 
 fn operand(inp: &str) -> IResult<&str, Operand> {
     alt((
-        value(Operand::AtXInc, tag("[X]+")),
-        value(Operand::AtYInc, tag("[Y]+")),
         value(Operand::AtX, tag("[X]")),
         value(Operand::AtY, tag("[Y]")),
+        value(Operand::AtXInc, tag("[X++]")),
+        value(Operand::AtYInc, tag("[Y++]")),
         map(number_value, Operand::new_immediate),
         map(delimited(tag("["), number_value, tag("]")), |v| {
             Operand::Mem(repr::MemoryAddress::new(v))
