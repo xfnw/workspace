@@ -100,3 +100,7 @@ impl AssSize for Instruction {
         }
     }
 }
+
+pub fn assemble(rep: Vec<Instruction>) -> Vec<u16> {
+    todo!()
+}
