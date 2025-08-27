@@ -2,7 +2,7 @@ use crate::repr::{Instruction, Operand, Opnd, Opnd1, Opnd2, TwoOpnd};
 use std::collections::BTreeMap;
 
 /// helper trait for calculating relative offsets
-pub trait AssSize {
+trait AssSize {
     /// the number of words taken up by machine code after being
     /// assembled
     fn size(&self) -> usize;
