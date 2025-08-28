@@ -257,6 +257,10 @@ fn instruction(inp: &str) -> IResult<&str, Instruction> {
                 ),
                 Instruction::Dw,
             ),
+            map(
+                preceded(tag("resw"), delimited(space0, number_value, space0)),
+                |n| Instruction::Dw(vec![0; n.into()]),
+            ),
         )),
     ))
     .parse(inp)
