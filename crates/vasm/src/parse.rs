@@ -128,6 +128,8 @@ fn instruction(inp: &str) -> IResult<&str, Instruction> {
     // items per tuple and rust's opaque types for closures making
     // using an array difficult
     // FIXME: generate this mess with a macro or something
+    // FIXME: should probably require whitespace after instructions
+    // with operands
     alt((
         alt((
             value(Instruction::Nop, tag("nop")),
