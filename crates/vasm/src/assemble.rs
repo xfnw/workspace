@@ -252,12 +252,170 @@ impl<L, R> AssPart for TwoOpnd<L, R> {
     }
 }
 
+#[allow(clippy::too_many_lines)]
 fn assemble_one(
     loc: u16,
     instruction: &Instruction,
     labels: &BTreeMap<String, u16>,
 ) -> Result<Vec<u16>, Error> {
-    todo!()
+    // FIXME: generate this mess with a macro or something
+    let (flags, extra) = match instruction {
+        Instruction::Nop => (0x0000, Extra::None),
+        Instruction::Brk(c) => (0x0400 + c.value(), Extra::None),
+        Instruction::Sys(c) => (0x0800 + c.value(), Extra::None),
+        Instruction::Jump(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x1000 + f, e)
+        }
+        Instruction::Call(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x1400 + f, e)
+        }
+        Instruction::Ret => (0x1800, Extra::None),
+        Instruction::Halt => (0x1C00, Extra::None),
+        Instruction::Move(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x2000 + f, e)
+        }
+        Instruction::Xchg(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x2400 + f, e)
+        }
+        Instruction::Inc(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x2800 + f, e)
+        }
+        Instruction::Dec(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x2c00 + f, e)
+        }
+        Instruction::Add(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x3000 + f, e)
+        }
+        Instruction::Sub(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x3400 + f, e)
+        }
+        Instruction::Mul(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x3800 + f, e)
+        }
+        Instruction::Div(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x3C00 + f, e)
+        }
+        Instruction::And(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x4000 + f, e)
+        }
+        Instruction::Or(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x4400 + f, e)
+        }
+        Instruction::Xor(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x4800 + f, e)
+        }
+        Instruction::Not(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x4c00 + f, e)
+        }
+        Instruction::Bnze(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x5000 + f, e)
+        }
+        Instruction::Bze(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x5400 + f, e)
+        }
+        Instruction::Bpos(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x5800 + f, e)
+        }
+        Instruction::Bneg(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x5c00 + f, e)
+        }
+        Instruction::In(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x6000 + f, e)
+        }
+        Instruction::Out(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x6400 + f, e)
+        }
+        Instruction::Push(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x6800 + f, e)
+        }
+        Instruction::Pop(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x6c00 + f, e)
+        }
+        Instruction::Swap(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x7000 + f, e)
+        }
+        Instruction::Dbnz(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x7400 + f, e)
+        }
+        Instruction::Mod(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x7800 + f, e)
+        }
+        Instruction::Shl(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x7c00 + f, e)
+        }
+        Instruction::Shr(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x8000 + f, e)
+        }
+        Instruction::Addc(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x8400 + f, e)
+        }
+        Instruction::Mulc(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x8800 + f, e)
+        }
+        Instruction::Skne(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x8c00 + f, e)
+        }
+        Instruction::Skeq(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x9000 + f, e)
+        }
+        Instruction::Sklt(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x9400 + f, e)
+        }
+        Instruction::Skgt(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x9800 + f, e)
+        }
+        Instruction::Msb(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x9c00 + f, e)
+        }
+        Instruction::LabelDef(_) | Instruction::Comment(_) => return Ok(vec![]),
+        Instruction::Dw(v) => return Ok(v.clone()),
+    };
+
+    let mut out = vec![flags];
+    match extra {
+        Extra::None => (),
+        Extra::One(o) => out.push(o),
+        Extra::Two(one, two) => {
+            out.push(one);
+            out.push(two);
+        }
+    }
+
+    Ok(out)
 }
 
 pub fn assemble(rep: Vec<Instruction>) -> Result<Vec<u16>, Error> {
