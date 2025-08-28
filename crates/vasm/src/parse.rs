@@ -26,7 +26,10 @@ pub enum Error {
 
 fn hexadecimal_value(inp: &str) -> IResult<&str, u16> {
     map_res(
-        preceded(tag("$"), recognize(many1(one_of("0123456789abcdefABCDEF")))),
+        preceded(
+            alt((tag("$"), tag("0x"), tag("0X"))),
+            recognize(many1(one_of("0123456789abcdefABCDEF"))),
+        ),
         |out| u16::from_str_radix(out, 16),
     )
     .parse(inp)
