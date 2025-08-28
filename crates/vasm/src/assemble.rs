@@ -120,8 +120,7 @@ pub enum Error {
 
 fn label_offset(label: &str, loc: u16, labels: &BTreeMap<String, u16>) -> Result<u16, Error> {
     if let Some(l) = labels.get(label) {
-        // TODO: explicitly use wrapping subtraction
-        return Ok(l - loc);
+        return Ok(l.wrapping_sub(loc));
     }
 
     Err(Error::LabelNotFound(label.to_string()))
