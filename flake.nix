@@ -90,6 +90,7 @@
         });
         members = genAttrs [
           "maw"
+          "vasm"
         ] buildPackage;
       in {
         checks = {
