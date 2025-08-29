@@ -4,8 +4,10 @@ use std::marker::PhantomData;
 pub enum Error {
     /// const operands should fit in 10 bits
     BiggerThan10Bits(u16),
-    /// destination operands may not have immediates
-    DstImmediate,
+    /// destination operands may not use source-exclusive operands
+    ///
+    /// this includes immediates and relative addresses
+    DstSrcExclusive,
 }
 
 #[derive(Debug, Clone)]
@@ -129,8 +131,11 @@ impl Operand {
             _ => Self::Immediate(Immediate(n)),
         }
     }
-    fn is_immediate(&self) -> bool {
-        matches!(self, Self::Immed0 | Self::Immed1 | Self::Immediate(_))
+    fn is_src_exclusive(&self) -> bool {
+        matches!(
+            self,
+            Self::Immed0 | Self::Immed1 | Self::Immediate(_) | Self::Rel2(_)
+        )
     }
 }
 
@@ -190,8 +195,8 @@ impl Opnd<Src> {
 
 impl Opnd<Dst> {
     pub fn new(operand: Operand) -> Result<Self, Error> {
-        if operand.is_immediate() {
-            return Err(Error::DstImmediate);
+        if operand.is_src_exclusive() {
+            return Err(Error::DstSrcExclusive);
         }
         Ok(Self {
             left: Opnd1(operand),
@@ -231,8 +236,8 @@ impl TwoOpnd<Src, Src> {
 
 impl TwoOpnd<Dst, Src> {
     pub fn new(left: Operand, right: Operand) -> Result<Self, Error> {
-        if left.is_immediate() {
-            return Err(Error::DstImmediate);
+        if left.is_src_exclusive() {
+            return Err(Error::DstSrcExclusive);
         }
         Ok(Self {
             left: Opnd1(left),
@@ -245,8 +250,8 @@ impl TwoOpnd<Dst, Src> {
 
 impl TwoOpnd<Dst, Dst> {
     pub fn new(left: Operand, right: Operand) -> Result<Self, Error> {
-        if left.is_immediate() || right.is_immediate() {
-            return Err(Error::DstImmediate);
+        if left.is_src_exclusive() || right.is_src_exclusive() {
+            return Err(Error::DstSrcExclusive);
         }
         Ok(Self {
             left: Opnd1(left),
