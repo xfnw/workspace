@@ -1,24 +1,56 @@
 use crate::repr::{self, Const, Dst, Instruction, LabelOffset, Operand, Opnd, Src, TwoOpnd};
 use nom::{
-    IResult, Parser,
+    Err, IResult, Parser,
     branch::alt,
     bytes::complete::{is_not, tag},
     character::complete::{alpha1, alphanumeric1, multispace0, one_of, space0},
-    combinator::{map, map_res, opt, recognize, value},
+    combinator::{complete, map, map_res, opt, recognize, value},
     multi::{many0, many1, separated_list1},
     sequence::{delimited, pair, preceded, separated_pair, terminated},
 };
+
+#[derive(Debug)]
+pub struct LineContext {
+    line: usize,
+    snippet: String,
+}
+
+impl LineContext {
+    fn get_context(slice: &str, subslice: &str) -> Self {
+        let snippet = subslice
+            .chars()
+            .enumerate()
+            .map_while(|(n, c)| (n < 10 && c != '\n').then_some(c))
+            .collect();
+        let target = subslice.as_ptr() as usize - slice.as_ptr() as usize;
+        let line = slice
+            .as_bytes()
+            .iter()
+            .take(target)
+            .filter(|&b| *b == b'\n')
+            .count();
+
+        Self {
+            line: line + 1,
+            snippet,
+        }
+    }
+}
+
+impl std::fmt::Display for LineContext {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "on line {} at: {}", self.line, self.snippet)
+    }
+}
 
 #[derive(Debug, foxerror::FoxError)]
 pub enum Error {
     /// could not build internal representation
     #[err(from)]
     Repr(repr::Error),
-    /// could not parse
+    /// invalid syntax or value
     #[err(from)]
-    Parse(nom::Err<nom::error::Error<String>>),
-    /// parser gave up
-    Trailing(String),
+    Parse(LineContext),
 }
 
 fn hexadecimal_value(inp: &str) -> IResult<&str, u16> {
@@ -295,24 +327,29 @@ fn comment(inp: &str) -> IResult<&str, Instruction> {
 }
 
 fn document(inp: &str) -> IResult<&str, Vec<Instruction>> {
-    many0(terminated(
+    complete(many0(terminated(
         alt((
             label_def,
             preceded(space0, instruction),
             preceded(space0, comment),
         )),
         multispace0,
-    ))
+    )))
     .parse(inp)
 }
 
 pub fn parse(inp: &str) -> Result<Vec<Instruction>, Error> {
-    #[allow(clippy::redundant_closure_for_method_calls)]
-    let (tail, out) = document(inp).map_err(|e| e.to_owned())?;
+    let (tail, out) = document(inp).map_err(|e| {
+        let inner = match e {
+            Err::Error(i) | Err::Failure(i) => i,
+            Err::Incomplete(_) => unreachable!("complete should turn this into Err::Error"),
+        };
+        LineContext::get_context(inp, inner.input)
+    })?;
     // TODO: replace with nom-supreme's final_parser once it supports nom v8
     // it'll also get less useless error messages and map_res_cut
     if !tail.is_empty() {
-        return Err(Error::Trailing(tail.to_string()));
+        return Err(LineContext::get_context(inp, tail).into());
     }
     Ok(out)
 }
