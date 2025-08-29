@@ -1,3 +1,4 @@
+use crate::repr::{self, Const, Dst, Instruction, LabelOffset, Operand, Opnd, Src, TwoOpnd};
 use nom::{
     IResult, Parser,
     branch::alt,
@@ -7,10 +8,6 @@ use nom::{
     multi::{many0, many1, separated_list1},
     sequence::{delimited, pair, preceded, separated_pair, terminated},
 };
-
-use crate::repr::{Const, Dst, Instruction, LabelOffset, Operand, Opnd, Src, TwoOpnd};
-
-use super::repr;
 
 #[derive(Debug, foxerror::FoxError)]
 pub enum Error {
