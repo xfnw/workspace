@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use std::marker::PhantomData;
 
 #[derive(Debug, Clone, foxerror::FoxError)]
@@ -368,6 +366,7 @@ pub enum Instruction {
     /// a comment
     ///
     /// not a real opcode, will not show up in the assembled output
+    #[allow(dead_code)]
     Comment(String),
     /// define word
     ///
