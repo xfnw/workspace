@@ -125,6 +125,30 @@ fn two_opnd(inp: &str) -> IResult<&str, (Operand, Operand)> {
     separated_pair(one_opnd, tag(","), one_opnd).parse(inp)
 }
 
+fn string_value(inp: &str) -> IResult<&str, Vec<u16>> {
+    map(delimited(tag("\""), is_not("\""), tag("\"")), |s: &str| {
+        s.as_bytes().iter().map(|&c| c.into()).collect()
+    })
+    .parse(inp)
+}
+
+fn string_packed(inp: &str) -> IResult<&str, Vec<u16>> {
+    map(preceded(tag("b"), string_value), |v| {
+        v.chunks(2)
+            .map(|p| match p.len() {
+                1 => p[0],
+                2 => (p[0] << 8) + p[1],
+                _ => unreachable!(),
+            })
+            .collect()
+    })
+    .parse(inp)
+}
+
+fn number_words(inp: &str) -> IResult<&str, Vec<u16>> {
+    alt((string_value, string_packed, map(number_value, |v| vec![v]))).parse(inp)
+}
+
 #[allow(clippy::too_many_lines)]
 fn instruction(inp: &str) -> IResult<&str, Instruction> {
     // cursed alt nesting courtesy of alt only supporting up to 21
@@ -253,9 +277,9 @@ fn instruction(inp: &str) -> IResult<&str, Instruction> {
             map(
                 preceded(
                     tag("dw"),
-                    separated_list1(tag(","), delimited(space0, number_value, space0)),
+                    separated_list1(tag(","), delimited(space0, number_words, space0)),
                 ),
-                Instruction::Dw,
+                |v| Instruction::Dw(v.into_iter().flatten().collect()),
             ),
             map(
                 preceded(tag("resw"), delimited(space0, number_value, space0)),
