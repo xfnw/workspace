@@ -133,7 +133,7 @@ fn string_value(inp: &str) -> IResult<&str, Vec<u16>> {
 }
 
 fn string_packed(inp: &str) -> IResult<&str, Vec<u16>> {
-    map(preceded(tag("b"), string_value), |v| {
+    map(preceded(tag("c"), string_value), |v| {
         v.chunks(2)
             .map(|p| match p.len() {
                 1 => p[0],
