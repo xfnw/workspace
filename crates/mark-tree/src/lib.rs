@@ -121,7 +121,7 @@ impl MarkTree {
     }
 
     /// create an [`Iterator`] over the tree
-    /// 
+    ///
     /// the generic `T` is the type for expressing the path to the
     /// current node: since normal iterators do not allow returning
     /// references to themselves, we cannot give a slice like
