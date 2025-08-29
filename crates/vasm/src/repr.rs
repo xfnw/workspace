@@ -372,6 +372,24 @@ pub enum Instruction {
     /// define word
     ///
     /// not a real opcode, will output the data untouched
+    ///
+    /// this has some syntax sugar for including both packed and single
+    /// character per word strings
+    /// ```custom
+    /// dw c"mow", 0, "mow", 0
+    /// ```
+    /// which is equivalent to
+    /// ```custom
+    /// dw 0x6d6f, 0x0077, 0x0000, 0x006d, 0x006f, 0x0077, 0x0000
+    /// ```
+    /// and for including a number of zeros
+    /// ```custom
+    /// resw 6
+    /// ```
+    /// which is equivalent to
+    /// ```custom
+    /// dw 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000
+    /// ```
     Dw(Vec<u16>),
 }
 
