@@ -14,6 +14,13 @@ pub enum Error {
 pub struct Immediate(u16);
 
 impl Immediate {
+    // outside of tests, Immediate should be normally constructed with
+    // Operand::new_immediate, so that 0 and 1 will use their compact
+    // representation
+    #[cfg(test)]
+    pub fn new(n: u16) -> Self {
+        Self(n)
+    }
     pub fn value(&self) -> u16 {
         self.0
     }

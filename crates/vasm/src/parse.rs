@@ -43,6 +43,25 @@ impl std::fmt::Display for LineContext {
     }
 }
 
+#[test]
+fn test_line_context() {
+    let teststr = "yip\nyap\nyop\nyote\n";
+    assert_eq!(
+        LineContext::get_context(teststr, &teststr[8..]),
+        LineContext {
+            line: 3,
+            snippet: "yop".to_string()
+        }
+    );
+    assert_eq!(
+        LineContext::get_context(teststr, &teststr[12..]),
+        LineContext {
+            line: 4,
+            snippet: "yote".to_string()
+        }
+    );
+}
+
 #[derive(Debug, foxerror::FoxError)]
 pub enum Error {
     /// could not build internal representation
@@ -73,6 +92,12 @@ fn decimal_value(inp: &str) -> IResult<&str, u16> {
 
 fn number_value(inp: &str) -> IResult<&str, u16> {
     alt((hexadecimal_value, decimal_value)).parse(inp)
+}
+
+#[test]
+fn test_numbers() {
+    assert_eq!(number_value("1234"), Ok(("", 1234)));
+    assert_eq!(number_value("0xaaaa"), Ok(("", 0xaaaa)));
 }
 
 fn number_offset(inp: &str) -> IResult<&str, repr::Offset> {
@@ -107,6 +132,39 @@ fn label_offset(inp: &str) -> IResult<&str, LabelOffset> {
         }),
     ))
     .parse(inp)
+}
+
+#[test]
+fn test_label_offset() {
+    assert_eq!(
+        label_offset("+1234"),
+        Ok(("", LabelOffset::new(None, repr::Offset::new(1234))))
+    );
+    assert_eq!(
+        label_offset("-3456"),
+        Ok(("", LabelOffset::new(None, repr::Offset::new(-3456))))
+    );
+    assert_eq!(
+        label_offset("meow+1234"),
+        Ok((
+            "",
+            LabelOffset::new(Some("meow".to_string()), repr::Offset::new(1234))
+        ))
+    );
+    assert_eq!(
+        label_offset("meow-3456"),
+        Ok((
+            "",
+            LabelOffset::new(Some("meow".to_string()), repr::Offset::new(-3456))
+        ))
+    );
+    assert_eq!(
+        label_offset("meow"),
+        Ok((
+            "",
+            LabelOffset::new(Some("meow".to_string()), repr::Offset::new(0))
+        ))
+    );
 }
 
 fn operand(inp: &str) -> IResult<&str, Operand> {
@@ -146,12 +204,70 @@ fn label_def(inp: &str) -> IResult<&str, Instruction> {
     .parse(inp)
 }
 
+#[test]
+fn test_label_def() {
+    assert_eq!(
+        label_def("meow: woof"),
+        Ok((" woof", Instruction::LabelDef("meow".to_string())))
+    );
+}
+
 fn one_opnd(inp: &str) -> IResult<&str, Operand> {
     delimited(space0, operand, space0).parse(inp)
 }
 
 fn two_opnd(inp: &str) -> IResult<&str, (Operand, Operand)> {
     separated_pair(one_opnd, tag(","), one_opnd).parse(inp)
+}
+
+#[test]
+fn test_operands() {
+    assert_eq!(one_opnd(" A"), Ok(("", Operand::A)));
+    assert_eq!(two_opnd("B,C"), Ok(("", (Operand::B, Operand::C))));
+    assert_eq!(two_opnd(" D, PC"), Ok(("", (Operand::D, Operand::PC))));
+    assert_eq!(two_opnd("SP, [X]"), Ok(("", (Operand::SP, Operand::AtX))));
+    assert_eq!(
+        two_opnd("[Y], [X++]"),
+        Ok(("", (Operand::AtY, Operand::AtXInc)))
+    );
+    assert_eq!(
+        two_opnd("[Y++], 0"),
+        Ok(("", (Operand::AtYInc, Operand::Immed0)))
+    );
+    assert_eq!(
+        two_opnd("1, 2"),
+        Ok((
+            "",
+            (Operand::Immed1, Operand::Immediate(repr::Immediate::new(2)))
+        ))
+    );
+    assert_eq!(
+        two_opnd("[1234], meow"),
+        Ok((
+            "",
+            (
+                Operand::Mem(repr::MemoryAddress::new(1234)),
+                Operand::Rel2(LabelOffset::new(
+                    Some("meow".to_string()),
+                    repr::Offset::new(0)
+                ))
+            )
+        ))
+    );
+    assert_eq!(
+        two_opnd("[X+$3621], [Y-0x3926]"),
+        Ok((
+            "",
+            (
+                Operand::AtXn(repr::Offset::new(0x3621)),
+                Operand::AtYn(repr::Offset::new(-0x3926))
+            )
+        ))
+    );
+    assert_eq!(
+        one_opnd("SP-69"),
+        Ok(("", Operand::SPn(repr::Offset::new(-69)))),
+    );
 }
 
 fn string_value(inp: &str) -> IResult<&str, Vec<u16>> {
@@ -317,6 +433,85 @@ fn instruction(inp: &str) -> IResult<&str, Instruction> {
         )),
     ))
     .parse(inp)
+}
+
+#[test]
+fn test_instructions() {
+    macro_rules! ins {
+        ($case:expr, $($expect:tt)*) => {
+            assert_eq!(instruction($case), Ok(("", Instruction::$($expect)*)));
+        };
+    }
+    macro_rules! ins_many {
+        ($append:expr, $inner:expr, ($(($case:expr, $arm:ident)),*)) => {
+            $(
+                ins!(concat!($case, " ", $append), $arm($inner));
+            )*
+        }
+    }
+
+    ins!("nop", Nop);
+    ins!("ret", Ret);
+    ins!("halt", Halt);
+    ins_many!(
+        "621",
+        Const::new(621).unwrap(),
+        (("brk", Brk), ("sys", Sys))
+    );
+    ins_many!(
+        "A",
+        Opnd::<Src>::new(Operand::A),
+        (("jump", Jump), ("call", Call), ("push", Push))
+    );
+    ins_many!(
+        "A",
+        Opnd::<Dst>::new(Operand::A).unwrap(),
+        (("inc", Inc), ("dec", Dec), ("not", Not))
+    );
+    ins_many!(
+        "A, B",
+        TwoOpnd::<Src, Src>::new(Operand::A, Operand::B),
+        (
+            ("bnze", Bnze),
+            ("bze", Bze),
+            ("bpos", Bpos),
+            ("bneg", Bneg),
+            ("out", Out),
+            ("skne", Skne),
+            ("skeq", Skeq),
+            ("sklt", Sklt),
+            ("skgt", Skgt)
+        )
+    );
+    ins_many!(
+        "C, D",
+        TwoOpnd::<Dst, Src>::new(Operand::C, Operand::D).unwrap(),
+        (
+            ("move", Move),
+            ("add", Add),
+            ("sub", Sub),
+            ("mul", Mul),
+            ("div", Div),
+            ("and", And),
+            ("or", Or),
+            ("xor", Xor),
+            ("in", In),
+            ("dbnz", Dbnz),
+            ("mod", Mod),
+            ("shl", Shl),
+            ("shr", Shr),
+            ("addc", Addc),
+            ("mulc", Mulc),
+            ("msb", Msb)
+        )
+    );
+    ins!(
+        "xchg PC, SP",
+        Xchg(TwoOpnd::<Dst, Dst>::new(Operand::PC, Operand::SP).unwrap())
+    );
+    ins!("dw 1", Dw(vec![1]));
+    ins!("dw \"meow\", 0", Dw(vec![109, 101, 111, 119, 0]));
+    ins!("dw c\"mow\", 0", Dw(vec![0x6d6f, 0x77, 0]));
 }
 
 fn comment(inp: &str) -> IResult<&str, Instruction> {
