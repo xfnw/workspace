@@ -9,7 +9,7 @@ use nom::{
     sequence::{delimited, pair, preceded, separated_pair, terminated},
 };
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct LineContext {
     line: usize,
     snippet: String,

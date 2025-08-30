@@ -10,7 +10,7 @@ pub enum Error {
     DstSrcExclusive,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Immediate(u16);
 
 impl Immediate {
@@ -19,7 +19,7 @@ impl Immediate {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MemoryAddress(u16);
 
 impl MemoryAddress {
@@ -31,7 +31,7 @@ impl MemoryAddress {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Offset(i16);
 
 impl Offset {
@@ -43,7 +43,7 @@ impl Offset {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LabelOffset {
     name: Option<String>,
     offset: Offset,
@@ -61,7 +61,7 @@ impl LabelOffset {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Operand {
     /// data register `A`
     A,
@@ -140,7 +140,7 @@ impl Operand {
 }
 
 /// the left operand
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Opnd1(Operand);
 
 impl Opnd1 {
@@ -150,7 +150,7 @@ impl Opnd1 {
 }
 
 /// the right operand
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Opnd2(Operand);
 
 impl Opnd2 {
@@ -162,17 +162,17 @@ impl Opnd2 {
 /// generic argument for source operands
 ///
 /// source operands may have immediates
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Src;
 
 /// generic argument for destination operands
 ///
 /// destination operands cannot have immediates
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Dst;
 
 /// a single operand
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Opnd<Kind> {
     left: Opnd1,
     phantom_kind: PhantomData<Kind>,
@@ -206,7 +206,7 @@ impl Opnd<Dst> {
 }
 
 /// two operands
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TwoOpnd<LeftKind, RightKind> {
     left: Opnd1,
     right: Opnd2,
@@ -263,7 +263,7 @@ impl TwoOpnd<Dst, Dst> {
 }
 
 /// a 10 bit number
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Const(u16);
 
 impl Const {
@@ -278,7 +278,7 @@ impl Const {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Instruction {
     /// no operation
     ///
