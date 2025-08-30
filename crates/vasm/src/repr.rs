@@ -93,20 +93,32 @@ pub enum Operand {
     /// `[Y]` value at address `Y`
     AtY,
     /// `[X++]` value at address `X`, post-increment `X`
+    ///
+    /// equivalent to the in game assembler's `[X]++`
     AtXInc,
     /// `[Y++]` value at address `Y`, post-increment `Y`
+    ///
+    /// equivalent to the in game assembler's `[Y]++`
     AtYInc,
     /// `0` a more compact representation of immediate 0
+    ///
+    /// equivalent to the in game assembler's `#0`
     Immed0,
     /// `1` a more compact representation of immediate 1
+    ///
+    /// equivalent to the in game assembler's `#1`
     Immed1,
     /// `n` an immediate value
     ///
     /// takes an extra word
+    ///
+    /// equivalent to the in game assembler's `#n`
     Immediate(Immediate),
     /// `[n]` value at address
     ///
     /// takes an extra word
+    ///
+    /// equivalent to the in game assembler's `n`
     Mem(MemoryAddress),
     /// `[SP+n]` value at address of stack pointer plus offset
     ///

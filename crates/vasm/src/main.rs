@@ -1,3 +1,5 @@
+//! see [`repr::Operand`] and [`repr::Instruction`] for information about the assembly syntax
+
 use argh::{FromArgs, from_env};
 use std::{io::Write, path::PathBuf, process::ExitCode};
 
@@ -6,7 +8,7 @@ mod h16;
 mod parse;
 mod repr;
 
-/// a toy vm16 assembler
+/// vulpine's vm16 assembler
 #[derive(Debug, FromArgs)]
 #[argh(help_triggers("-h", "--help"))]
 struct Opt {

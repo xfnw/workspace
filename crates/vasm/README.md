@@ -2,6 +2,7 @@
 i did not like the syntax of the in game assembler, so i made my own
 
 notable features include:
+- a more intel-ish syntax
 - automatically detecting `sk{ne,eq,lt,gt}` misalignment mistakes
 - somewhat cursed parsing that does not require newlines anywhere
   except after line comments
