@@ -1,4 +1,4 @@
-use crate::repr::{Instruction, Operand, Opnd, Opnd1, Opnd2, TwoOpnd};
+use crate::repr::{Const, Instruction, Operand, Opnd, Opnd1, Opnd2, TwoOpnd};
 use std::collections::BTreeMap;
 
 /// helper trait for calculating relative offsets
@@ -251,6 +251,12 @@ impl<L, R> AssPart for TwoOpnd<L, R> {
     }
 }
 
+impl AssPart for Const {
+    fn part(&self, _loc: u16, _labels: &BTreeMap<String, u16>) -> Result<(u16, Extra), Error> {
+        Ok((self.value(), Extra::None))
+    }
+}
+
 #[allow(clippy::too_many_lines)]
 fn assemble_one(
     loc: u16,
@@ -260,8 +266,14 @@ fn assemble_one(
     // FIXME: generate this mess with a macro or something
     let (flags, extra) = match instruction {
         Instruction::Nop => (0x0000, Extra::None),
-        Instruction::Brk(c) => (0x0400 + c.value(), Extra::None),
-        Instruction::Sys(c) => (0x0800 + c.value(), Extra::None),
+        Instruction::Brk(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x0400 + f, e)
+        }
+        Instruction::Sys(o) => {
+            let (f, e) = o.part(loc, labels)?;
+            (0x0800 + f, e)
+        }
         Instruction::Jump(o) => {
             let (f, e) = o.part(loc, labels)?;
             (0x1000 + f, e)
