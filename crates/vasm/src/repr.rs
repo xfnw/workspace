@@ -405,15 +405,12 @@ pub enum Instruction {
     /// ```custom
     /// dw 0x6d6f, 0x0077, 0x0000, 0x006d, 0x006f, 0x0077, 0x0000
     /// ```
-    /// and for including a number of zeros
-    /// ```custom
-    /// resw 6
-    /// ```
-    /// which is equivalent to
-    /// ```custom
-    /// dw 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000
-    /// ```
     Dw(Vec<u16>),
+    /// reserve a number of words without specifying the contents
+    ///
+    /// not a real opcode, may output zeros or leave what was there
+    /// previously untouched
+    Resw(u16),
 }
 
 // TODO: pretty print instead of just using debug

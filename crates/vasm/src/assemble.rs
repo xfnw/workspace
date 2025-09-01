@@ -96,6 +96,7 @@ impl AssSize for Instruction {
             | Self::Skgt(i) => 1 + i.size(),
             Self::LabelDef(_) | Self::Comment(_) => 0,
             Self::Dw(v) => v.len(),
+            Self::Resw(n) => *n as usize,
         }
     }
 }
@@ -311,6 +312,7 @@ fn assemble_one(
         Instruction::Msb(o) => opart!(0x9c00, o),
         Instruction::LabelDef(_) | Instruction::Comment(_) => return Ok(vec![]),
         Instruction::Dw(v) => return Ok(v.clone()),
+        Instruction::Resw(n) => return Ok(vec![0; *n as usize]),
     };
 
     let mut out = vec![flags];
@@ -328,7 +330,7 @@ fn assemble_one(
 
 pub fn assemble(rep: Vec<Instruction>) -> Result<Vec<u16>, Error> {
     let mut labels = BTreeMap::new();
-    let loc = rep
+    let mut loc = rep
         .into_iter()
         .scan((0u16, None), |(statepos, skt), i| {
             let pos = *statepos;
@@ -367,6 +369,11 @@ pub fn assemble(rep: Vec<Instruction>) -> Result<Vec<u16>, Error> {
             Some(Ok((pos, i)))
         })
         .collect::<Result<Vec<_>, _>>()?;
+
+    while loc
+        .pop_if(|(_, i)| matches!(i, Instruction::Resw(_)) || i.size() == 0)
+        .is_some()
+    {}
 
     let mut out = vec![];
 

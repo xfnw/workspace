@@ -428,7 +428,7 @@ fn instruction(inp: &str) -> IResult<&str, Instruction> {
             ),
             map(
                 preceded(tag("resw"), delimited(space0, number_value, space0)),
-                |n| Instruction::Dw(vec![0; n.into()]),
+                Instruction::Resw,
             ),
         )),
     ))
@@ -512,7 +512,7 @@ fn test_instructions() {
     ins!("dw 1", Dw(vec![1]));
     ins!("dw \"meow\", 0", Dw(vec![109, 101, 111, 119, 0]));
     ins!("dw c\"mow\", 0", Dw(vec![0x6d6f, 0x77, 0]));
-    ins!("resw 6", Dw(vec![0; 6]));
+    ins!("resw 6", Resw(6));
 }
 
 fn comment(inp: &str) -> IResult<&str, Instruction> {
