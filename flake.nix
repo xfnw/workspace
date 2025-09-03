@@ -42,7 +42,7 @@
             '';
             doInstallCargoArtifacts = true;
           });
-        src = crane'.cleanCargoSource ./.;
+        src = ./.;
         common = {
           pname = "workspace";
           version = "0";
