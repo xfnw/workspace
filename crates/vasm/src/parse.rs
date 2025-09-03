@@ -3,7 +3,7 @@ use nom::{
     Err, IResult, Parser,
     branch::alt,
     bytes::complete::{is_not, tag},
-    character::complete::{alpha1, alphanumeric1, multispace0, one_of, space0},
+    character::complete::{alpha1, alphanumeric1, multispace0, one_of, space0, space1},
     combinator::{complete, map, map_res, opt, recognize, value},
     multi::{many0, many1, separated_list1},
     sequence::{delimited, pair, preceded, separated_pair, terminated},
@@ -213,36 +213,36 @@ fn test_label_def() {
 }
 
 fn one_opnd(inp: &str) -> IResult<&str, Operand> {
-    delimited(space0, operand, space0).parse(inp)
+    delimited(space1, operand, space0).parse(inp)
 }
 
 fn two_opnd(inp: &str) -> IResult<&str, (Operand, Operand)> {
-    separated_pair(one_opnd, tag(","), one_opnd).parse(inp)
+    separated_pair(one_opnd, tag(","), delimited(space0, operand, space0)).parse(inp)
 }
 
 #[test]
 fn test_operands() {
     assert_eq!(one_opnd(" A"), Ok(("", Operand::A)));
-    assert_eq!(two_opnd("B,C"), Ok(("", (Operand::B, Operand::C))));
+    assert_eq!(two_opnd(" B,C"), Ok(("", (Operand::B, Operand::C))));
     assert_eq!(two_opnd(" D, PC"), Ok(("", (Operand::D, Operand::PC))));
-    assert_eq!(two_opnd("SP, [X]"), Ok(("", (Operand::SP, Operand::AtX))));
+    assert_eq!(two_opnd(" SP, [X]"), Ok(("", (Operand::SP, Operand::AtX))));
     assert_eq!(
-        two_opnd("[Y], [X++]"),
+        two_opnd(" [Y], [X++]"),
         Ok(("", (Operand::AtY, Operand::AtXInc)))
     );
     assert_eq!(
-        two_opnd("[Y++], 0"),
+        two_opnd(" [Y++], 0"),
         Ok(("", (Operand::AtYInc, Operand::Immed0)))
     );
     assert_eq!(
-        two_opnd("1, 2"),
+        two_opnd(" 1, 2"),
         Ok((
             "",
             (Operand::Immed1, Operand::Immediate(repr::Immediate::new(2)))
         ))
     );
     assert_eq!(
-        two_opnd("[1234], meow"),
+        two_opnd(" [1234], meow"),
         Ok((
             "",
             (
@@ -255,7 +255,7 @@ fn test_operands() {
         ))
     );
     assert_eq!(
-        two_opnd("[X+$3621], [Y-0x3926]"),
+        two_opnd(" [X+$3621], [Y-0x3926]"),
         Ok((
             "",
             (
@@ -265,7 +265,7 @@ fn test_operands() {
         ))
     );
     assert_eq!(
-        one_opnd("SP-69"),
+        one_opnd(" SP-69"),
         Ok(("", Operand::SPn(repr::Offset::new(-69)))),
     );
 }
@@ -300,17 +300,15 @@ fn instruction(inp: &str) -> IResult<&str, Instruction> {
     // items per tuple and rust's opaque types for closures making
     // using an array difficult
     // FIXME: generate this mess with a macro or something
-    // FIXME: should probably require whitespace after instructions
-    // with operands
     alt((
         alt((
             value(Instruction::Nop, tag("nop")),
             map_res(
-                preceded(tag("brk"), delimited(space0, number_value, space0)),
+                preceded(tag("brk"), delimited(space1, number_value, space0)),
                 |n| Const::new(n).map(Instruction::Brk),
             ),
             map_res(
-                preceded(tag("sys"), delimited(space0, number_value, space0)),
+                preceded(tag("sys"), delimited(space1, number_value, space0)),
                 |n| Const::new(n).map(Instruction::Sys),
             ),
             map(preceded(tag("jump"), one_opnd), |l| {
@@ -422,12 +420,12 @@ fn instruction(inp: &str) -> IResult<&str, Instruction> {
             map(
                 preceded(
                     tag("dw"),
-                    separated_list1(tag(","), delimited(space0, number_words, space0)),
+                    separated_list1(tag(","), delimited(space1, number_words, space0)),
                 ),
                 |v| Instruction::Dw(v.into_iter().flatten().collect()),
             ),
             map(
-                preceded(tag("resw"), delimited(space0, number_value, space0)),
+                preceded(tag("resw"), delimited(space1, number_value, space0)),
                 Instruction::Resw,
             ),
         )),
