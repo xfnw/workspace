@@ -27,17 +27,23 @@ fn snapshot(name: &str, h: u16) {
     assert_eq!(lines.next(), None);
 }
 
-#[test]
-fn chal1() {
-    snapshot("chal1", 0);
+macro_rules! snap {
+    ($name:ident, $offset:expr) => {
+        #[test]
+        fn $name() {
+            snapshot(stringify!($name), $offset);
+        }
+    };
+    ($name:ident) => {
+        snap!($name, 0);
+    };
 }
 
-#[test]
-fn hwrite() {
-    snapshot("hwrite", 0);
-}
+snap!(chal1);
+snap!(chal2);
+snap!(chal3);
+snap!(chal4);
+snap!(chal5);
 
-#[test]
-fn uninit() {
-    snapshot("uninit", 0xfffe);
-}
+snap!(hwrite);
+snap!(uninit, 0xfffe);
