@@ -26,6 +26,12 @@ impl Immediate {
     }
 }
 
+impl fmt::Display for Immediate {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:#x}", self.0)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct MemoryAddress(u16);
 
@@ -38,6 +44,12 @@ impl MemoryAddress {
     }
 }
 
+impl fmt::Display for MemoryAddress {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:#x}", self.0)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Offset(i16);
 
@@ -47,6 +59,12 @@ impl Offset {
     }
     pub fn value(&self) -> i16 {
         self.0
+    }
+}
+
+impl fmt::Display for Offset {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:+}", self.0)
     }
 }
 
@@ -65,6 +83,18 @@ impl LabelOffset {
     }
     pub fn offset(&self) -> &Offset {
         &self.offset
+    }
+}
+
+impl fmt::Display for LabelOffset {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(name) = &self.name {
+            write!(f, "{name}")?;
+        }
+        if self.name.is_none() || self.offset.0 != 0 {
+            write!(f, "{}", self.offset)?;
+        }
+        Ok(())
     }
 }
 
@@ -158,6 +188,38 @@ impl Operand {
     }
 }
 
+impl fmt::Display for Operand {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::A => "A",
+                Self::B => "B",
+                Self::C => "C",
+                Self::D => "D",
+                Self::X => "X",
+                Self::Y => "Y",
+                Self::PC => "PC",
+                Self::SP => "SP",
+                Self::AtX => "[X]",
+                Self::AtY => "[Y]",
+                Self::AtXInc => "[X++]",
+                Self::AtYInc => "[Y++]",
+                Self::Immed0 => "0",
+                Self::Immed1 => "1",
+                Self::Immediate(i) => return write!(f, "{i}"),
+                Self::Mem(i) => return write!(f, "[{i}]"),
+                Self::AtSPn(i) => return write!(f, "[SP{i}]"),
+                Self::Rel2(i) => return write!(f, "{i}"),
+                Self::AtXn(i) => return write!(f, "[X{i}]"),
+                Self::AtYn(i) => return write!(f, "[Y{i}]"),
+                Self::SPn(i) => return write!(f, "SP{i}"),
+            }
+        )
+    }
+}
+
 /// the left operand
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Opnd1(Operand);
@@ -224,6 +286,12 @@ impl Opnd<Dst> {
     }
 }
 
+impl<Kind> fmt::Display for Opnd<Kind> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.left.0)
+    }
+}
+
 /// two operands
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TwoOpnd<LeftKind, RightKind> {
@@ -281,6 +349,11 @@ impl TwoOpnd<Dst, Dst> {
     }
 }
 
+impl<L, R> fmt::Display for TwoOpnd<L, R> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}, {}", self.left.0, self.right.0)
+    }
+}
 /// a 10 bit number
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Const(u16);
@@ -294,6 +367,12 @@ impl Const {
     }
     pub fn value(&self) -> u16 {
         self.0
+    }
+}
+
+impl fmt::Display for Const {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:#x}", self.0)
     }
 }
 
@@ -390,7 +469,6 @@ pub enum Instruction {
     /// a comment
     ///
     /// not a real opcode, will not show up in the assembled output
-    #[allow(dead_code)]
     Comment(String),
     /// define word
     ///
@@ -413,10 +491,70 @@ pub enum Instruction {
     Resw(u16),
 }
 
-// TODO: pretty print instead of just using debug
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{self:?}")
+        macro_rules! w {
+            ($fmt:expr, $($arg:tt)*) => {
+                writeln!(f, concat!("\t", $fmt), $($arg)*)
+            };
+            ($fmt:expr) => {
+                w!($fmt,)
+            };
+        }
+
+        match self {
+            Self::Nop => w!("nop"),
+            Self::Brk(o) => w!("brk {}", o),
+            Self::Sys(o) => w!("sys {}", o),
+            Self::Jump(o) => w!("jump {}", o),
+            Self::Call(o) => w!("call {}", o),
+            Self::Ret => w!("ret"),
+            Self::Halt => w!("halt"),
+            Self::Move(o) => w!("move {}", o),
+            Self::Xchg(o) => w!("xchg {}", o),
+            Self::Inc(o) => w!("inc {}", o),
+            Self::Dec(o) => w!("dec {}", o),
+            Self::Add(o) => w!("add {}", o),
+            Self::Sub(o) => w!("sub {}", o),
+            Self::Mul(o) => w!("mul {}", o),
+            Self::Div(o) => w!("div {}", o),
+            Self::And(o) => w!("and {}", o),
+            Self::Or(o) => w!("or {}", o),
+            Self::Xor(o) => w!("xor {}", o),
+            Self::Not(o) => w!("not {}", o),
+            Self::Bnze(o) => w!("bnze {}", o),
+            Self::Bze(o) => w!("bze {}", o),
+            Self::Bpos(o) => w!("bpos {}", o),
+            Self::Bneg(o) => w!("bneg {}", o),
+            Self::In(o) => w!("in {}", o),
+            Self::Out(o) => w!("out {}", o),
+            Self::Push(o) => w!("push {}", o),
+            Self::Pop(o) => w!("pop {}", o),
+            Self::Swap(o) => w!("swap {}", o),
+            Self::Dbnz(o) => w!("swap {}", o),
+            Self::Mod(o) => w!("mod {}", o),
+            Self::Shl(o) => w!("shl {}", o),
+            Self::Shr(o) => w!("shr {}", o),
+            Self::Mulc(o) => w!("mulc {}", o),
+            Self::Skne(o) => w!("skne {}", o),
+            Self::Skeq(o) => w!("skeq {}", o),
+            Self::Sklt(o) => w!("sklt {}", o),
+            Self::Skgt(o) => w!("skgt {}", o),
+            Self::Addc(o) => w!("addc {}", o),
+            Self::Msb(o) => w!("msb {}", o),
+            Self::LabelDef(n) => writeln!(f, "{n}:"),
+            Self::Comment(o) => w!(";{}", o),
+            Self::Dw(v) => {
+                write!(f, "dw")?;
+                let mut sep = " ";
+                for i in v {
+                    write!(f, "{sep}{i:#x}")?;
+                    sep = ", ";
+                }
+                writeln!(f)
+            }
+            Self::Resw(o) => w!("resw {}", o),
+        }
     }
 }
 
