@@ -426,7 +426,10 @@ fn instruction(inp: &str) -> IResult<&str, Instruction> {
             map(
                 preceded(
                     tag("dw"),
-                    separated_list1(tag(","), delimited(space1, number_words, space0)),
+                    preceded(
+                        space1,
+                        separated_list1(tag(","), delimited(space0, number_words, space0)),
+                    ),
                 ),
                 |v| Instruction::Dw(v.into_iter().flatten().collect()),
             ),

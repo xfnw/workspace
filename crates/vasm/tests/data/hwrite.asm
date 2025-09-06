@@ -8,4 +8,4 @@
 
 msg:	dw "now with string support!", 0
 cmsg:	dw c"and packed strings too!", 0
-hmsg:	dw 'h', 0
+hmsg:	dw 'h',0
