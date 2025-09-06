@@ -3,7 +3,7 @@ use nom::{
     Err, IResult, Parser,
     branch::alt,
     bytes::complete::{is_not, tag},
-    character::complete::{alpha1, alphanumeric1, multispace0, one_of, space0, space1},
+    character::complete::{alpha1, alphanumeric1, anychar, multispace0, one_of, space0, space1},
     combinator::{complete, map, map_res, opt, recognize, value},
     multi::{many0, many1, separated_list1},
     sequence::{delimited, pair, preceded, separated_pair, terminated},
@@ -90,8 +90,12 @@ fn decimal_value(inp: &str) -> IResult<&str, u16> {
     .parse(inp)
 }
 
+fn char_value(inp: &str) -> IResult<&str, u16> {
+    map(delimited(tag("'"), anychar, tag("'")), |out| out as u16).parse(inp)
+}
+
 fn number_value(inp: &str) -> IResult<&str, u16> {
-    alt((hexadecimal_value, decimal_value)).parse(inp)
+    alt((hexadecimal_value, decimal_value, char_value)).parse(inp)
 }
 
 #[test]
