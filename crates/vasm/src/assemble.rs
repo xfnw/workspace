@@ -1,4 +1,4 @@
-use crate::repr::{Const, Instruction, Operand, Opnd, Opnd1, Opnd2, TwoOpnd};
+use crate::repr::{Const, Instruction, Instructions, Operand, Opnd, Opnd1, Opnd2, TwoOpnd};
 use std::collections::BTreeMap;
 
 /// helper trait for calculating relative offsets
@@ -328,9 +328,10 @@ fn assemble_one(
     Ok(out)
 }
 
-pub fn assemble(rep: Vec<Instruction>) -> Result<Vec<u16>, Error> {
+pub fn assemble(rep: Instructions) -> Result<Vec<u16>, Error> {
     let mut labels = BTreeMap::new();
     let mut loc = rep
+        .0
         .into_iter()
         .scan((0u16, None), |(statepos, skt), i| {
             let pos = *statepos;

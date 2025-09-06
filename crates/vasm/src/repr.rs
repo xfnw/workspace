@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use std::{fmt, marker::PhantomData};
 
 #[derive(Debug, Clone, foxerror::FoxError)]
 pub enum Error {
@@ -414,8 +414,19 @@ pub enum Instruction {
 }
 
 // TODO: pretty print instead of just using debug
-impl std::fmt::Display for Instruction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for Instruction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{self:?}")
+    }
+}
+
+pub struct Instructions(pub Vec<Instruction>);
+
+impl fmt::Display for Instructions {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for i in &self.0 {
+            write!(f, "{i}")?;
+        }
+        Ok(())
     }
 }

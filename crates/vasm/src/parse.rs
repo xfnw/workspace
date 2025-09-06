@@ -1,4 +1,6 @@
-use crate::repr::{self, Const, Dst, Instruction, LabelOffset, Operand, Opnd, Src, TwoOpnd};
+use crate::repr::{
+    self, Const, Dst, Instruction, Instructions, LabelOffset, Operand, Opnd, Src, TwoOpnd,
+};
 use nom::{
     Err, IResult, Parser,
     branch::alt,
@@ -536,7 +538,7 @@ fn document(inp: &str) -> IResult<&str, Vec<Instruction>> {
     .parse(inp)
 }
 
-pub fn parse(inp: &str) -> Result<Vec<Instruction>, Error> {
+pub fn parse(inp: &str) -> Result<Instructions, Error> {
     let (tail, out) = document(inp).map_err(|e| {
         let inner = match e {
             Err::Error(i) | Err::Failure(i) => i,
@@ -549,5 +551,5 @@ pub fn parse(inp: &str) -> Result<Vec<Instruction>, Error> {
     if !tail.is_empty() {
         return Err(LineContext::get_context(inp, tail).into());
     }
-    Ok(out)
+    Ok(Instructions(out))
 }
