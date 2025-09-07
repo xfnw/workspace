@@ -545,7 +545,7 @@ impl fmt::Display for Instruction {
             Self::LabelDef(n) => write!(f, "{n}:"),
             Self::Comment(o) => w!(";{}", o),
             Self::Dw(v) => {
-                write!(f, "dw")?;
+                write!(f, "\tdw")?;
                 let mut sep = " ";
                 for i in v {
                     write!(f, "{sep}{i:#x}")?;
