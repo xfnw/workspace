@@ -129,43 +129,42 @@ fn right_opnd(v: u16, c: &[u16]) -> Option<(Operand, &[u16])> {
     ))
 }
 
-fn disassemble_one(c: &[u16]) -> Option<(Instruction, &[u16])> {
-    let (&f, rest) = c.split_first()?;
+fn disassemble_instruction(f: u16, rest: &[u16]) -> Option<(Instruction, &[u16])> {
     let instr = f & (((1 << 6) - 1) << 10);
     let flags = f & ((1 << 10) - 1);
 
     macro_rules! opnd {
         ($inst:ident, Src) => {{
             let (operand, rest) = left_opnd(flags, rest)?;
-            Some((Instruction::$inst(Opnd::<Src>::new(operand)), rest))
+            (Instruction::$inst(Opnd::<Src>::new(operand)), rest)
         }};
         ($inst:ident, $kind:ident) => {{
             let (operand, rest) = left_opnd(flags, rest)?;
-            Some((Instruction::$inst(Opnd::<$kind>::new(operand).ok()?), rest))
+            (Instruction::$inst(Opnd::<$kind>::new(operand).ok()?), rest)
         }};
         ($inst:ident, Src, Src) => {{
             let (o1, rest) = left_opnd(flags, rest)?;
             let (o2, rest) = right_opnd(flags, rest)?;
-            Some((Instruction::$inst(TwoOpnd::<Src, Src>::new(o1, o2)), rest))
+            (Instruction::$inst(TwoOpnd::<Src, Src>::new(o1, o2)), rest)
         }};
         ($inst:ident, $left:ident, $right:ident) => {{
             let (o1, rest) = left_opnd(flags, rest)?;
             let (o2, rest) = right_opnd(flags, rest)?;
-            Some((
+            (
                 Instruction::$inst(TwoOpnd::<$left, $right>::new(o1, o2).ok()?),
                 rest,
-            ))
+            )
         }};
     }
 
-    match instr {
-        0x0000 => (flags == 0).then_some((Instruction::Nop, rest)),
-        0x0400 => Some((Instruction::Brk(Const::new(flags).unwrap()), rest)),
-        0x0800 => Some((Instruction::Sys(Const::new(flags).unwrap()), rest)),
+    Some(match instr {
+        0x0000 => return (flags == 0).then_some((Instruction::Nop, rest)),
+        0x0400 => (Instruction::Brk(Const::new(flags).unwrap()), rest),
+        0x0800 => (Instruction::Sys(Const::new(flags).unwrap()), rest),
         0x1000 => opnd!(Jump, Src),
         0x1400 => opnd!(Call, Src),
-        0x1800 => (flags == 0).then_some((Instruction::Ret, rest)),
-        0x1c00 => (flags == 0).then_some((Instruction::Halt, rest)),
+        0x1800 => return (flags == 0).then_some((Instruction::Ret, rest)),
+        0x1c00 => return (flags == 0).then_some((Instruction::Halt, rest)),
         0x2000 => opnd!(Move, Dst, Src),
         0x2400 => opnd!(Xchg, Dst, Dst),
         0x2800 => opnd!(Inc, Dst),
@@ -198,9 +197,13 @@ fn disassemble_one(c: &[u16]) -> Option<(Instruction, &[u16])> {
         0x9400 => opnd!(Sklt, Src, Src),
         0x9800 => opnd!(Skgt, Src, Src),
         0x9c00 => opnd!(Msb, Dst, Src),
-        _ => None,
-    }
-    .or(Some((Instruction::Dw(vec![f]), rest)))
+        _ => return None,
+    })
+}
+
+fn disassemble_one(c: &[u16]) -> Option<(Instruction, &[u16])> {
+    let (&f, rest) = c.split_first()?;
+    disassemble_instruction(f, rest).or(Some((Instruction::Dw(vec![f]), rest)))
 }
 
 pub fn disassemble(bytes: &[u16]) -> Instructions {
