@@ -21,7 +21,7 @@ struct Opt {
     #[argh(option, arg_name = "start", from_str_fn(parse_hex16))]
     h16: Option<u16>,
     #[argh(positional)]
-    file: PathBuf,
+    file: Option<PathBuf>,
 }
 
 #[derive(Debug, foxerror::FoxError)]
@@ -42,7 +42,11 @@ fn parse_hex16(inp: &str) -> Result<u16, String> {
 }
 
 fn run(opt: &Opt) -> Result<(), Error> {
-    let input = std::fs::read_to_string(&opt.file)?;
+    let input = if let Some(file) = &opt.file {
+        std::fs::read_to_string(file)?
+    } else {
+        std::io::read_to_string(std::io::stdin())?
+    };
     let assembled = assemble::assemble(parse::parse(&input)?)?;
 
     if let Some(output) = &opt.output {
