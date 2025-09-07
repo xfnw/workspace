@@ -285,7 +285,7 @@ fn assemble_one(
         Instruction::Add(o) => opart!(0x3000, o),
         Instruction::Sub(o) => opart!(0x3400, o),
         Instruction::Mul(o) => opart!(0x3800, o),
-        Instruction::Div(o) => opart!(0x3C00, o),
+        Instruction::Div(o) => opart!(0x3c00, o),
         Instruction::And(o) => opart!(0x4000, o),
         Instruction::Or(o) => opart!(0x4400, o),
         Instruction::Xor(o) => opart!(0x4800, o),
