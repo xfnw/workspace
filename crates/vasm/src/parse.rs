@@ -244,7 +244,10 @@ fn test_operands() {
         two_opnd(" 1, 2"),
         Ok((
             "",
-            (Operand::Immed1, Operand::Immediate(repr::Immediate::new(2)))
+            (
+                Operand::Immed1,
+                Operand::Immediate(repr::Immediate::new(2).unwrap())
+            )
         ))
     );
     assert_eq!(
