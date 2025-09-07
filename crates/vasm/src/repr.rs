@@ -495,7 +495,7 @@ impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         macro_rules! w {
             ($fmt:expr, $($arg:tt)*) => {
-                writeln!(f, concat!("\t", $fmt), $($arg)*)
+                write!(f, concat!("\t", $fmt), $($arg)*)
             };
             ($fmt:expr) => {
                 w!($fmt,)
@@ -542,7 +542,7 @@ impl fmt::Display for Instruction {
             Self::Skgt(o) => w!("skgt {}", o),
             Self::Addc(o) => w!("addc {}", o),
             Self::Msb(o) => w!("msb {}", o),
-            Self::LabelDef(n) => writeln!(f, "{n}:"),
+            Self::LabelDef(n) => write!(f, "{n}:"),
             Self::Comment(o) => w!(";{}", o),
             Self::Dw(v) => {
                 write!(f, "dw")?;
@@ -551,7 +551,7 @@ impl fmt::Display for Instruction {
                     write!(f, "{sep}{i:#x}")?;
                     sep = ", ";
                 }
-                writeln!(f)
+                Ok(())
             }
             Self::Resw(o) => w!("resw {}", o),
         }
@@ -563,7 +563,7 @@ pub struct Instructions(pub Vec<Instruction>);
 impl fmt::Display for Instructions {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for i in &self.0 {
-            write!(f, "{i}")?;
+            writeln!(f, "{i}")?;
         }
         Ok(())
     }
