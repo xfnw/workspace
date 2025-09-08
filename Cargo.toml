@@ -5,6 +5,7 @@ members = ["crates/*"]
 [workspace.lints.clippy]
 pedantic = "warn"
 use_self = "warn"
+or_fun_call = "warn"
 
 [profile.smol]
 inherits = "release"

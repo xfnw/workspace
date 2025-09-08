@@ -203,7 +203,7 @@ fn disassemble_instruction(f: u16, rest: &[u16]) -> Option<(Instruction, &[u16])
 
 fn disassemble_one(c: &[u16]) -> Option<(Instruction, &[u16])> {
     let (&f, rest) = c.split_first()?;
-    disassemble_instruction(f, rest).or(Some((Instruction::Dw(vec![f]), rest)))
+    disassemble_instruction(f, rest).or_else(|| Some((Instruction::Dw(vec![f]), rest)))
 }
 
 pub fn disassemble(bytes: &[u16]) -> Instructions {
