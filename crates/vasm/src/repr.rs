@@ -532,7 +532,7 @@ impl fmt::Display for Instruction {
             Self::Push(o) => w!("push {}", o),
             Self::Pop(o) => w!("pop {}", o),
             Self::Swap(o) => w!("swap {}", o),
-            Self::Dbnz(o) => w!("swap {}", o),
+            Self::Dbnz(o) => w!("dbnz {}", o),
             Self::Mod(o) => w!("mod {}", o),
             Self::Shl(o) => w!("shl {}", o),
             Self::Shr(o) => w!("shr {}", o),
