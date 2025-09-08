@@ -2,7 +2,7 @@ use crate::repr::{Const, Instruction, Instructions, Operand, Opnd, Opnd1, Opnd2,
 use std::collections::BTreeMap;
 
 /// helper trait for calculating relative offsets
-trait AssSize {
+pub trait AssSize {
     /// the number of words taken up by machine code after being
     /// assembled
     fn size(&self) -> usize;
@@ -328,7 +328,7 @@ fn assemble_one(
     Ok(out)
 }
 
-enum SkAlign {
+pub enum SkAlign {
     None,
     One,
     OneOne,
@@ -336,14 +336,14 @@ enum SkAlign {
 }
 
 impl SkAlign {
-    fn will_misalign(&self, size: u16) -> bool {
+    pub fn will_misalign(&self, size: u16) -> bool {
         match self {
             Self::None => false,
             Self::One | Self::OneOne => size > 1,
             Self::Two => size > 2,
         }
     }
-    fn advance(&mut self, size: u16, is_skip: bool) {
+    pub fn advance(&mut self, size: u16, is_skip: bool) {
         *self = match (&self, size, is_skip) {
             (Self::None, _, false)
             | (Self::One, 1.., false)

@@ -1,8 +1,11 @@
 #![allow(clippy::cast_possible_wrap)]
 
-use crate::repr::{
-    Const, Dst, Immediate, Instruction, Instructions, LabelOffset, MemoryAddress, Offset, Operand,
-    Opnd, Src, TwoOpnd,
+use crate::{
+    assemble::{AssSize, SkAlign},
+    repr::{
+        Const, Dst, Immediate, Instruction, Instructions, LabelOffset, MemoryAddress, Offset,
+        Operand, Opnd, Src, TwoOpnd,
+    },
 };
 
 fn left_opnd(v: u16, c: &[u16]) -> Option<(Operand, &[u16])> {
@@ -211,10 +214,20 @@ fn disassemble_instruction(f: u16, rest: &[u16]) -> Option<(Instruction, &[u16])
 pub fn disassemble(bytes: &[u16]) -> Instructions {
     let mut out = vec![];
     let mut cursor = bytes;
+    let mut skt = SkAlign::None;
 
     while let Some((&f, rest)) = cursor.split_first() {
-        let (ins, rest) =
-            disassemble_instruction(f, rest).unwrap_or_else(|| (Instruction::Dw(vec![f]), rest));
+        let (ins, rest) = disassemble_instruction(f, rest)
+            .filter(|(i, _)| {
+                #[allow(clippy::cast_possible_truncation)]
+                let fits = !skt.will_misalign(i.size() as u16);
+                fits
+            })
+            .unwrap_or_else(|| (Instruction::Dw(vec![f]), rest));
+
+        #[allow(clippy::cast_possible_truncation)]
+        skt.advance(ins.size() as u16, ins.is_skip());
+
         out.push(ins);
         cursor = rest;
     }
