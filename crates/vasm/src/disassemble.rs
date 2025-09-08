@@ -218,15 +218,10 @@ pub fn disassemble(bytes: &[u16]) -> Instructions {
 
     while let Some((&f, rest)) = cursor.split_first() {
         let (ins, rest) = disassemble_instruction(f, rest)
-            .filter(|(i, _)| {
-                #[allow(clippy::cast_possible_truncation)]
-                let fits = !skt.will_misalign(i.size() as u16);
-                fits
-            })
+            .filter(|(i, _)| !skt.will_misalign(i.size()))
             .unwrap_or_else(|| (Instruction::Dw(vec![f]), rest));
 
-        #[allow(clippy::cast_possible_truncation)]
-        skt.advance(ins.size() as u16, ins.is_skip());
+        skt.advance(ins.size(), ins.is_skip());
 
         out.push(ins);
         cursor = rest;

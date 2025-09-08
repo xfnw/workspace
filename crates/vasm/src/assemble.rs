@@ -336,14 +336,14 @@ pub enum SkAlign {
 }
 
 impl SkAlign {
-    pub fn will_misalign(&self, size: u16) -> bool {
+    pub fn will_misalign(&self, size: usize) -> bool {
         match self {
             Self::None => false,
             Self::One | Self::OneOne => size > 1,
             Self::Two => size > 2,
         }
     }
-    pub fn advance(&mut self, size: u16, is_skip: bool) {
+    pub fn advance(&mut self, size: usize, is_skip: bool) {
         *self = match (&self, size, is_skip) {
             (Self::None, _, false)
             | (Self::One, 1.., false)
@@ -372,7 +372,7 @@ pub fn assemble(rep: Instructions) -> Result<Vec<u16>, Error> {
             } else {
                 return Some(Err(Error::CodeTooLong));
             };
-            if skt.will_misalign(size) && !matches!(i, Instruction::Dw(_)) {
+            if skt.will_misalign(size.into()) && !matches!(i, Instruction::Dw(_)) {
                 return Some(Err(Error::SkMisalignment(i)));
             }
             if let Instruction::LabelDef(ref def) = i
@@ -381,7 +381,7 @@ pub fn assemble(rep: Instructions) -> Result<Vec<u16>, Error> {
                 return Some(Err(Error::DuplicateLabel(def.clone())));
             }
 
-            skt.advance(size, i.is_skip());
+            skt.advance(size.into(), i.is_skip());
 
             Some(Ok((pos, i)))
         })
