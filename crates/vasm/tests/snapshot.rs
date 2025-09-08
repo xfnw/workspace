@@ -27,11 +27,51 @@ fn snapshot(name: &str, h: u16) {
     assert_eq!(lines.next(), None);
 }
 
+fn roundtrip(name: &str, h: u16) {
+    let testname = Path::new(DATA_DIR).join(name);
+    let testdata = testname.with_extension("h16");
+    let mut ass = Command::new(BIN)
+        .arg("--h16")
+        .arg(format!("{h:x}"))
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+
+    let dis = Command::new(BIN)
+        .arg("-d")
+        .arg("--h16")
+        .arg(format!("{h:x}"))
+        .arg(&testdata)
+        .stdout(ass.stdin.take().unwrap())
+        .output()
+        .unwrap();
+
+    assert!(dis.status.success());
+    assert!(dis.stderr.is_empty());
+
+    let output = ass.wait_with_output().unwrap();
+
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+
+    let output = String::from_utf8(output.stdout).unwrap();
+    let mut lines = output.lines();
+    let sample = std::fs::read_to_string(testdata).unwrap();
+
+    for (n, sl) in sample.lines().enumerate() {
+        assert_eq!(lines.next().unwrap(), sl, "reassemble line {}", n + 1);
+    }
+
+    assert_eq!(lines.next(), None);
+}
+
 macro_rules! snap {
     ($name:ident, $offset:expr) => {
         #[test]
         fn $name() {
             snapshot(stringify!($name), $offset);
+            roundtrip(stringify!($name), $offset);
         }
     };
     ($name:ident) => {
