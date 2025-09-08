@@ -201,16 +201,13 @@ fn disassemble_instruction(f: u16, rest: &[u16]) -> Option<(Instruction, &[u16])
     })
 }
 
-fn disassemble_one(c: &[u16]) -> Option<(Instruction, &[u16])> {
-    let (&f, rest) = c.split_first()?;
-    disassemble_instruction(f, rest).or_else(|| Some((Instruction::Dw(vec![f]), rest)))
-}
-
 pub fn disassemble(bytes: &[u16]) -> Instructions {
     let mut out = vec![];
     let mut cursor = bytes;
 
-    while let Some((ins, rest)) = disassemble_one(cursor) {
+    while let Some((&f, rest)) = cursor.split_first() {
+        let (ins, rest) =
+            disassemble_instruction(f, rest).unwrap_or_else(|| (Instruction::Dw(vec![f]), rest));
         out.push(ins);
         cursor = rest;
     }
