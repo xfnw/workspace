@@ -328,12 +328,41 @@ fn assemble_one(
     Ok(out)
 }
 
+enum SkAlign {
+    None,
+    One,
+    OneOne,
+    Two,
+}
+
+impl SkAlign {
+    fn will_misalign(&self, size: u16) -> bool {
+        match self {
+            Self::None => false,
+            Self::One | Self::OneOne => size > 1,
+            Self::Two => size > 2,
+        }
+    }
+    fn advance(&mut self, size: u16, is_skip: bool) {
+        *self = match (&self, size, is_skip) {
+            (Self::None, _, false)
+            | (Self::One, 1.., false)
+            | (Self::OneOne | Self::Two, 2.., false) => Self::None,
+            (Self::OneOne | Self::Two, 1, false) => Self::One,
+            (Self::OneOne | Self::Two, 1, true) => Self::OneOne,
+            (Self::None, _, true) | (Self::One, 1.., true) | (_, 2.., true) => Self::Two,
+            (_, 0, false) => return,
+            (_, 0, true) => panic!("skips have size"),
+        };
+    }
+}
+
 pub fn assemble(rep: Instructions) -> Result<Vec<u16>, Error> {
     let mut labels = BTreeMap::new();
     let mut loc = rep
         .0
         .into_iter()
-        .scan((0u16, None), |(statepos, skt), i| {
+        .scan((0u16, SkAlign::None), |(statepos, skt), i| {
             let pos = *statepos;
             let Ok(size) = u16::try_from(i.size()) else {
                 return Some(Err(Error::InstructionTooBig(i)));
@@ -343,29 +372,16 @@ pub fn assemble(rep: Instructions) -> Result<Vec<u16>, Error> {
             } else {
                 return Some(Err(Error::CodeTooLong));
             };
-
-            if let Some(skt) = skt
-                && pos < *skt
-                && *statepos > *skt
-                && !matches!(i, Instruction::Dw(_))
-            {
+            if skt.will_misalign(size) && !matches!(i, Instruction::Dw(_)) {
                 return Some(Err(Error::SkMisalignment(i)));
             }
-
-            match i {
-                Instruction::LabelDef(ref def) => {
-                    if labels.insert(def.clone(), pos).is_some() {
-                        return Some(Err(Error::DuplicateLabel(def.clone())));
-                    }
-                }
-                Instruction::Skne(_)
-                | Instruction::Skeq(_)
-                | Instruction::Sklt(_)
-                | Instruction::Skgt(_) => {
-                    *skt = Some(*statepos + 2);
-                }
-                _ => (),
+            if let Instruction::LabelDef(ref def) = i
+                && labels.insert(def.clone(), pos).is_some()
+            {
+                return Some(Err(Error::DuplicateLabel(def.clone())));
             }
+
+            skt.advance(size, i.is_skip());
 
             Some(Ok((pos, i)))
         })

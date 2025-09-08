@@ -492,6 +492,15 @@ pub enum Instruction {
     Resw(u16),
 }
 
+impl Instruction {
+    pub fn is_skip(&self) -> bool {
+        matches!(
+            self,
+            Self::Skne(_) | Self::Skeq(_) | Self::Sklt(_) | Self::Skgt(_)
+        )
+    }
+}
+
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         macro_rules! w {
