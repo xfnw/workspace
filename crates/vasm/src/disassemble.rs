@@ -129,6 +129,11 @@ fn right_opnd(v: u16, c: &[u16]) -> Option<(Operand, &[u16])> {
     ))
 }
 
+fn right_empty(v: u16) -> Option<()> {
+    let flags = v & ((1 << 5) - 1);
+    (flags == 0).then_some(())
+}
+
 fn disassemble_instruction(f: u16, rest: &[u16]) -> Option<(Instruction, &[u16])> {
     let instr = f & (((1 << 6) - 1) << 10);
     let flags = f & ((1 << 10) - 1);
@@ -136,10 +141,12 @@ fn disassemble_instruction(f: u16, rest: &[u16]) -> Option<(Instruction, &[u16])
     macro_rules! opnd {
         ($inst:ident, Src) => {{
             let (operand, rest) = left_opnd(flags, rest)?;
+            right_empty(flags)?;
             (Instruction::$inst(Opnd::<Src>::new(operand)), rest)
         }};
         ($inst:ident, $kind:ident) => {{
             let (operand, rest) = left_opnd(flags, rest)?;
+            right_empty(flags)?;
             (Instruction::$inst(Opnd::<$kind>::new(operand).ok()?), rest)
         }};
         ($inst:ident, Src, Src) => {{
