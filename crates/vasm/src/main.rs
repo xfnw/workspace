@@ -21,7 +21,7 @@ struct Opt {
     /// where to send assembled output (dumps hex to stdout by default)
     #[argh(option, short = 'o')]
     output: Option<PathBuf>,
-    /// output using vm16's h16 format.
+    /// use vm16's h16 format.
     ///
     /// takes an address for the starting position in hex
     #[argh(option, arg_name = "start", from_str_fn(parse_hex16))]
