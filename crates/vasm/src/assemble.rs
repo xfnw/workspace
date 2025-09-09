@@ -328,14 +328,28 @@ fn assemble_one(
     Ok(out)
 }
 
+/// the state of how previous sk* instructions affect the current instruction
+///
+/// sk* instructions skip forward two words when their condition is met, which might not line up
+/// with other instructions (since vm16 instructions have a variable length). this determines when
+/// a sk* instruction could jump into the middle of another instruction.
 pub enum SkAlign {
+    /// no sk* instructions recent enough to have any affect. no special requirements for the
+    /// current instruction.
     None,
+    /// sk* instruction before a single word instruction. the current instruction must also fit
+    /// into a single word.
     One,
+    /// sk* instruction before a single word sk* instruction. the current instruction must fit into
+    /// a single word and the instruction after this must also fit into a single word.
     OneOne,
+    /// sk* instruction immediately before. the current instruction must fit into two words (a
+    /// single two word instruction, or two single word instructions)
     Two,
 }
 
 impl SkAlign {
+    /// check whether a previous sk* instruction could skip into the middle of this instruction
     pub fn will_misalign(&self, size: usize) -> bool {
         match self {
             Self::None => false,
@@ -343,6 +357,7 @@ impl SkAlign {
             Self::Two => size > 2,
         }
     }
+    /// advance the state machine by one instruction
     pub fn advance(&mut self, size: usize, is_skip: bool) {
         *self = match (&self, size, is_skip) {
             (Self::None, _, false)
