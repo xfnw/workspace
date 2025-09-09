@@ -364,10 +364,9 @@ impl SkAlign {
             | (Self::One, 1.., false)
             | (Self::OneOne | Self::Two, 2.., false) => Self::None,
             (Self::OneOne | Self::Two, 1, false) => Self::One,
-            (Self::OneOne | Self::Two, 1, true) => Self::OneOne,
+            (Self::OneOne | Self::Two, 1, true) | (Self::One, 0, true) => Self::OneOne,
             (Self::None, _, true) | (Self::One, 1.., true) | (_, 2.., true) => Self::Two,
-            (_, 0, false) => return,
-            (_, 0, true) => panic!("skips have size"),
+            (_, 0, _) => return,
         };
     }
 }
