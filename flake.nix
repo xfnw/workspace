@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 xfnw
+# SPDX-License-Identifier: MIT
+
 {
   inputs = {
     crane.url = "github:ipetkov/crane";
