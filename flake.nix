@@ -112,9 +112,13 @@
 
         packages = members // {
           default = pkgs.symlinkJoin {
-            name = "all";
+            name = "default";
             paths = attrValues members;
           };
+          doc = crane'.cargoDoc (common // {
+            inherit cargoArtifacts;
+            cargoDocExtraArgs = "";
+          });
         };
 
         devShells.default = crane'.devShell {
