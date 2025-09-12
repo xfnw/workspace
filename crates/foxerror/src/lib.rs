@@ -24,10 +24,16 @@ struct ParsedErrors {
     variants: Vec<Variant>,
 }
 
+enum Message {
+    None,
+    Single(String),
+    Multiline(String, String),
+}
+
 struct Variant {
     ident: syn::Ident,
     fields: syn::Fields,
-    msg: Option<String>,
+    msg: Message,
     from: bool,
 }
 
@@ -103,7 +109,11 @@ fn expr_str(a: &syn::Expr) -> Option<String> {
 }
 
 fn parse_variant(v: syn::Variant) -> Variant {
-    let doc = v.attrs.iter().find_map(parse_attr_doc);
+    let mut doc = v
+        .attrs
+        .iter()
+        .filter_map(parse_attr_doc)
+        .filter_map(expr_str);
     let mut args = v.attrs.iter().filter_map(parse_attr);
     let amsg = args
         .clone()
@@ -112,8 +122,20 @@ fn parse_variant(v: syn::Variant) -> Variant {
                 .find(|a| a.ident == "msg")
                 .and_then(|a| a.value)
         })
-        .next_back();
-    let msg = amsg.as_ref().or(doc).and_then(expr_str);
+        .next_back()
+        .and_then(|e| expr_str(&e));
+    let msg = if let Some(amsg) = amsg {
+        Message::Single(amsg)
+    } else if let Some(msg) = doc.next() {
+        let extra: Vec<_> = doc.collect();
+        if extra.is_empty() {
+            Message::Single(msg)
+        } else {
+            Message::Multiline(msg, extra.join("\n"))
+        }
+    } else {
+        Message::None
+    };
     let from = args
         .find_map(|a| a.0.into_iter().find(|a| a.ident == "from"))
         .is_some();
@@ -154,19 +176,28 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
             msg,
             ..
         } = v;
-        let msg = if let Some(msg) = msg {
-            quote!(#msg)
-        } else {
-            let name = name.to_string();
-            quote!(#name)
+        let bmsg = match msg {
+            Message::None => {
+                let name = name.to_string();
+                quote!(#name)
+            }
+            Message::Single(s) | Message::Multiline(s, _) => quote!(#s),
         };
         let mut set = quote!();
         let mut get = vec![];
         let mut fmt = vec![quote!("{}")];
 
+        if !matches!(fields, syn::Fields::Unit) {
+            fmt.push(quote!(":"));
+        }
+        if matches!(msg, Message::Multiline(_, _)) {
+            fmt.push(quote!("\n"));
+        } else if !matches!(fields, syn::Fields::Unit) {
+            fmt.push(quote!(" "));
+        }
+
         match fields {
             syn::Fields::Named(fields) => {
-                fmt.push(quote!(":"));
                 let mut ids = vec![];
                 for (fnum, field) in fields.named.iter().enumerate() {
                     let fid = syn::Ident::new(format!("arg_{fnum}").as_ref(), Span::call_site());
@@ -174,30 +205,34 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
                     let fnm = field.ident.as_ref().expect("missing ident");
                     ids.push(quote!(#fnm));
                     if fnum > 0 {
-                        fmt.push(quote!(","));
+                        fmt.push(quote!(", "));
                     }
-                    let fo = format!(" {fnm}: {{}}");
+                    let fo = format!("{fnm}: {{}}");
                     fmt.push(quote!(#fo));
                 }
                 set = quote!({#(#ids: #get),*});
             }
             syn::Fields::Unnamed(fields) => {
-                fmt.push(quote!(":"));
                 for fnum in 0..fields.unnamed.len() {
                     let fid = syn::Ident::new(format!("arg_{fnum}").as_ref(), Span::call_site());
                     get.push(quote!(#fid));
                     if fnum > 0 {
-                        fmt.push(quote!(","));
+                        fmt.push(quote!(", "));
                     }
-                    fmt.push(quote!(" {}"));
+                    fmt.push(quote!("{}"));
                 }
                 set = quote!((#(#get),*));
             }
             syn::Fields::Unit => (),
         }
 
+        if let Message::Multiline(_, s) = msg {
+            fmt.push(quote!("\n{}"));
+            get.push(quote!(#s));
+        }
+
         quote! {
-            #ident::#name #set => write!(f, concat!(#(#fmt),*), #msg, #(#get),*)
+            #ident::#name #set => write!(f, concat!(#(#fmt),*), #bmsg, #(#get),*)
         }
     });
 
@@ -247,7 +282,6 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
 /// #[derive(Debug, PartialEq, foxerror::FoxError)]
 /// enum Error<'a> {
 ///     /// i am a doc comment
-///     /// other lines get ignored
 ///     NoFields,
 ///     /// or override the message with an attribute
 ///     #[err(msg = "i also get overridden")]
@@ -255,6 +289,8 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
 ///     #[err(from)]
 ///     OneField(&'a str),
 ///     /// my favorite numbers are
+///     ///
+///     /// other lines go after
 ///     ManyFields(i8, i8, i8, i8),
 ///     // defaults to the variant name when no doc nor attr
 ///     NamedFields {
@@ -270,7 +306,7 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
 /// );
 /// assert_eq!(
 ///     format!("{}", Error::ManyFields(3, 6, 2, 1)),
-///     "my favorite numbers are: 3, 6, 2, 1",
+///     "my favorite numbers are:\n3, 6, 2, 1\n\nother lines go after",
 /// );
 /// assert_eq!(
 ///     format!("{}", Error::NamedFields { species: "fox", leggies: 4 }),
