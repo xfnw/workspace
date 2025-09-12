@@ -303,129 +303,99 @@ fn number_words(inp: &str) -> IResult<&str, Vec<u16>> {
     alt((string_value, string_packed, map(number_value, |v| vec![v]))).parse(inp)
 }
 
-#[allow(clippy::too_many_lines)]
+macro_rules! alts {
+    (($(($in:ident, $name:expr)),*)) => {
+        alt(($(value(Instruction::$in, tag($name)),)*))
+    };
+    (Const, ($(($in:ident, $name:expr)),*)) => {
+        alt(($(map_res(
+                preceded(tag($name), delimited(space1, number_value, space0)),
+                |n| Const::new(n).map(Instruction::$in),
+        ),)*))
+    };
+    (Src, ($(($in:ident, $name:expr)),*)) => {
+        alt(($(map(
+                preceded(tag($name), one_opnd),
+                |l| Instruction::$in(Opnd::<Src>::new(l)),
+        ),)*))
+    };
+    (Src, Src, ($(($in:ident, $name:expr)),*)) => {
+        alt(($(map(
+                preceded(tag($name), two_opnd),
+                |(l, r)| Instruction::$in(TwoOpnd::<Src, Src>::new(l, r)),
+        ),)*))
+    };
+    (Dst, ($(($in:ident, $name:expr)),*)) => {
+        alt(($(map_res(
+                preceded(tag($name), one_opnd),
+                |l| Opnd::<Dst>::new(l).map(Instruction::$in),
+        ),)*))
+    };
+    (Dst, $ri:ty, ($(($in:ident, $name:expr)),*)) => {
+        alt(($(map_res(
+                preceded(tag($name), two_opnd),
+                |(l, r)| TwoOpnd::<Dst, $ri>::new(l, r).map(Instruction::$in),
+        ),)*))
+    };
+}
+
 fn instruction(inp: &str) -> IResult<&str, Instruction> {
     // cursed alt nesting courtesy of alt only supporting up to 21
     // items per tuple and rust's opaque types for closures making
     // using an array difficult
-    // FIXME: generate this mess with a macro or something
     alt((
+        alts!(((Nop, "nop"), (Ret, "ret"), (Halt, "halt"))),
+        alts!(Const, ((Brk, "brk"), (Sys, "sys"))),
+        alts!(Src, ((Jump, "jump"), (Call, "call"), (Push, "push"))),
+        alts!(
+            Src,
+            Src,
+            (
+                (Bnze, "bnze"),
+                (Bze, "bze"),
+                (Bpos, "bpos"),
+                (Bneg, "bneg"),
+                (Out, "out"),
+                (Skne, "skne"),
+                (Skeq, "skeq"),
+                (Sklt, "sklt"),
+                (Skgt, "skgt")
+            )
+        ),
+        alts!(
+            Dst,
+            (
+                (Inc, "inc"),
+                (Dec, "dec"),
+                (Not, "not"),
+                (Pop, "pop"),
+                (Swap, "swap")
+            )
+        ),
+        alts!(
+            Dst,
+            Src,
+            (
+                (Move, "move"),
+                (Add, "add"),
+                (Sub, "sub"),
+                (Mul, "mul"),
+                (Div, "div"),
+                (And, "and"),
+                (Or, "or"),
+                (Xor, "xor"),
+                (In, "in"),
+                (Dbnz, "dbnz"),
+                (Mod, "mod"),
+                (Shl, "shl"),
+                (Shr, "shr"),
+                (Addc, "addc"),
+                (Mulc, "mulc"),
+                (Msb, "msb")
+            )
+        ),
+        alts!(Dst, Dst, ((Xchg, "xchg"))),
         alt((
-            value(Instruction::Nop, tag("nop")),
-            map_res(
-                preceded(tag("brk"), delimited(space1, number_value, space0)),
-                |n| Const::new(n).map(Instruction::Brk),
-            ),
-            map_res(
-                preceded(tag("sys"), delimited(space1, number_value, space0)),
-                |n| Const::new(n).map(Instruction::Sys),
-            ),
-            map(preceded(tag("jump"), one_opnd), |l| {
-                Instruction::Jump(Opnd::<Src>::new(l))
-            }),
-            map(preceded(tag("call"), one_opnd), |l| {
-                Instruction::Call(Opnd::<Src>::new(l))
-            }),
-            value(Instruction::Ret, tag("ret")),
-            value(Instruction::Halt, tag("halt")),
-            map_res(preceded(tag("move"), two_opnd), |(l, r)| {
-                TwoOpnd::<Dst, Src>::new(l, r).map(Instruction::Move)
-            }),
-            map_res(preceded(tag("xchg"), two_opnd), |(l, r)| {
-                TwoOpnd::<Dst, Dst>::new(l, r).map(Instruction::Xchg)
-            }),
-            map_res(preceded(tag("inc"), one_opnd), |l| {
-                Opnd::<Dst>::new(l).map(Instruction::Inc)
-            }),
-            map_res(preceded(tag("dec"), one_opnd), |l| {
-                Opnd::<Dst>::new(l).map(Instruction::Dec)
-            }),
-            map_res(preceded(tag("add"), two_opnd), |(l, r)| {
-                TwoOpnd::<Dst, Src>::new(l, r).map(Instruction::Add)
-            }),
-            map_res(preceded(tag("sub"), two_opnd), |(l, r)| {
-                TwoOpnd::<Dst, Src>::new(l, r).map(Instruction::Sub)
-            }),
-            map_res(preceded(tag("mul"), two_opnd), |(l, r)| {
-                TwoOpnd::<Dst, Src>::new(l, r).map(Instruction::Mul)
-            }),
-            map_res(preceded(tag("div"), two_opnd), |(l, r)| {
-                TwoOpnd::<Dst, Src>::new(l, r).map(Instruction::Div)
-            }),
-            map_res(preceded(tag("and"), two_opnd), |(l, r)| {
-                TwoOpnd::<Dst, Src>::new(l, r).map(Instruction::And)
-            }),
-            map_res(preceded(tag("or"), two_opnd), |(l, r)| {
-                TwoOpnd::<Dst, Src>::new(l, r).map(Instruction::Or)
-            }),
-            map_res(preceded(tag("xor"), two_opnd), |(l, r)| {
-                TwoOpnd::<Dst, Src>::new(l, r).map(Instruction::Xor)
-            }),
-            map_res(preceded(tag("not"), one_opnd), |l| {
-                Opnd::<Dst>::new(l).map(Instruction::Not)
-            }),
-            map(preceded(tag("bnze"), two_opnd), |(l, r)| {
-                Instruction::Bnze(TwoOpnd::<Src, Src>::new(l, r))
-            }),
-            map(preceded(tag("bze"), two_opnd), |(l, r)| {
-                Instruction::Bze(TwoOpnd::<Src, Src>::new(l, r))
-            }),
-        )),
-        alt((
-            map(preceded(tag("bpos"), two_opnd), |(l, r)| {
-                Instruction::Bpos(TwoOpnd::<Src, Src>::new(l, r))
-            }),
-            map(preceded(tag("bneg"), two_opnd), |(l, r)| {
-                Instruction::Bneg(TwoOpnd::<Src, Src>::new(l, r))
-            }),
-            map_res(preceded(tag("in"), two_opnd), |(l, r)| {
-                TwoOpnd::<Dst, Src>::new(l, r).map(Instruction::In)
-            }),
-            map(preceded(tag("out"), two_opnd), |(l, r)| {
-                Instruction::Out(TwoOpnd::<Src, Src>::new(l, r))
-            }),
-            map(preceded(tag("push"), one_opnd), |l| {
-                Instruction::Push(Opnd::<Src>::new(l))
-            }),
-            map_res(preceded(tag("pop"), one_opnd), |l| {
-                Opnd::<Dst>::new(l).map(Instruction::Pop)
-            }),
-            map_res(preceded(tag("swap"), one_opnd), |l| {
-                Opnd::<Dst>::new(l).map(Instruction::Swap)
-            }),
-            map_res(preceded(tag("dbnz"), two_opnd), |(l, r)| {
-                TwoOpnd::<Dst, Src>::new(l, r).map(Instruction::Dbnz)
-            }),
-            map_res(preceded(tag("mod"), two_opnd), |(l, r)| {
-                TwoOpnd::<Dst, Src>::new(l, r).map(Instruction::Mod)
-            }),
-            map_res(preceded(tag("shl"), two_opnd), |(l, r)| {
-                TwoOpnd::<Dst, Src>::new(l, r).map(Instruction::Shl)
-            }),
-            map_res(preceded(tag("shr"), two_opnd), |(l, r)| {
-                TwoOpnd::<Dst, Src>::new(l, r).map(Instruction::Shr)
-            }),
-            map_res(preceded(tag("addc"), two_opnd), |(l, r)| {
-                TwoOpnd::<Dst, Src>::new(l, r).map(Instruction::Addc)
-            }),
-            map_res(preceded(tag("mulc"), two_opnd), |(l, r)| {
-                TwoOpnd::<Dst, Src>::new(l, r).map(Instruction::Mulc)
-            }),
-            map(preceded(tag("skne"), two_opnd), |(l, r)| {
-                Instruction::Skne(TwoOpnd::<Src, Src>::new(l, r))
-            }),
-            map(preceded(tag("skeq"), two_opnd), |(l, r)| {
-                Instruction::Skeq(TwoOpnd::<Src, Src>::new(l, r))
-            }),
-            map(preceded(tag("sklt"), two_opnd), |(l, r)| {
-                Instruction::Sklt(TwoOpnd::<Src, Src>::new(l, r))
-            }),
-            map(preceded(tag("skgt"), two_opnd), |(l, r)| {
-                Instruction::Skgt(TwoOpnd::<Src, Src>::new(l, r))
-            }),
-            map_res(preceded(tag("msb"), two_opnd), |(l, r)| {
-                TwoOpnd::<Dst, Src>::new(l, r).map(Instruction::Msb)
-            }),
             map(
                 preceded(
                     tag("dw"),
