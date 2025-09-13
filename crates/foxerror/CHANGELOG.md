@@ -1,6 +1,6 @@
 # changelog
 
-## unreleased
+## 0.1.2 - 2025-09-13
 - add support for multiline error messages
 
 ## 0.1.1 - 2025-03-24
