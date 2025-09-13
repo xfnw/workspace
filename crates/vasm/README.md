@@ -3,7 +3,8 @@ i did not like the syntax of the in game assembler, so i made my own
 
 notable features include:
 - a more intel-ish syntax
-- automatically detecting `sk{ne,eq,lt,gt}` misalignment mistakes
+- automatically detects `sk{ne,eq,lt,gt}` skipping into the middle
+  of an instruction
 - somewhat cursed parsing that does not require newlines anywhere
   except after line comments
 - fully relocatable output (this does mean using a label absolutely is

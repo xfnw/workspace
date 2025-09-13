@@ -1,7 +1,7 @@
 #![allow(clippy::cast_possible_wrap)]
 
 use crate::{
-    assemble::{AssSize, SkAlign},
+    assemble::{AssSize, SkChecker},
     repr::{
         Const, Dst, Immediate, Instruction, Instructions, LabelOffset, MemoryAddress, Offset,
         Operand, Opnd, Src, TwoOpnd,
@@ -214,11 +214,11 @@ fn disassemble_instruction(f: u16, rest: &[u16]) -> Option<(Instruction, &[u16])
 pub fn disassemble(bytes: &[u16]) -> Instructions {
     let mut out = vec![];
     let mut cursor = bytes;
-    let mut skt = SkAlign::None;
+    let mut skt = SkChecker::None;
 
     while let Some((&f, rest)) = cursor.split_first() {
         let (ins, rest) = disassemble_instruction(f, rest)
-            .filter(|(i, _)| !skt.will_misalign(i.size()))
+            .filter(|(i, _)| !skt.is_split(i.size()))
             .unwrap_or_else(|| (Instruction::Dw(vec![f]), rest));
 
         skt.advance(ins.size(), ins.is_skip());

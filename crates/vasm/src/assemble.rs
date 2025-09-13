@@ -103,12 +103,12 @@ impl AssSize for Instruction {
 
 #[derive(Debug, foxerror::FoxError)]
 pub enum Error {
-    /// likely incorrect usage of sk* instructions will misalign
+    /// skip to middle of instruction likely incorrect
     ///
     /// if you're intentionally making a program that has different
     /// behavior than the assembly suggests, consider using dw to make
     /// it more obvious there is more going on.
-    SkMisalignment(Instruction),
+    SkMistake(Instruction),
     /// label defined multiple times
     DuplicateLabel(String),
     /// instruction takes up more than 65535 words!?
@@ -333,7 +333,7 @@ fn assemble_one(
 /// sk* instructions skip forward two words when their condition is met, which might not line up
 /// with other instructions (since vm16 instructions have a variable length). this determines when
 /// a sk* instruction could jump into the middle of another instruction.
-pub enum SkAlign {
+pub enum SkChecker {
     /// no sk* instructions recent enough to have any affect. no special requirements for the
     /// current instruction.
     None,
@@ -348,9 +348,9 @@ pub enum SkAlign {
     Two,
 }
 
-impl SkAlign {
+impl SkChecker {
     /// check whether a previous sk* instruction could skip into the middle of this instruction
-    pub fn will_misalign(&self, size: usize) -> bool {
+    pub fn is_split(&self, size: usize) -> bool {
         match self {
             Self::None => false,
             Self::One | Self::OneOne => size > 1,
@@ -376,7 +376,7 @@ pub fn assemble(rep: Instructions) -> Result<Vec<u16>, Error> {
     let mut loc = rep
         .0
         .into_iter()
-        .scan((0u16, SkAlign::None), |(statepos, skt), i| {
+        .scan((0u16, SkChecker::None), |(statepos, skt), i| {
             let pos = *statepos;
             let Ok(size) = u16::try_from(i.size()) else {
                 return Some(Err(Error::InstructionTooBig(i)));
@@ -386,8 +386,8 @@ pub fn assemble(rep: Instructions) -> Result<Vec<u16>, Error> {
             } else {
                 return Some(Err(Error::CodeTooLong));
             };
-            if skt.will_misalign(size.into()) && !matches!(i, Instruction::Dw(_)) {
-                return Some(Err(Error::SkMisalignment(i)));
+            if skt.is_split(size.into()) && !matches!(i, Instruction::Dw(_)) {
+                return Some(Err(Error::SkMistake(i)));
             }
             if let Instruction::LabelDef(ref def) = i
                 && labels.insert(def.clone(), pos).is_some()
