@@ -113,6 +113,16 @@ impl IpRange {
         Self::new_v6(Ipv6Addr::from_bits(out), bits.len())
     }
 
+    /// decompose an ip range into an ip address and subnet mask length
+    #[must_use]
+    pub const fn into_parts(&self) -> (IpAddr, usize) {
+        if let Some(v4) = self.ip.to_ipv4_mapped() {
+            (IpAddr::V4(v4), self.mask_len - 96)
+        } else {
+            (IpAddr::V6(self.ip), self.mask_len)
+        }
+    }
+
     /// create an iterator over the bits in the ip range
     pub fn iter(&self) -> BitRangeIter<u128> {
         (self.ip.to_bits(), self.mask_len).into()
