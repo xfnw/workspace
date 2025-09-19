@@ -8,34 +8,3 @@ path = [
 ]
 SPDX-FileCopyrightText = "NONE"
 SPDX-License-Identifier = "CC0-1.0"
-
-# crates
-[[annotations]]
-path = "crates/foxerror/**"
-SPDX-FileCopyrightText = "2025 xfnw"
-SPDX-License-Identifier = "MIT"
-
-[[annotations]]
-path = "crates/irc-connect/**"
-SPDX-FileCopyrightText = "2025 xfnw"
-SPDX-License-Identifier = "MIT"
-
-[[annotations]]
-path = "crates/mark-tree/**"
-SPDX-FileCopyrightText = "2025 xfnw"
-SPDX-License-Identifier = "MIT"
-
-[[annotations]]
-path = "crates/maw/**"
-SPDX-FileCopyrightText = "2025 xfnw"
-SPDX-License-Identifier = "MPL-2.0"
-
-[[annotations]]
-path = "crates/vasm/**"
-SPDX-FileCopyrightText = "2025 xfnw"
-SPDX-License-Identifier = "MPL-2.0"
-
-[[annotations]]
-path = "crates/vasm/tests/data/**"
-SPDX-FileCopyrightText = "2025 xfnw"
-SPDX-License-Identifier = "CC0-1.0"
