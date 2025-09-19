@@ -98,9 +98,31 @@ impl IpRange {
         Self::new_v6(ip.to_ipv6_mapped(), mask_len)
     }
 
+    /// construct an ip range from a vec of bools
+    #[must_use]
+    pub fn from_bits(bits: &[bool]) -> Option<Self> {
+        let mut out = 0;
+
+        for &bit in bits.iter().rev() {
+            out >>= 1;
+            if bit {
+                out |= 1 << (u128::BITS - 1);
+            }
+        }
+
+        Self::new_v6(Ipv6Addr::from_bits(out), bits.len())
+    }
+
     /// create an iterator over the bits in the ip range
     pub fn iter(&self) -> BitRangeIter<u128> {
         (self.ip.to_bits(), self.mask_len).into()
+    }
+}
+
+impl ConvertBits for IpRange {
+    type Output = Option<Self>;
+    fn convert_bits(value: &[bool]) -> Self::Output {
+        Self::from_bits(value)
     }
 }
 
