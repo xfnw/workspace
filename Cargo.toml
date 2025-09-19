@@ -5,6 +5,9 @@
 resolver = "3"
 members = ["crates/*"]
 
+[workspace.package]
+repository = "https://github.com/xfnw/workspace"
+
 [workspace.lints.clippy]
 pedantic = "warn"
 use_self = "warn"

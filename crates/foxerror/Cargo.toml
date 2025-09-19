@@ -4,7 +4,7 @@ version = "0.1.2"
 edition = "2021"
 license = "MIT"
 description = "yet another proc macro for deriving Error on enums"
-repository = "https://github.com/xfnw/workspace"
+repository.workspace = true
 
 [lib]
 proc-macro = true
