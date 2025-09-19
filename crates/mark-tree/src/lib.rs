@@ -3,6 +3,23 @@
 
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
+/// a more flexible way to turn a slice of bools into something
+pub trait ConvertBits {
+    type Output;
+    /// convert a slice of bools into the output type
+    fn convert_bits(value: &[bool]) -> Self::Output;
+}
+
+impl<T> ConvertBits for T
+where
+    T: for<'a> From<&'a [bool]>,
+{
+    type Output = T;
+    fn convert_bits(value: &[bool]) -> Self::Output {
+        T::from(value)
+    }
+}
+
 /// an [`Iterator`] over a number of the most significant bits in an unsigned integer
 ///
 /// this goes most significant to least significant. if the range is larger than the number of
@@ -231,7 +248,7 @@ impl MarkTree {
     /// [`MarkTree::traverse`] does.
     pub fn iter<T>(&self) -> MarkTreeIter<'_, T>
     where
-        T: for<'a> From<&'a [bool]>,
+        T: ConvertBits,
     {
         MarkTreeIter::<T> {
             stack: vec![(self, TreePos::Root)],
@@ -261,9 +278,9 @@ pub struct MarkTreeIter<'a, T> {
 
 impl<'a, T> Iterator for MarkTreeIter<'a, T>
 where
-    T: for<'b> From<&'b [bool]>,
+    T: ConvertBits,
 {
-    type Item = (&'a MarkTree, T);
+    type Item = (&'a MarkTree, T::Output);
 
     fn next(&mut self) -> Option<Self::Item> {
         let (tree, treepos) = self.stack.pop()?;
@@ -294,7 +311,7 @@ where
             ));
         }
 
-        Some((tree, T::from(&self.path)))
+        Some((tree, T::convert_bits(&self.path)))
     }
 }
 
