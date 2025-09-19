@@ -1,6 +1,8 @@
 //! questionable tree-shaped thing
 #![allow(clippy::precedence)]
 
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+
 /// an [`Iterator`] over a number of the most significant bits in an unsigned integer
 ///
 /// this goes most significant to least significant. if the range is larger than the number of
@@ -39,6 +41,107 @@ macro_rules! bitrange_impl {
 }
 
 bitrange_impl!(u8, u16, u32, u64, u128);
+
+/// an ip address range
+///
+/// note that this internally stores ipv4 addresses as ipv4-mapped ipv6 addresses,
+/// which has the side effect of coercing ipv6 addresses in the range `::ffff:0:0/96` to ipv4.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct IpRange {
+    ip: Ipv6Addr,
+    mask_len: usize,
+}
+
+impl IpRange {
+    /// create a new ip range from either kind of ip address
+    #[must_use]
+    pub const fn new(ip: IpAddr, mask_len: usize) -> Option<Self> {
+        match ip {
+            IpAddr::V6(ip) => Self::new_v6(ip, mask_len),
+            IpAddr::V4(ip) => Self::new_v4(ip, mask_len),
+        }
+    }
+
+    /// create a new ip range from an ipv6 address
+    #[must_use]
+    pub const fn new_v6(ip: Ipv6Addr, mask_len: usize) -> Option<Self> {
+        if mask_len > 128 {
+            return None;
+        }
+        Some(Self { ip, mask_len })
+    }
+
+    /// create a new ip range from an ipv4 address
+    #[must_use]
+    pub const fn new_v4(ip: Ipv4Addr, mask_len: usize) -> Option<Self> {
+        // `?` is not const :(
+        let Some(mask_len) = mask_len.checked_add(96) else {
+            return None;
+        };
+        Self::new_v6(ip.to_ipv6_mapped(), mask_len)
+    }
+
+    /// create an iterator over the bits in the ip range
+    pub fn iter(&self) -> BitRangeIter<u128> {
+        (self.ip.to_bits(), self.mask_len).into()
+    }
+}
+
+impl IntoIterator for &IpRange {
+    type Item = bool;
+    type IntoIter = BitRangeIter<u128>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl std::fmt::Display for IpRange {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}/{}", self.ip, self.mask_len)
+    }
+}
+
+impl std::str::FromStr for IpRange {
+    type Err = ParseIpRangeError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (ip, len) = if let Some((ip, len)) = s.rsplit_once('/') {
+            (ip, Some(len))
+        } else {
+            (s, None)
+        };
+        let ip = ip.parse().map_err(ParseIpRangeError::AddrParse)?;
+        let len = if let Some(len) = len {
+            len.parse().map_err(ParseIpRangeError::ParseInt)?
+        } else {
+            match ip {
+                IpAddr::V6(_) => 128,
+                IpAddr::V4(_) => 32,
+            }
+        };
+        Self::new(ip, len).ok_or(ParseIpRangeError::MaskTooBig)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ParseIpRangeError {
+    AddrParse(std::net::AddrParseError),
+    ParseInt(std::num::ParseIntError),
+    MaskTooBig,
+}
+
+impl std::fmt::Display for ParseIpRangeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::AddrParse(a) => a.fmt(f),
+            Self::ParseInt(p) => p.fmt(f),
+            Self::MaskTooBig => write!(f, "Subnet mask too long"),
+        }
+    }
+}
+
+impl std::error::Error for ParseIpRangeError {}
 
 /// a binary tree where branches get marked based on where an iterator of bools ends
 ///
