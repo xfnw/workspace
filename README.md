@@ -11,4 +11,4 @@ incompatible.
 this repository contains a mixture of different licenses, organized
 following the REUSE specification. you agree for any contributions
 intentionally submitted by you for inclusion into this repository to
-be redistributed under the license indicated by REUSE.
+be redistributed under the license(s) indicated by REUSE.
