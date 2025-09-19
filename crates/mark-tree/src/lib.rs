@@ -350,7 +350,8 @@ where
 #[cfg(test)]
 #[allow(clippy::unreadable_literal)]
 mod tests {
-    use super::{BitRangeIter, MarkTree};
+    use crate::{BitRangeIter, ConvertBits, IpRange, MarkTree, ParseIpRangeError};
+    use std::{net::IpAddr, str::FromStr};
 
     #[test]
     fn range_known() {
@@ -424,5 +425,53 @@ mod tests {
         });
 
         assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn range_str() {
+        assert_eq!(
+            IpRange::from_str("1.2.3.4").unwrap().into_parts(),
+            (IpAddr::from_str("1.2.3.4").unwrap(), 32)
+        );
+        assert_eq!(
+            IpRange::from_str("::ffff:1.2.3.4/127")
+                .unwrap()
+                .into_parts(),
+            (IpAddr::from_str("1.2.3.4").unwrap(), 31)
+        );
+        assert_eq!(
+            IpRange::from_str("fe80::/10").unwrap().to_string(),
+            "fe80::/10"
+        );
+        assert_eq!(
+            IpRange::from_str("127.6.2.1/33"),
+            Err(ParseIpRangeError::MaskTooBig)
+        );
+        assert_eq!(
+            IpRange::from_str("aaaa::/129"),
+            Err(ParseIpRangeError::MaskTooBig)
+        );
+    }
+
+    #[test]
+    fn range_bits() {
+        assert_eq!(
+            IpRange::convert_bits(&[true, false, true])
+                .unwrap()
+                .to_string(),
+            "a000::/3"
+        );
+        assert_eq!(
+            IpRange::convert_bits(&[false; 128]).unwrap().to_string(),
+            "::/128"
+        );
+        assert_eq!(
+            IpRange::from_str("fa00::/8")
+                .unwrap()
+                .into_iter()
+                .collect::<Vec<_>>(),
+            [true, true, true, true, true, false, true, false]
+        );
+        assert_eq!(IpRange::convert_bits(&[false; 129]), None);
     }
 }
