@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 xfnw
+//
+// SPDX-License-Identifier: MPL-2.0
+
 use lazy_regex::regex_captures;
 use std::{
     convert::From,

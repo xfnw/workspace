@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2025 xfnw
+
+SPDX-License-Identifier: MIT
+-->
+
 # changelog
 
 ## 0.2.0 - 2025-07-29

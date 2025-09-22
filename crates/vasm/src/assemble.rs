@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 xfnw
+//
+// SPDX-License-Identifier: MPL-2.0
+
 use crate::repr::{Const, Instruction, Instructions, Operand, Opnd, Opnd1, Opnd2, TwoOpnd};
 use std::collections::BTreeMap;
 

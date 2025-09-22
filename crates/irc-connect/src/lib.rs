@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 xfnw
+//
+// SPDX-License-Identifier: MIT
+
 //! an abstraction over the kinds of connections useful for irc clients
 
 use pin_project_lite::pin_project;

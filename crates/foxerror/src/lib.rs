@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 xfnw
+//
+// SPDX-License-Identifier: MIT
+
 //! derive macro for implementing Display and Error on enums
 //!
 //! ```rust

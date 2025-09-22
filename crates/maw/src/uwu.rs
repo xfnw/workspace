@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 xfnw
+//
+// SPDX-License-Identifier: MPL-2.0
+
 use std::{
     fs::{read, read_to_string},
     io::{Write, stdout},

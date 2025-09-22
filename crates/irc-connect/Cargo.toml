@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 xfnw
+#
+# SPDX-License-Identifier: MIT
+
 [package]
 name = "irc-connect"
 version = "0.2.0"

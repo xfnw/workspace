@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 xfnw
+//
+// SPDX-License-Identifier: MPL-2.0
+
 use std::{cmp::Ord, convert::From, fmt, fs::read_to_string, path::PathBuf};
 use url::Url;
 

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 xfnw
+//
+// SPDX-License-Identifier: MPL-2.0
+
 #![allow(clippy::cast_possible_wrap)]
 
 use crate::{

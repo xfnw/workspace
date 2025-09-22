@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 xfnw
+//
+// SPDX-License-Identifier: MPL-2.0
+
 use std::{path::Path, process::Command};
 
 static BIN: &str = env!("CARGO_BIN_EXE_vasm");

@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2025 xfnw
+
+SPDX-License-Identifier: MPL-2.0
+-->
+
 # vulpine's vm16 assembler
 i did not like the syntax of the in game assembler, so i made my own
 

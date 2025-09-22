@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 xfnw
+//
+// SPDX-License-Identifier: MPL-2.0
+
 use chrono::{DateTime, offset::Utc};
 use rayon::prelude::*;
 use sha2::{Digest, Sha256};

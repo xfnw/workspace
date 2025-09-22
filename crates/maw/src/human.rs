@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 xfnw
+//
+// SPDX-License-Identifier: MPL-2.0
+
 #![allow(clippy::unreadable_literal)]
 
 use std::fmt;

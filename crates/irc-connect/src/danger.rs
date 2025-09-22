@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 xfnw
+//
+// SPDX-License-Identifier: MIT
+
 use std::sync::Arc;
 use tokio_rustls::rustls::{
     self,

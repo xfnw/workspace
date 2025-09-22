@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 xfnw
+//
+// SPDX-License-Identifier: MPL-2.0
+
 //! see [`repr::Operand`] and [`repr::Instruction`] for information about the assembly syntax
 
 use argh::{FromArgs, from_env};

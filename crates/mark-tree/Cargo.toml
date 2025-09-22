@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2025 xfnw
+#
+# SPDX-License-Identifier: MIT
+
 [package]
 name = "mark-tree"
 version = "0.1.0"
