@@ -8,6 +8,10 @@ use std::fmt;
 pub enum Error {
     /// could not open lock file
     LockOpen(std::io::Error),
+    /// could not open config file
+    ConfigOpen(std::io::Error),
+    /// could not open audits file
+    AuditsOpen(std::io::Error),
     /// could not deserialize toml
     #[err(from)]
     Deserialize(toml_edit::de::Error),

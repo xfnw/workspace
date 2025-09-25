@@ -30,6 +30,12 @@ pub struct CheckArgs {
     /// path to your cargo lock
     #[argh(option, default = "PathBuf::from(\"Cargo.lock\")")]
     lock: PathBuf,
+    /// path to your vancouver config
+    #[argh(option, default = "PathBuf::from(\"vancouver.toml\")")]
+    config: PathBuf,
+    /// path to your audits
+    #[argh(option, default = "PathBuf::from(\"audits.toml\")")]
+    audits: PathBuf,
 }
 
 fn main() -> ExitCode {
