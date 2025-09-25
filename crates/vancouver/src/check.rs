@@ -2,13 +2,14 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-use crate::types::Error;
+use crate::types::{Error, Version};
 use rayon::prelude::*;
 use serde::Deserialize;
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs::read_to_string,
     process::ExitCode,
+    sync::atomic::{AtomicBool, Ordering},
 };
 
 #[derive(Debug, Deserialize)]
@@ -51,6 +52,12 @@ struct Audit {
     /// the version for a standalone audit of an entire version
     #[serde(default)]
     version: Option<String>,
+    /// do not warn when this is an unused exemption
+    ///
+    /// this is only meaningful when specified on exemptions in the
+    /// config, unused audits do not cause warnings
+    #[serde(default)]
+    allow_unused: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -66,6 +73,37 @@ struct Criteria {
     /// of the listed criteria
     #[serde(default)]
     implied_any: BTreeSet<String>,
+}
+
+#[derive(Debug)]
+struct UsedMarker(Option<AtomicBool>);
+
+impl UsedMarker {
+    fn mark_used(&self) {
+        if let Some(b) = &self.0 {
+            b.store(true, Ordering::Relaxed);
+        }
+    }
+}
+
+#[derive(Debug)]
+struct TrustRoot {
+    used: UsedMarker,
+}
+
+#[derive(Debug)]
+struct TrustDelta {
+    used: UsedMarker,
+    parent_version: Version,
+}
+
+type CriteriaMap<T> = BTreeMap<String, T>;
+type DepMap<T> = BTreeMap<String, T>;
+
+#[derive(Debug)]
+struct Rules {
+    trust_roots: CriteriaMap<DepMap<BTreeMap<Version, TrustRoot>>>,
+    trust_deltas: CriteriaMap<DepMap<BTreeMap<Version, TrustDelta>>>,
 }
 
 pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
