@@ -106,6 +106,45 @@ struct Rules {
     trust_deltas: CriteriaMap<DepMap<BTreeMap<Version, TrustDelta>>>,
 }
 
+#[allow(clippy::pedantic)] // TODO
+impl Rules {
+    fn new(_config: &Config, _audits: &Audits) -> Result<Self, Error> {
+        let trust_roots = BTreeMap::new();
+        let trust_deltas = BTreeMap::new();
+        Ok(Self {
+            trust_roots,
+            trust_deltas,
+        })
+    }
+
+    fn check(&self, name: String, version: Version) -> Result<Receipt, Error> {
+        Ok(Receipt {
+            name,
+            version,
+            status: Status::Passed,
+        })
+    }
+}
+
+#[derive(Debug, Clone)]
+struct Fail {
+    needed: String,
+    prev_version: Option<Version>,
+}
+
+#[derive(Debug, Clone)]
+enum Status {
+    Passed,
+    Fail(Vec<Fail>),
+}
+
+#[derive(Debug, Clone)]
+struct Receipt {
+    name: String,
+    version: Version,
+    status: Status,
+}
+
 pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
     let dependencies = crate::metadata::get_dependencies(&args.lock)?;
     if dependencies.is_empty() {
@@ -114,21 +153,55 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
 
     let config = read_to_string(&args.config).map_err(Error::ConfigOpen)?;
     let config: Config = toml_edit::de::from_str(&config)?;
-    let audits = read_to_string(&args.audits).map_err(Error::ConfigOpen)?;
+    let audits = read_to_string(&args.audits).map_err(Error::AuditsOpen)?;
     let audits: Audits = toml_edit::de::from_str(&audits)?;
+    let rules = Rules::new(&config, &audits)?;
 
-    let unaudited: Vec<_> = dependencies
+    let receipts = dependencies
         .into_par_iter()
-        .flat_map(|(_name, _version)| Some(1))
+        .map(|(name, version)| rules.check(name, version))
+        .collect::<Result<Vec<_>, _>>()?;
+    let total = receipts.len();
+    let fails: Vec<_> = receipts
+        .into_iter()
+        .filter(|r| !matches!(r.status, Status::Passed))
         .collect();
 
-    if unaudited.is_empty() {
+    if fails.is_empty() {
+        eprintln!("all {total} crates ok");
         return Ok(ExitCode::SUCCESS);
     }
 
-    for c in unaudited {
-        println!("oh no {c}");
+    for Receipt {
+        name,
+        version,
+        status,
+    } in &fails
+    {
+        println!("{name} {version}");
+        match status {
+            Status::Passed => unreachable!(),
+            Status::Fail(v) => {
+                for Fail {
+                    needed,
+                    prev_version,
+                } in v
+                {
+                    println!(" needs {needed}");
+                    if let Some(prev) = prev_version {
+                        println!("  help: found a previous audit for {prev}");
+                        println!("  review https://diff.rs/{name}/{prev}/{version}");
+                        println!("  and then vancouver audit {needed} {name} {prev} {version}");
+                    } else {
+                        println!("  help: could not find previous audits :(");
+                        println!("  review https://diff.rs/browse/{name}/{version}");
+                        println!("  and then vancouver audit {needed} {name} {version}");
+                    }
+                }
+            }
+        }
     }
 
+    eprintln!("{}/{total} crates need to be audited", fails.len());
     Ok(ExitCode::FAILURE)
 }
