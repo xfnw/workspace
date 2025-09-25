@@ -60,7 +60,7 @@ struct Audit {
     allow_unused: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 struct Criteria {
     /// give the listed criteria to everything that has this criteria
     #[serde(default)]
@@ -104,16 +104,39 @@ type DepMap<T> = BTreeMap<String, T>;
 struct Rules {
     trust_roots: CriteriaMap<DepMap<BTreeMap<Version, TrustRoot>>>,
     trust_deltas: CriteriaMap<DepMap<BTreeMap<Version, TrustDelta>>>,
+    implied_all: CriteriaMap<BTreeSet<String>>,
+    implied_any: CriteriaMap<BTreeSet<String>>,
 }
 
 #[allow(clippy::pedantic)] // TODO
 impl Rules {
-    fn new(_config: &Config, _audits: &Audits) -> Result<Self, Error> {
+    fn new(config: &Config, audits: &Audits) -> Result<Self, Error> {
+        let mut criteria = audits.criteria.clone();
+        criteria.append(&mut config.criteria.clone());
+
+        let mut implies = BTreeMap::new();
+        let implied_all = BTreeMap::new();
+        let implied_any = BTreeMap::new();
+
+        for (
+            criteria,
+            Criteria {
+                implies: imp,
+                implied_all: all,
+                implied_any: any,
+            },
+        ) in criteria
+        {
+            implies.insert(criteria.clone(), imp.clone());
+        }
+
         let trust_roots = BTreeMap::new();
         let trust_deltas = BTreeMap::new();
         Ok(Self {
             trust_roots,
             trust_deltas,
+            implied_all,
+            implied_any,
         })
     }
 
