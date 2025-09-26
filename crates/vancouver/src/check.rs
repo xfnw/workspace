@@ -314,16 +314,14 @@ impl Rules {
     ) -> Option<Version> {
         let versions: BTreeSet<_> = self
             .trust_roots
-            .get(criteria)
-            .and_then(|d| d.get(name))
-            .into_iter()
+            .values()
+            .filter_map(|d| d.get(name))
             .flatten()
             .map(|(v, _)| v)
             .chain(
                 self.trust_deltas
-                    .get(criteria)
-                    .and_then(|d| d.get(name))
-                    .into_iter()
+                    .values()
+                    .filter_map(|d| d.get(name))
                     .flatten()
                     .map(|(v, _)| v),
             )
