@@ -2,7 +2,10 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-use crate::types::{Error, Version};
+use crate::{
+    de::string_or_bset,
+    types::{Error, Version},
+};
 use rayon::prelude::*;
 use serde::Deserialize;
 use std::{
@@ -70,15 +73,15 @@ struct Audit {
 #[derive(Debug, Deserialize, Clone)]
 struct Criteria {
     /// give the listed criteria to everything that has this criteria
-    #[serde(default)]
+    #[serde(default, deserialize_with = "string_or_bset")]
     implies: BTreeSet<String>,
     /// automatically imply this criteria on everything that has all
     /// of the listed criteria
-    #[serde(default, alias = "implied-all")]
+    #[serde(default, deserialize_with = "string_or_bset", alias = "implied-all")]
     implied_all: BTreeSet<String>,
     /// automatically imply this criteria on everything that has any
     /// of the listed criteria
-    #[serde(default, alias = "implied-any")]
+    #[serde(default, deserialize_with = "string_or_bset", alias = "implied-any")]
     implied_any: BTreeSet<String>,
 }
 

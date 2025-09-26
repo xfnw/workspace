@@ -6,6 +6,7 @@ use argh::{FromArgs, from_env};
 use std::{path::PathBuf, process::ExitCode};
 
 mod check;
+mod de;
 mod metadata;
 mod types;
 
