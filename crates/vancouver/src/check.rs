@@ -307,9 +307,21 @@ impl Rules {
             return self.check_criteria(name, &trust.parent_version, criteria, recursion_limit - 1);
         }
 
-        // TODO: check implied_any
+        if let Some(criteria) = self.implied_all.get(criteria)
+            && criteria
+                .iter()
+                .all(|c| self.check_criteria(name, version, c, recursion_limit - 1))
+        {
+            return true;
+        }
 
-        // TODO: check implied_all
+        if let Some(criteria) = self.implied_any.get(criteria)
+            && criteria
+                .iter()
+                .any(|c| self.check_criteria(name, version, c, recursion_limit - 1))
+        {
+            return true;
+        }
 
         false
     }
