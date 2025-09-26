@@ -304,6 +304,39 @@ impl Rules {
         false
     }
 
+    fn find_prev(
+        &self,
+        name: &str,
+        version: &Version,
+        criteria: &str,
+        recursion_limit: usize,
+    ) -> Option<Version> {
+        let versions: BTreeSet<_> = self
+            .trust_roots
+            .get(criteria)
+            .and_then(|d| d.get(name))
+            .into_iter()
+            .flatten()
+            .map(|(v, _)| v)
+            .chain(
+                self.trust_deltas
+                    .get(criteria)
+                    .and_then(|d| d.get(name))
+                    .into_iter()
+                    .flatten()
+                    .map(|(v, _)| v),
+            )
+            .collect();
+
+        for &potential in versions.range::<&Version, _>(..version).rev() {
+            if self.check_criteria(name, potential, criteria, recursion_limit) {
+                return Some(potential.clone());
+            }
+        }
+
+        None
+    }
+
     fn check(&self, name: String, version: Version, recursion_limit: usize) -> Receipt {
         let Policy { require_all } = self.get_policy(&name);
 
@@ -315,8 +348,7 @@ impl Rules {
                 } else {
                     Some(Fail {
                         needed: c.to_string(),
-                        // TODO: search for a previous version's audit
-                        prev_version: None,
+                        prev_version: self.find_prev(&name, &version, c, recursion_limit),
                     })
                 }
             })
