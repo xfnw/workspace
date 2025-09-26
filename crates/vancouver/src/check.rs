@@ -98,7 +98,6 @@ struct TrustRoot {
 
 #[derive(Debug)]
 struct TrustDelta {
-    used: UsedMarker,
     parent_version: Version,
 }
 
@@ -147,27 +146,12 @@ impl Rules {
         for (name, aset) in config.exempt {
             for Audit {
                 criteria,
-                delta,
                 version,
                 allow_unused,
+                ..
             } in aset
             {
                 walk_implies(&implies, &criteria, |criteria| {
-                    if let Some(delta) = &delta {
-                        let (prev, next) = parse_delta(delta)?;
-                        trust_deltas
-                            .entry(criteria.to_string())
-                            .or_default()
-                            .entry(name.clone())
-                            .or_default()
-                            .insert(
-                                next,
-                                TrustDelta {
-                                    used: UsedMarker(Some(allow_unused.into())),
-                                    parent_version: prev,
-                                },
-                            );
-                    }
                     if let Some(version) = &version {
                         trust_roots
                             .entry(criteria.to_string())
@@ -199,7 +183,7 @@ impl Rules {
                 walk_implies(&implies, &criteria, |criteria| {
                     if let Some(delta) = &delta {
                         let (prev, next) = parse_delta(delta)?;
-                        if trust_deltas
+                        trust_deltas
                             .entry(criteria.to_string())
                             .or_default()
                             .entry(name.clone())
@@ -207,14 +191,9 @@ impl Rules {
                             .insert(
                                 next,
                                 TrustDelta {
-                                    used: UsedMarker(None),
                                     parent_version: prev,
                                 },
-                            )
-                            .is_some()
-                        {
-                            extra_unused.insert(format!("{name} {delta} {criteria}"));
-                        }
+                            );
                     }
                     if let Some(version) = &version
                         && trust_roots
@@ -300,7 +279,6 @@ impl Rules {
             .and_then(|d| d.get(name))
             .and_then(|v| v.get(version))
         {
-            trust.used.mark_used();
             return self.check_criteria(name, &trust.parent_version, criteria, recursion_limit - 1);
         }
 
