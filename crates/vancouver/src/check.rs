@@ -137,6 +137,22 @@ impl Rules {
         let mut trust_roots: CriteriaMap<DepMap<BTreeMap<Version, TrustRoot>>> = BTreeMap::new();
         let mut trust_deltas: CriteriaMap<DepMap<BTreeMap<Version, TrustDelta>>> = BTreeMap::new();
 
+        fn walk_implies(
+            implies: &BTreeMap<String, BTreeSet<String>>,
+            c: &str,
+            mut f: impl FnMut(&str) -> Result<(), Error>,
+        ) -> Result<(), Error> {
+            f(c)?;
+
+            if let Some(criteria) = implies.get(c) {
+                for c in criteria {
+                    f(c)?;
+                }
+            }
+
+            Ok(())
+        }
+
         for (name, aset) in audits.audits {
             for Audit {
                 criteria,
@@ -145,34 +161,37 @@ impl Rules {
                 ..
             } in aset
             {
-                if let Some(delta) = delta {
-                    let (prev, next) = parse_delta(delta)?;
-                    trust_deltas
-                        .entry(criteria.clone())
-                        .or_default()
-                        .entry(name.clone())
-                        .or_default()
-                        .insert(
-                            next,
-                            TrustDelta {
-                                used: UsedMarker(None),
-                                parent_version: prev,
-                            },
-                        );
-                }
-                if let Some(version) = version {
-                    trust_roots
-                        .entry(criteria)
-                        .or_default()
-                        .entry(name.clone())
-                        .or_default()
-                        .insert(
-                            Version::new(&version),
-                            TrustRoot {
-                                used: UsedMarker(None),
-                            },
-                        );
-                }
+                walk_implies(&implies, &criteria, |criteria| {
+                    if let Some(delta) = &delta {
+                        let (prev, next) = parse_delta(delta)?;
+                        trust_deltas
+                            .entry(criteria.to_string())
+                            .or_default()
+                            .entry(name.clone())
+                            .or_default()
+                            .insert(
+                                next,
+                                TrustDelta {
+                                    used: UsedMarker(None),
+                                    parent_version: prev,
+                                },
+                            );
+                    }
+                    if let Some(version) = &version {
+                        trust_roots
+                            .entry(criteria.to_string())
+                            .or_default()
+                            .entry(name.clone())
+                            .or_default()
+                            .insert(
+                                Version::new(version),
+                                TrustRoot {
+                                    used: UsedMarker(None),
+                                },
+                            );
+                    }
+                    Ok(())
+                })?;
             }
         }
         for (name, aset) in config.exempt {
@@ -183,34 +202,37 @@ impl Rules {
                 allow_unused,
             } in aset
             {
-                if let Some(delta) = delta {
-                    let (prev, next) = parse_delta(delta)?;
-                    trust_deltas
-                        .entry(criteria.clone())
-                        .or_default()
-                        .entry(name.clone())
-                        .or_default()
-                        .insert(
-                            next,
-                            TrustDelta {
-                                used: UsedMarker(Some(allow_unused.into())),
-                                parent_version: prev,
-                            },
-                        );
-                }
-                if let Some(version) = version {
-                    trust_roots
-                        .entry(criteria)
-                        .or_default()
-                        .entry(name.clone())
-                        .or_default()
-                        .insert(
-                            Version::new(&version),
-                            TrustRoot {
-                                used: UsedMarker(Some(allow_unused.into())),
-                            },
-                        );
-                }
+                walk_implies(&implies, &criteria, |criteria| {
+                    if let Some(delta) = &delta {
+                        let (prev, next) = parse_delta(delta)?;
+                        trust_deltas
+                            .entry(criteria.to_string())
+                            .or_default()
+                            .entry(name.clone())
+                            .or_default()
+                            .insert(
+                                next,
+                                TrustDelta {
+                                    used: UsedMarker(Some(allow_unused.into())),
+                                    parent_version: prev,
+                                },
+                            );
+                    }
+                    if let Some(version) = &version {
+                        trust_roots
+                            .entry(criteria.to_string())
+                            .or_default()
+                            .entry(name.clone())
+                            .or_default()
+                            .insert(
+                                Version::new(version),
+                                TrustRoot {
+                                    used: UsedMarker(Some(allow_unused.into())),
+                                },
+                            );
+                    }
+                    Ok(())
+                })?;
             }
         }
 
@@ -233,9 +255,9 @@ impl Rules {
     }
 }
 
-fn parse_delta(delta: String) -> Result<(Version, Version), Error> {
+fn parse_delta(delta: &str) -> Result<(Version, Version), Error> {
     let Some((prev, next)) = delta.split_once("->") else {
-        return Err(Error::ParseDelta(delta));
+        return Err(Error::ParseDelta(delta.to_string()));
     };
 
     Ok((
