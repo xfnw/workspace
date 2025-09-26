@@ -280,6 +280,7 @@ impl Rules {
             }
 
             if let Some(criteria) = self.implied_all.get(criteria)
+                && !criteria.is_empty()
                 && criteria
                     .iter()
                     .all(|c| self.check_criteria(name, version, c, recursion_limit - 1))
