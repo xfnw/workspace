@@ -492,11 +492,11 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
                     if let Some(prev) = prev_version {
                         println!("  help: found a previous audit for {prev}");
                         println!("  review https://diff.rs/{name}/{prev}/{version}");
-                        println!("  and then vancouver audit {needed} {name} {prev} {version}");
+                        println!("  and then vancouver audit {name} -b {prev} {version} {needed}");
                     } else {
                         println!("  help: could not find previous audits :(");
                         println!("  review https://diff.rs/browse/{name}/{version}");
-                        println!("  and then vancouver audit {needed} {name} {version}");
+                        println!("  and then vancouver audit {name} {version} {needed}");
                     }
                 }
             }
