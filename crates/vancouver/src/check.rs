@@ -20,17 +20,22 @@ struct Config {
     criteria: BTreeMap<String, Criteria>,
     /// policy for crates without a policy specified
     #[serde(default, alias = "default-policy")]
-    default_policy: Policy,
+    default_policy: PolicyLayer,
     #[serde(default)]
-    policy: BTreeMap<String, Policy>,
+    policy: BTreeMap<String, PolicyLayer>,
     #[serde(default)]
     exempt: BTreeMap<String, BTreeSet<Audit>>,
 }
 
 #[derive(Debug, Deserialize, Default, Clone)]
-struct Policy {
+struct PolicyLayer {
     #[serde(default, alias = "require-all")]
     require_all: Option<BTreeSet<String>>,
+}
+
+#[derive(Debug, Clone)]
+struct Policy {
+    require_all: BTreeSet<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -236,14 +241,39 @@ impl Rules {
             }
         }
 
+        let default_policy = Policy {
+            require_all: config
+                .default_policy
+                .require_all
+                .unwrap_or_else(|| ["safe-to-deploy".to_string()].into()),
+        };
+        let policy = config
+            .policy
+            .into_iter()
+            .map(|(d, p)| {
+                (
+                    d,
+                    Policy {
+                        require_all: p
+                            .require_all
+                            .unwrap_or_else(|| default_policy.require_all.clone()),
+                    },
+                )
+            })
+            .collect();
+
         Ok(Self {
             trust_roots,
             trust_deltas,
             implied_all,
             implied_any,
-            default_policy: config.default_policy,
-            policy: config.policy,
+            default_policy,
+            policy,
         })
+    }
+
+    fn get_policy(&self, name: &str) -> &Policy {
+        self.policy.get(name).unwrap_or(&self.default_policy)
     }
 
     fn check(&self, name: String, version: Version) -> Result<Receipt, Error> {
