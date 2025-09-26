@@ -126,7 +126,6 @@ impl Rules {
         let mut criteria = audits.criteria;
         criteria.append(&mut config.criteria);
 
-        let mut implies = BTreeMap::new();
         let mut implied_all = BTreeMap::new();
         let mut implied_any = BTreeMap::new();
 
@@ -139,9 +138,11 @@ impl Rules {
             },
         ) in criteria
         {
-            implies.insert(criteria.clone(), imp);
-            implied_all.insert(criteria.clone(), all);
-            implied_any.insert(criteria, any);
+            implied_any.insert(criteria.clone(), any);
+            for i in imp {
+                implied_any.entry(i).or_default().insert(criteria.clone());
+            }
+            implied_all.insert(criteria, all);
         }
 
         let mut trust_roots: CriteriaMap<DepMap<BTreeMap<Version, TrustRoot>>> = BTreeMap::new();
@@ -156,22 +157,19 @@ impl Rules {
                 ..
             } in aset
             {
-                walk_implies(&implies, &criteria, |criteria| {
-                    if let Some(version) = &version {
-                        trust_roots
-                            .entry(criteria.to_string())
-                            .or_default()
-                            .entry(name.clone())
-                            .or_default()
-                            .insert(
-                                Version::new(version),
-                                TrustRoot {
-                                    used: UsedMarker(Some(allow_unused.into())),
-                                },
-                            );
-                    }
-                    Ok(())
-                })?;
+                if let Some(version) = &version {
+                    trust_roots
+                        .entry(criteria.clone())
+                        .or_default()
+                        .entry(name.clone())
+                        .or_default()
+                        .insert(
+                            Version::new(version),
+                            TrustRoot {
+                                used: UsedMarker(Some(allow_unused.into())),
+                            },
+                        );
+                }
             }
         }
 
@@ -185,39 +183,36 @@ impl Rules {
                 ..
             } in aset
             {
-                walk_implies(&implies, &criteria, |criteria| {
-                    if let Some(delta) = &delta {
-                        let (prev, next) = parse_delta(delta)?;
-                        trust_deltas
-                            .entry(criteria.to_string())
-                            .or_default()
-                            .entry(name.clone())
-                            .or_default()
-                            .insert(
-                                next,
-                                TrustDelta {
-                                    parent_version: prev,
-                                },
-                            );
-                    }
-                    if let Some(version) = &version
-                        && trust_roots
-                            .entry(criteria.to_string())
-                            .or_default()
-                            .entry(name.clone())
-                            .or_default()
-                            .insert(
-                                Version::new(version),
-                                TrustRoot {
-                                    used: UsedMarker(None),
-                                },
-                            )
-                            .is_some()
-                    {
-                        extra_unused.insert(format!("{name} {version} {criteria}"));
-                    }
-                    Ok(())
-                })?;
+                if let Some(delta) = &delta {
+                    let (prev, next) = parse_delta(delta)?;
+                    trust_deltas
+                        .entry(criteria.clone())
+                        .or_default()
+                        .entry(name.clone())
+                        .or_default()
+                        .insert(
+                            next,
+                            TrustDelta {
+                                parent_version: prev,
+                            },
+                        );
+                }
+                if let Some(version) = &version
+                    && trust_roots
+                        .entry(criteria.clone())
+                        .or_default()
+                        .entry(name.clone())
+                        .or_default()
+                        .insert(
+                            Version::new(version),
+                            TrustRoot {
+                                used: UsedMarker(None),
+                            },
+                        )
+                        .is_some()
+                {
+                    extra_unused.insert(format!("{name} {version} {criteria}"));
+                }
             }
         }
 
@@ -393,22 +388,6 @@ impl Rules {
 
         out
     }
-}
-
-fn walk_implies(
-    implies: &BTreeMap<String, BTreeSet<String>>,
-    c: &str,
-    mut f: impl FnMut(&str) -> Result<(), Error>,
-) -> Result<(), Error> {
-    f(c)?;
-
-    if let Some(criteria) = implies.get(c) {
-        for c in criteria {
-            f(c)?;
-        }
-    }
-
-    Ok(())
 }
 
 fn parse_delta(delta: &str) -> Result<(Version, Version), Error> {
