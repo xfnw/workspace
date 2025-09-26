@@ -531,6 +531,9 @@ fn add_exempts(fails: &Vec<Receipt>, toml: &mut DocumentMut) -> Result<(), Error
     else {
         return Err(Error::TomlBorked);
     };
+    if etable.is_empty() {
+        etable.set_implicit(true);
+    }
 
     for Receipt {
         name,
