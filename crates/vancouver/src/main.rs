@@ -39,6 +39,9 @@ pub struct CheckArgs {
     /// stop searching after this many layers of recursion
     #[argh(option, default = "621")]
     recursion_limit: usize,
+    /// add exempts for all unaudited packages to the config
+    #[argh(switch)]
+    add_exempts: bool,
 }
 
 fn main() -> ExitCode {

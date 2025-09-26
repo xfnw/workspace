@@ -10,6 +10,8 @@ pub enum Error {
     LockOpen(std::io::Error),
     /// could not open config file
     ConfigOpen(std::io::Error),
+    /// could not write config
+    ConfigWrite(std::io::Error),
     /// could not open audits file
     AuditsOpen(std::io::Error),
     /// could not deserialize toml
@@ -22,6 +24,11 @@ pub enum Error {
     EmptyDependencies,
     /// could not parse delta
     ParseDelta(String),
+    /// could not edit toml
+    #[err(from)]
+    Toml(toml_edit::TomlError),
+    /// please do not the config
+    TomlBorked,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]

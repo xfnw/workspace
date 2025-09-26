@@ -8,9 +8,11 @@ use serde::Deserialize;
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs::read_to_string,
+    io::{Seek, Write},
     process::ExitCode,
     sync::atomic::{AtomicBool, Ordering},
 };
+use toml_edit::{ArrayOfTables, DocumentMut, Item, Table, value};
 
 #[derive(Debug, Deserialize)]
 struct Config {
@@ -467,7 +469,26 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
         return Ok(ExitCode::SUCCESS);
     }
 
-    // TODO: add flag to add exempts in the config for failures
+    if args.add_exempts {
+        let mut file = std::fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(&args.config)
+            .map_err(Error::ConfigOpen)?;
+        let mut toml: DocumentMut = std::io::read_to_string(&file)
+            .map_err(Error::ConfigOpen)?
+            .parse()?;
+
+        add_exempts(&fails, &mut toml)?;
+
+        file.rewind().map_err(Error::ConfigWrite)?;
+        file.set_len(0).map_err(Error::ConfigWrite)?;
+        file.write_all(toml.to_string().as_bytes())
+            .map_err(Error::ConfigWrite)?;
+
+        eprintln!("added {} exempt(s) to the config", fails.len());
+        return Ok(ExitCode::from(3));
+    }
 
     for Receipt {
         name,
@@ -501,4 +522,41 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
 
     eprintln!("{}/{total} crates need to be audited", fails.len());
     Ok(ExitCode::FAILURE)
+}
+
+fn add_exempts(fails: &Vec<Receipt>, toml: &mut DocumentMut) -> Result<(), Error> {
+    let Item::Table(etable) = toml
+        .entry("exempt")
+        .or_insert_with(|| Item::Table(Table::new()))
+    else {
+        return Err(Error::TomlBorked);
+    };
+
+    for Receipt {
+        name,
+        version,
+        status,
+    } in fails
+    {
+        let Item::ArrayOfTables(arr) = etable
+            .entry(name)
+            .or_insert_with(|| Item::ArrayOfTables(ArrayOfTables::new()))
+        else {
+            return Err(Error::TomlBorked);
+        };
+
+        match status {
+            Status::Passed => unreachable!(),
+            Status::Fail(f) => {
+                for Fail { needed, .. } in f {
+                    let mut t = Table::new();
+                    t["version"] = value(version.to_string());
+                    t["criteria"] = value(needed);
+                    arr.push(t);
+                }
+            }
+        }
+    }
+
+    Ok(())
 }
