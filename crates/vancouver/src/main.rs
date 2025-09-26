@@ -5,6 +5,7 @@
 use argh::{FromArgs, from_env};
 use std::{path::PathBuf, process::ExitCode};
 
+mod audit;
 mod check;
 mod de;
 mod metadata;
@@ -75,7 +76,7 @@ fn main() -> ExitCode {
     let opt: Opt = from_env();
     match match opt.command {
         Cmds::Check(args) => check::do_check(&args),
-        Cmds::Audit(args) => todo!(),
+        Cmds::Audit(args) => audit::add_audit(&args),
     } {
         Ok(c) => c,
         Err(e) => {

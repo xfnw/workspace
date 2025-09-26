@@ -14,6 +14,8 @@ pub enum Error {
     ConfigWrite(std::io::Error),
     /// could not open audits file
     AuditsOpen(std::io::Error),
+    /// could not write audits file
+    AuditsWrite(std::io::Error),
     /// could not deserialize toml
     #[err(from)]
     Deserialize(toml_edit::de::Error),
@@ -27,7 +29,7 @@ pub enum Error {
     /// could not edit toml
     #[err(from)]
     Toml(toml_edit::TomlError),
-    /// please do not the config
+    /// please do not the toml
     TomlBorked,
 }
 
