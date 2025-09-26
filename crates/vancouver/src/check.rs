@@ -115,8 +115,8 @@ struct Rules {
     policy: DepMap<Policy>,
 }
 
-#[allow(clippy::pedantic)] // TODO
 impl Rules {
+    #[allow(clippy::too_many_lines)]
     fn new(mut config: Config, audits: Audits) -> Result<Self, Error> {
         let mut criteria = audits.criteria;
         criteria.append(&mut config.criteria);
@@ -142,22 +142,7 @@ impl Rules {
         let mut trust_roots: CriteriaMap<DepMap<BTreeMap<Version, TrustRoot>>> = BTreeMap::new();
         let mut trust_deltas: CriteriaMap<DepMap<BTreeMap<Version, TrustDelta>>> = BTreeMap::new();
 
-        fn walk_implies(
-            implies: &BTreeMap<String, BTreeSet<String>>,
-            c: &str,
-            mut f: impl FnMut(&str) -> Result<(), Error>,
-        ) -> Result<(), Error> {
-            f(c)?;
-
-            if let Some(criteria) = implies.get(c) {
-                for c in criteria {
-                    f(c)?;
-                }
-            }
-
-            Ok(())
-        }
-
+        // TODO: squish this into a macro
         for (name, aset) in audits.audits {
             for Audit {
                 criteria,
@@ -326,12 +311,7 @@ impl Rules {
         false
     }
 
-    fn check(
-        &self,
-        name: String,
-        version: Version,
-        recursion_limit: usize,
-    ) -> Result<Receipt, Error> {
+    fn check(&self, name: String, version: Version, recursion_limit: usize) -> Receipt {
         let Policy { require_all } = self.get_policy(&name);
 
         let fails: Vec<_> = require_all
@@ -355,12 +335,28 @@ impl Rules {
             Status::Fail(fails)
         };
 
-        Ok(Receipt {
+        Receipt {
             name,
             version,
             status,
-        })
+        }
     }
+}
+
+fn walk_implies(
+    implies: &BTreeMap<String, BTreeSet<String>>,
+    c: &str,
+    mut f: impl FnMut(&str) -> Result<(), Error>,
+) -> Result<(), Error> {
+    f(c)?;
+
+    if let Some(criteria) = implies.get(c) {
+        for c in criteria {
+            f(c)?;
+        }
+    }
+
+    Ok(())
 }
 
 fn parse_delta(delta: &str) -> Result<(Version, Version), Error> {
@@ -405,10 +401,10 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
     let audits: Audits = toml_edit::de::from_str(&audits)?;
     let rules = Rules::new(config, audits)?;
 
-    let receipts = dependencies
+    let receipts: Vec<_> = dependencies
         .into_par_iter()
         .map(|(name, version)| rules.check(name, version, args.recursion_limit))
-        .collect::<Result<Vec<_>, _>>()?;
+        .collect();
     let total = receipts.len();
     let fails: Vec<_> = receipts
         .into_iter()
