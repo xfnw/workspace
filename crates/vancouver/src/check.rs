@@ -109,6 +109,7 @@ type DepMap<T> = BTreeMap<String, T>;
 struct Rules {
     trust_roots: CriteriaMap<DepMap<BTreeMap<Version, TrustRoot>>>,
     trust_deltas: CriteriaMap<DepMap<BTreeMap<Version, TrustDelta>>>,
+    extra_unused: BTreeSet<String>,
     implied_all: CriteriaMap<BTreeSet<String>>,
     implied_any: CriteriaMap<BTreeSet<String>>,
     default_policy: Policy,
@@ -184,6 +185,9 @@ impl Rules {
                 })?;
             }
         }
+
+        let mut extra_unused = BTreeSet::new();
+
         for (name, aset) in audits.audits {
             for Audit {
                 criteria,
@@ -195,7 +199,7 @@ impl Rules {
                 walk_implies(&implies, &criteria, |criteria| {
                     if let Some(delta) = &delta {
                         let (prev, next) = parse_delta(delta)?;
-                        trust_deltas
+                        if trust_deltas
                             .entry(criteria.to_string())
                             .or_default()
                             .entry(name.clone())
@@ -206,10 +210,14 @@ impl Rules {
                                     used: UsedMarker(None),
                                     parent_version: prev,
                                 },
-                            );
+                            )
+                            .is_some()
+                        {
+                            extra_unused.insert(format!("{name} {delta} {criteria}"));
+                        }
                     }
-                    if let Some(version) = &version {
-                        trust_roots
+                    if let Some(version) = &version
+                        && trust_roots
                             .entry(criteria.to_string())
                             .or_default()
                             .entry(name.clone())
@@ -219,7 +227,10 @@ impl Rules {
                                 TrustRoot {
                                     used: UsedMarker(None),
                                 },
-                            );
+                            )
+                            .is_some()
+                    {
+                        extra_unused.insert(format!("{name} {version} {criteria}"));
                     }
                     Ok(())
                 })?;
@@ -250,6 +261,7 @@ impl Rules {
         Ok(Self {
             trust_roots,
             trust_deltas,
+            extra_unused,
             implied_all,
             implied_any,
             default_policy,
@@ -341,6 +353,27 @@ impl Rules {
             status,
         }
     }
+
+    fn unused_exempts(&self) -> BTreeSet<String> {
+        let mut out = self.extra_unused.clone();
+
+        for (criteria, map) in &self.trust_roots {
+            for (dep, map) in map {
+                for (version, root) in map {
+                    if root
+                        .used
+                        .0
+                        .as_ref()
+                        .is_some_and(|b| !b.load(Ordering::Relaxed))
+                    {
+                        out.insert(format!("{dep} {version} {criteria}"));
+                    }
+                }
+            }
+        }
+
+        out
+    }
 }
 
 fn walk_implies(
@@ -411,8 +444,12 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
         .filter(|r| !matches!(r.status, Status::Passed))
         .collect();
 
+    let unused = rules.unused_exempts();
+    for s in unused {
+        println!("unused exempt: {s}");
+    }
+
     if fails.is_empty() {
-        // TODO: check for unused exempts here
         eprintln!("all {total} crates ok");
         return Ok(ExitCode::SUCCESS);
     }
