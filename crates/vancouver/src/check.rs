@@ -276,11 +276,62 @@ impl Rules {
         self.policy.get(name).unwrap_or(&self.default_policy)
     }
 
+    fn check_criteria(&self, name: &str, version: &Version, criteria: &str) -> bool {
+        if let Some(trust) = self
+            .trust_roots
+            .get(criteria)
+            .and_then(|d| d.get(name))
+            .and_then(|v| v.get(version))
+        {
+            trust.used.mark_used();
+            return true;
+        }
+
+        if let Some(trust) = self
+            .trust_deltas
+            .get(criteria)
+            .and_then(|d| d.get(name))
+            .and_then(|v| v.get(version))
+        {
+            trust.used.mark_used();
+            return self.check_criteria(name, &trust.parent_version, criteria);
+        }
+
+        // TODO: check implied_any
+
+        // TODO: check implied_all
+
+        false
+    }
+
     fn check(&self, name: String, version: Version) -> Result<Receipt, Error> {
+        let Policy { require_all } = self.get_policy(&name);
+
+        let fails: Vec<_> = require_all
+            .iter()
+            .filter_map(|c| {
+                if self.check_criteria(&name, &version, c) {
+                    None
+                } else {
+                    Some(Fail {
+                        needed: c.to_string(),
+                        // TODO: search for a previous version's audit
+                        prev_version: None,
+                    })
+                }
+            })
+            .collect();
+
+        let status = if fails.is_empty() {
+            Status::Passed
+        } else {
+            Status::Fail(fails)
+        };
+
         Ok(Receipt {
             name,
             version,
-            status: Status::Passed,
+            status,
         })
     }
 }
@@ -338,10 +389,13 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
         .collect();
 
     if fails.is_empty() {
+        // TODO: check for unused exempts here
         eprintln!("all {total} crates ok");
         return Ok(ExitCode::SUCCESS);
     }
 
+    // TODO: add flag to add exempts in the config for failures
+    
     for Receipt {
         name,
         version,
