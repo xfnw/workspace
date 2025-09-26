@@ -36,6 +36,9 @@ pub struct CheckArgs {
     /// path to your audits
     #[argh(option, default = "PathBuf::from(\"audits.toml\")")]
     audits: PathBuf,
+    /// stop searching after this many layers of recursion
+    #[argh(option, default = "621")]
+    recursion_limit: usize,
 }
 
 fn main() -> ExitCode {

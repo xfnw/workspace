@@ -276,7 +276,13 @@ impl Rules {
         self.policy.get(name).unwrap_or(&self.default_policy)
     }
 
-    fn check_criteria(&self, name: &str, version: &Version, criteria: &str) -> bool {
+    fn check_criteria(
+        &self,
+        name: &str,
+        version: &Version,
+        criteria: &str,
+        recursion_limit: usize,
+    ) -> bool {
         if let Some(trust) = self
             .trust_roots
             .get(criteria)
@@ -287,6 +293,10 @@ impl Rules {
             return true;
         }
 
+        if recursion_limit == 0 {
+            return false;
+        }
+
         if let Some(trust) = self
             .trust_deltas
             .get(criteria)
@@ -294,7 +304,7 @@ impl Rules {
             .and_then(|v| v.get(version))
         {
             trust.used.mark_used();
-            return self.check_criteria(name, &trust.parent_version, criteria);
+            return self.check_criteria(name, &trust.parent_version, criteria, recursion_limit - 1);
         }
 
         // TODO: check implied_any
@@ -304,13 +314,18 @@ impl Rules {
         false
     }
 
-    fn check(&self, name: String, version: Version) -> Result<Receipt, Error> {
+    fn check(
+        &self,
+        name: String,
+        version: Version,
+        recursion_limit: usize,
+    ) -> Result<Receipt, Error> {
         let Policy { require_all } = self.get_policy(&name);
 
         let fails: Vec<_> = require_all
             .iter()
             .filter_map(|c| {
-                if self.check_criteria(&name, &version, c) {
+                if self.check_criteria(&name, &version, c, recursion_limit) {
                     None
                 } else {
                     Some(Fail {
@@ -380,7 +395,7 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
 
     let receipts = dependencies
         .into_par_iter()
-        .map(|(name, version)| rules.check(name, version))
+        .map(|(name, version)| rules.check(name, version, args.recursion_limit))
         .collect::<Result<Vec<_>, _>>()?;
     let total = receipts.len();
     let fails: Vec<_> = receipts
@@ -395,7 +410,7 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
     }
 
     // TODO: add flag to add exempts in the config for failures
-    
+
     for Receipt {
         name,
         version,
