@@ -27,7 +27,7 @@ struct Config {
     exempt: BTreeMap<String, BTreeSet<Audit>>,
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, Clone)]
 struct Policy {
     #[serde(default, alias = "require-all")]
     require_all: Option<BTreeSet<String>>,
@@ -56,7 +56,7 @@ struct Audit {
     ///
     /// this is only meaningful when specified on exemptions in the
     /// config, unused audits do not cause warnings
-    #[serde(default)]
+    #[serde(default, alias = "allow-unused")]
     allow_unused: bool,
 }
 
@@ -67,11 +67,11 @@ struct Criteria {
     implies: BTreeSet<String>,
     /// automatically imply this criteria on everything that has all
     /// of the listed criteria
-    #[serde(default)]
+    #[serde(default, alias = "implied-all")]
     implied_all: BTreeSet<String>,
     /// automatically imply this criteria on everything that has any
     /// of the listed criteria
-    #[serde(default)]
+    #[serde(default, alias = "implied-any")]
     implied_any: BTreeSet<String>,
 }
 
@@ -106,17 +106,19 @@ struct Rules {
     trust_deltas: CriteriaMap<DepMap<BTreeMap<Version, TrustDelta>>>,
     implied_all: CriteriaMap<BTreeSet<String>>,
     implied_any: CriteriaMap<BTreeSet<String>>,
+    default_policy: Policy,
+    policy: DepMap<Policy>,
 }
 
 #[allow(clippy::pedantic)] // TODO
 impl Rules {
-    fn new(config: &Config, audits: &Audits) -> Result<Self, Error> {
-        let mut criteria = audits.criteria.clone();
-        criteria.append(&mut config.criteria.clone());
+    fn new(mut config: Config, audits: Audits) -> Result<Self, Error> {
+        let mut criteria = audits.criteria;
+        criteria.append(&mut config.criteria);
 
         let mut implies = BTreeMap::new();
-        let implied_all = BTreeMap::new();
-        let implied_any = BTreeMap::new();
+        let mut implied_all = BTreeMap::new();
+        let mut implied_any = BTreeMap::new();
 
         for (
             criteria,
@@ -127,16 +129,98 @@ impl Rules {
             },
         ) in criteria
         {
-            implies.insert(criteria.clone(), imp.clone());
+            implies.insert(criteria.clone(), imp);
+            implied_all.insert(criteria.clone(), all);
+            implied_any.insert(criteria, any);
         }
 
-        let trust_roots = BTreeMap::new();
-        let trust_deltas = BTreeMap::new();
+        let mut trust_roots: CriteriaMap<DepMap<BTreeMap<Version, TrustRoot>>> = BTreeMap::new();
+        let mut trust_deltas: CriteriaMap<DepMap<BTreeMap<Version, TrustDelta>>> = BTreeMap::new();
+
+        for (name, aset) in audits.audits {
+            for Audit {
+                criteria,
+                delta,
+                version,
+                ..
+            } in aset
+            {
+                if let Some(delta) = delta {
+                    let (prev, next) = parse_delta(delta)?;
+                    trust_deltas
+                        .entry(criteria.clone())
+                        .or_default()
+                        .entry(name.clone())
+                        .or_default()
+                        .insert(
+                            next,
+                            TrustDelta {
+                                used: UsedMarker(None),
+                                parent_version: prev,
+                            },
+                        );
+                }
+                if let Some(version) = version {
+                    trust_roots
+                        .entry(criteria)
+                        .or_default()
+                        .entry(name.clone())
+                        .or_default()
+                        .insert(
+                            Version::new(&version),
+                            TrustRoot {
+                                used: UsedMarker(None),
+                            },
+                        );
+                }
+            }
+        }
+        for (name, aset) in config.exempt {
+            for Audit {
+                criteria,
+                delta,
+                version,
+                allow_unused,
+            } in aset
+            {
+                if let Some(delta) = delta {
+                    let (prev, next) = parse_delta(delta)?;
+                    trust_deltas
+                        .entry(criteria.clone())
+                        .or_default()
+                        .entry(name.clone())
+                        .or_default()
+                        .insert(
+                            next,
+                            TrustDelta {
+                                used: UsedMarker(Some(allow_unused.into())),
+                                parent_version: prev,
+                            },
+                        );
+                }
+                if let Some(version) = version {
+                    trust_roots
+                        .entry(criteria)
+                        .or_default()
+                        .entry(name.clone())
+                        .or_default()
+                        .insert(
+                            Version::new(&version),
+                            TrustRoot {
+                                used: UsedMarker(Some(allow_unused.into())),
+                            },
+                        );
+                }
+            }
+        }
+
         Ok(Self {
             trust_roots,
             trust_deltas,
             implied_all,
             implied_any,
+            default_policy: config.default_policy,
+            policy: config.policy,
         })
     }
 
@@ -147,6 +231,17 @@ impl Rules {
             status: Status::Passed,
         })
     }
+}
+
+fn parse_delta(delta: String) -> Result<(Version, Version), Error> {
+    let Some((prev, next)) = delta.split_once("->") else {
+        return Err(Error::ParseDelta(delta));
+    };
+
+    Ok((
+        Version::new(prev.trim_ascii()),
+        Version::new(next.trim_ascii()),
+    ))
 }
 
 #[derive(Debug, Clone)]
@@ -178,7 +273,7 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
     let config: Config = toml_edit::de::from_str(&config)?;
     let audits = read_to_string(&args.audits).map_err(Error::AuditsOpen)?;
     let audits: Audits = toml_edit::de::from_str(&audits)?;
-    let rules = Rules::new(&config, &audits)?;
+    let rules = Rules::new(config, audits)?;
 
     let receipts = dependencies
         .into_par_iter()

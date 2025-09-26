@@ -20,6 +20,8 @@ pub enum Error {
     /// this is probably a bug unless you actually have an empty lock
     /// file for some reason, please report it
     EmptyDependencies,
+    /// could not parse delta
+    ParseDelta(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
