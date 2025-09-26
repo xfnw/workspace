@@ -143,47 +143,6 @@ impl Rules {
         let mut trust_deltas: CriteriaMap<DepMap<BTreeMap<Version, TrustDelta>>> = BTreeMap::new();
 
         // TODO: squish this into a macro
-        for (name, aset) in audits.audits {
-            for Audit {
-                criteria,
-                delta,
-                version,
-                ..
-            } in aset
-            {
-                walk_implies(&implies, &criteria, |criteria| {
-                    if let Some(delta) = &delta {
-                        let (prev, next) = parse_delta(delta)?;
-                        trust_deltas
-                            .entry(criteria.to_string())
-                            .or_default()
-                            .entry(name.clone())
-                            .or_default()
-                            .insert(
-                                next,
-                                TrustDelta {
-                                    used: UsedMarker(None),
-                                    parent_version: prev,
-                                },
-                            );
-                    }
-                    if let Some(version) = &version {
-                        trust_roots
-                            .entry(criteria.to_string())
-                            .or_default()
-                            .entry(name.clone())
-                            .or_default()
-                            .insert(
-                                Version::new(version),
-                                TrustRoot {
-                                    used: UsedMarker(None),
-                                },
-                            );
-                    }
-                    Ok(())
-                })?;
-            }
-        }
         for (name, aset) in config.exempt {
             for Audit {
                 criteria,
@@ -218,6 +177,47 @@ impl Rules {
                                 Version::new(version),
                                 TrustRoot {
                                     used: UsedMarker(Some(allow_unused.into())),
+                                },
+                            );
+                    }
+                    Ok(())
+                })?;
+            }
+        }
+        for (name, aset) in audits.audits {
+            for Audit {
+                criteria,
+                delta,
+                version,
+                ..
+            } in aset
+            {
+                walk_implies(&implies, &criteria, |criteria| {
+                    if let Some(delta) = &delta {
+                        let (prev, next) = parse_delta(delta)?;
+                        trust_deltas
+                            .entry(criteria.to_string())
+                            .or_default()
+                            .entry(name.clone())
+                            .or_default()
+                            .insert(
+                                next,
+                                TrustDelta {
+                                    used: UsedMarker(None),
+                                    parent_version: prev,
+                                },
+                            );
+                    }
+                    if let Some(version) = &version {
+                        trust_roots
+                            .entry(criteria.to_string())
+                            .or_default()
+                            .entry(name.clone())
+                            .or_default()
+                            .insert(
+                                Version::new(version),
+                                TrustRoot {
+                                    used: UsedMarker(None),
                                 },
                             );
                     }
