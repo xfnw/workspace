@@ -93,6 +93,7 @@
         });
         members = genAttrs [
           "maw"
+          "vancouver"
           "vasm"
         ] buildPackage;
       in {
