@@ -15,7 +15,7 @@ many fields that cargo-vet requires, while cargo-vet does not support
 some of vancouver's more advanced criteria implications.
 
 it should be possible to write an `audits.toml` that works with both
-cargo-vet and vancouver, just do not expect that to heppen
+cargo-vet and vancouver, just do not expect that to happen
 automatically. 
 
 ## did you really name this after the cat youtuber?
