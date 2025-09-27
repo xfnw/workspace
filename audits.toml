@@ -1,0 +1,59 @@
+# SPDX-FileCopyrightText: 2025 xfnw
+#
+# SPDX-License-Identifier: MIT
+
+[criteria.blobs-ok]
+description = "may have blobs, but it is obvious where they come from or are reproducible"
+
+[criteria.local-crate]
+description = "i wrote it, so it must be Secure™®©!"
+
+[criteria.no-sus-blobs]
+description = "the crate does not include weird blobs"
+implies = "blobs-ok"
+
+[criteria.skimmed]
+description = "i glanced at it and nothing seemed too suspicious"
+
+[criteria.too-big-to-fail]
+description = "popular enough that i dont think it needs to be audited (famous last words)"
+
+[[audits.foxerror]]
+version = "0.1.0"
+criteria = "local-crate"
+
+[[audits.foxerror]]
+version = "0.1.1"
+criteria = "local-crate"
+
+[[audits.foxerror]]
+version = "0.1.2"
+criteria = "local-crate"
+
+[[audits.irc-connect]]
+version = "0.1.0"
+criteria = "local-crate"
+
+[[audits.irc-connect]]
+version = "0.1.1"
+criteria = "local-crate"
+
+[[audits.irc-connect]]
+version = "0.2.0"
+criteria = "local-crate"
+
+[[audits.vasm]]
+version = "1.0.0"
+criteria = "local-crate"
+
+[[audits.mark-tree]]
+version = "0.1.0"
+criteria = "local-crate"
+
+[[audits.maw]]
+version = "0.1.0"
+criteria = "local-crate"
+
+[[audits.vancouver]]
+version = "0.1.0"
+criteria = "local-crate"
