@@ -11,7 +11,7 @@ mod de;
 mod metadata;
 mod types;
 
-/// a more helpful vet
+/// dependency auditing that meows
 #[derive(Debug, FromArgs)]
 #[argh(help_triggers("-h", "--help", "help"))]
 struct Opt {
