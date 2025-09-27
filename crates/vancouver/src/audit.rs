@@ -43,6 +43,9 @@ pub fn add_audit(args: &crate::AuditArgs) -> Result<ExitCode, Error> {
         t["version"] = value(&args.version);
     }
     t["criteria"] = value(&args.criteria);
+    if let Some(notes) = &args.notes {
+        t["notes"] = value(notes);
+    }
     arr.push(t);
 
     file.rewind().map_err(Error::AuditsWrite)?;

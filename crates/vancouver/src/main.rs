@@ -70,6 +70,9 @@ pub struct AuditArgs {
     /// the criteria you audited
     #[argh(positional)]
     criteria: String,
+    /// additional notes to include
+    #[argh(option, short = 'n')]
+    notes: Option<String>,
 }
 
 fn main() -> ExitCode {
