@@ -464,7 +464,7 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
         file.write_all(toml.to_string().as_bytes())
             .map_err(Error::ConfigWrite)?;
 
-        eprintln!("added {} exempt(s) to the config", fails.len());
+        eprintln!("added {} exempts to the config", fails.len());
         return Ok(ExitCode::from(3));
     }
 
