@@ -259,39 +259,6 @@ impl Rules {
         criteria: &str,
         recursion_limit: usize,
     ) -> bool {
-        if recursion_limit > 0 {
-            if let Some(trust) = self
-                .trust_deltas
-                .get(criteria)
-                .and_then(|d| d.get(name))
-                .and_then(|v| v.get(version))
-            {
-                return self.check_criteria(
-                    name,
-                    &trust.parent_version,
-                    criteria,
-                    recursion_limit - 1,
-                );
-            }
-
-            if let Some(criteria) = self.implied_all.get(criteria)
-                && !criteria.is_empty()
-                && criteria
-                    .iter()
-                    .all(|c| self.check_criteria(name, version, c, recursion_limit - 1))
-            {
-                return true;
-            }
-
-            if let Some(criteria) = self.implied_any.get(criteria)
-                && criteria
-                    .iter()
-                    .any(|c| self.check_criteria(name, version, c, recursion_limit - 1))
-            {
-                return true;
-            }
-        }
-
         if let Some(trust) = self
             .trust_roots
             .get(criteria)
@@ -299,6 +266,36 @@ impl Rules {
             .and_then(|v| v.get(version))
         {
             trust.used.mark_used();
+            return true;
+        }
+
+        if recursion_limit == 0 {
+            return false;
+        }
+
+        if let Some(trust) = self
+            .trust_deltas
+            .get(criteria)
+            .and_then(|d| d.get(name))
+            .and_then(|v| v.get(version))
+        {
+            return self.check_criteria(name, &trust.parent_version, criteria, recursion_limit - 1);
+        }
+
+        if let Some(criteria) = self.implied_all.get(criteria)
+            && !criteria.is_empty()
+            && criteria
+                .iter()
+                .all(|c| self.check_criteria(name, version, c, recursion_limit - 1))
+        {
+            return true;
+        }
+
+        if let Some(criteria) = self.implied_any.get(criteria)
+            && criteria
+                .iter()
+                .any(|c| self.check_criteria(name, version, c, recursion_limit - 1))
+        {
             return true;
         }
 
