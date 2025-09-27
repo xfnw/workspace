@@ -5,7 +5,7 @@
 [criteria.blobs-ok]
 description = "may have blobs, but it is obvious where they come from or are reproducible"
 
-[criteria.local-crate]
+[criteria.by-xfnw]
 description = "i wrote it, so it must be Secure™®©!"
 
 [criteria.no-sus-blobs]
@@ -20,43 +20,43 @@ description = "popular enough that i dont think it needs to be audited (famous l
 
 [[audits.foxerror]]
 version = "0.1.0"
-criteria = "local-crate"
+criteria = "by-xfnw"
 
 [[audits.foxerror]]
 version = "0.1.1"
-criteria = "local-crate"
+criteria = "by-xfnw"
 
 [[audits.foxerror]]
 version = "0.1.2"
-criteria = "local-crate"
+criteria = "by-xfnw"
 
 [[audits.irc-connect]]
 version = "0.1.0"
-criteria = "local-crate"
+criteria = "by-xfnw"
 
 [[audits.irc-connect]]
 version = "0.1.1"
-criteria = "local-crate"
+criteria = "by-xfnw"
 
 [[audits.irc-connect]]
 version = "0.2.0"
-criteria = "local-crate"
+criteria = "by-xfnw"
 
 [[audits.vasm]]
 version = "1.0.0"
-criteria = "local-crate"
+criteria = "by-xfnw"
 
 [[audits.mark-tree]]
 version = "0.1.0"
-criteria = "local-crate"
+criteria = "by-xfnw"
 
 [[audits.maw]]
 version = "0.1.0"
-criteria = "local-crate"
+criteria = "by-xfnw"
 
 [[audits.vancouver]]
 version = "0.1.0"
-criteria = "local-crate"
+criteria = "by-xfnw"
 
 [[audits.libloading]]
 version = "0.8.8"

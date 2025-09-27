@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-[criteria.local-crate]
+[criteria.by-xfnw]
 implies = ["blobs-ok", "skimmed"]
 
 [criteria.too-big-to-fail]
