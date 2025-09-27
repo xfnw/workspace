@@ -127,22 +127,22 @@ impl Rules {
         criteria.append(&mut config.criteria);
 
         let mut implied_all = BTreeMap::new();
-        let mut implied_any = BTreeMap::new();
+        let mut implied_any: CriteriaMap<BTreeSet<String>> = BTreeMap::new();
 
         for (
             criteria,
             Criteria {
                 implies: imp,
                 implied_all: all,
-                implied_any: any,
+                implied_any: mut any,
             },
         ) in criteria
         {
-            implied_any.insert(criteria.clone(), any);
             for i in imp {
                 implied_any.entry(i).or_default().insert(criteria.clone());
             }
-            implied_all.insert(criteria, all);
+            implied_all.insert(criteria.clone(), all);
+            implied_any.entry(criteria).or_default().append(&mut any);
         }
 
         let mut trust_roots: CriteriaMap<DepMap<BTreeMap<Version, TrustRoot>>> = BTreeMap::new();
