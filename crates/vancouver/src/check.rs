@@ -15,7 +15,7 @@ use std::{
     process::ExitCode,
     sync::atomic::{AtomicBool, Ordering},
 };
-use toml_edit::{ArrayOfTables, DocumentMut, Item, Table, value};
+use toml_edit::{ArrayOfTables, DocumentMut, Item, Table, Value, value};
 
 #[derive(Debug, Deserialize)]
 struct Config {
@@ -113,7 +113,7 @@ type DepMap<T> = BTreeMap<String, T>;
 struct Rules {
     trust_roots: CriteriaMap<DepMap<BTreeMap<Version, TrustRoot>>>,
     trust_deltas: CriteriaMap<DepMap<BTreeMap<Version, TrustDelta>>>,
-    extra_unused: BTreeSet<String>,
+    extra_unused: BTreeSet<(String, String, String)>,
     implied_all: CriteriaMap<BTreeSet<String>>,
     implied_any: CriteriaMap<BTreeSet<String>>,
     default_policy: Policy,
@@ -211,7 +211,7 @@ impl Rules {
                         )
                         .is_some()
                 {
-                    extra_unused.insert(format!("{name} {version} {criteria}"));
+                    extra_unused.insert((name.clone(), version.clone(), criteria));
                 }
             }
         }
@@ -363,7 +363,7 @@ impl Rules {
         }
     }
 
-    fn unused_exempts(&self) -> BTreeSet<String> {
+    fn unused_exempts(&self) -> BTreeSet<(String, String, String)> {
         let mut out = self.extra_unused.clone();
 
         for (criteria, map) in &self.trust_roots {
@@ -375,7 +375,7 @@ impl Rules {
                         .as_ref()
                         .is_some_and(|b| !b.load(Ordering::Relaxed))
                     {
-                        out.insert(format!("{dep} {version} {criteria}"));
+                        out.insert((dep.clone(), version.to_string(), criteria.clone()));
                     }
                 }
             }
@@ -438,8 +438,18 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
         .collect();
 
     let unused = rules.unused_exempts();
-    for s in unused {
-        println!("unused exempt: {s}");
+    if args.ratchet && !unused.is_empty() {
+        let mut file = open_config(args)?;
+        let mut toml: DocumentMut = config_mut(&file)?;
+
+        ratchet_exempts(&unused, &mut toml)?;
+
+        write_config(&mut file, toml.to_string().as_bytes())?;
+        println!("removed {} unused exempts :3", unused.len());
+    } else {
+        for (n, v, c) in unused {
+            println!("unused exempt: {n} {v} {c}");
+        }
     }
 
     if fails.is_empty() {
@@ -448,21 +458,12 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
     }
 
     if args.add_exempts {
-        let mut file = std::fs::OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open(&args.config)
-            .map_err(Error::ConfigOpen)?;
-        let mut toml: DocumentMut = std::io::read_to_string(&file)
-            .map_err(Error::ConfigOpen)?
-            .parse()?;
+        let mut file = open_config(args)?;
+        let mut toml: DocumentMut = config_mut(&file)?;
 
         add_exempts(&fails, &mut toml)?;
 
-        file.rewind().map_err(Error::ConfigWrite)?;
-        file.set_len(0).map_err(Error::ConfigWrite)?;
-        file.write_all(toml.to_string().as_bytes())
-            .map_err(Error::ConfigWrite)?;
+        write_config(&mut file, toml.to_string().as_bytes())?;
 
         eprintln!("added {} exempts to the config", fails.len());
         return Ok(ExitCode::from(3));
@@ -502,6 +503,28 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
     Ok(ExitCode::FAILURE)
 }
 
+fn write_config(file: &mut std::fs::File, bytes: &[u8]) -> Result<(), Error> {
+    file.rewind().map_err(Error::ConfigWrite)?;
+    file.set_len(0).map_err(Error::ConfigWrite)?;
+    file.write_all(bytes).map_err(Error::ConfigWrite)?;
+    Ok(())
+}
+
+fn config_mut(file: &std::fs::File) -> Result<DocumentMut, Error> {
+    Ok(std::io::read_to_string(file)
+        .map_err(Error::ConfigOpen)?
+        .parse()?)
+}
+
+fn open_config(args: &crate::CheckArgs) -> Result<std::fs::File, Error> {
+    let file = std::fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(&args.config)
+        .map_err(Error::ConfigOpen)?;
+    Ok(file)
+}
+
 fn add_exempts(fails: &Vec<Receipt>, toml: &mut DocumentMut) -> Result<(), Error> {
     let Item::Table(etable) = toml
         .entry("exempt")
@@ -538,6 +561,38 @@ fn add_exempts(fails: &Vec<Receipt>, toml: &mut DocumentMut) -> Result<(), Error
             }
         }
     }
+
+    Ok(())
+}
+
+fn ratchet_exempts(
+    unused: &BTreeSet<(String, String, String)>,
+    toml: &mut DocumentMut,
+) -> Result<(), Error> {
+    let Item::Table(etable) = toml
+        .entry("exempt")
+        .or_insert_with(|| Item::Table(Table::new()))
+    else {
+        return Err(Error::TomlBorked);
+    };
+
+    etable.retain(|dep, inner| {
+        let Item::ArrayOfTables(inner) = inner else {
+            return true;
+        };
+
+        inner.retain(|t| {
+            let Some(Item::Value(Value::String(v))) = t.get("version") else {
+                return true;
+            };
+            let Some(Item::Value(Value::String(c))) = t.get("criteria") else {
+                return true;
+            };
+            !unused.contains(&(dep.to_string(), v.value().clone(), c.value().clone()))
+        });
+
+        !inner.is_empty()
+    });
 
     Ok(())
 }

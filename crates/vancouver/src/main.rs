@@ -47,6 +47,9 @@ pub struct CheckArgs {
     /// add exempts for all unaudited packages to the config
     #[argh(switch)]
     add_exempts: bool,
+    /// remove unused exempts from the config
+    #[argh(switch)]
+    ratchet: bool,
 }
 
 /// record that you audited a dependency
