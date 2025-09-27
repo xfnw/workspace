@@ -49,5 +49,7 @@ pub fn add_audit(args: &crate::AuditArgs) -> Result<ExitCode, Error> {
     file.set_len(0).map_err(Error::AuditsWrite)?;
     file.write_all(toml.to_string().as_bytes())
         .map_err(Error::AuditsWrite)?;
+
+    eprintln!("added :3");
     Ok(ExitCode::SUCCESS)
 }
