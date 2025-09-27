@@ -57,3 +57,68 @@ criteria = "local-crate"
 [[audits.vancouver]]
 version = "0.1.0"
 criteria = "local-crate"
+
+[[audits.libloading]]
+version = "0.8.8"
+criteria = "skimmed"
+
+[[audits.libloading]]
+delta = "0.8.8 -> 0.8.9"
+criteria = "skimmed"
+
+[[audits.libloading]]
+delta = "0.8.8 -> 0.8.9"
+criteria = "blobs-ok"
+notes = "does have weird dlls in tests, but they were not modified in this update"
+
+[[audits.aws-lc-fips-sys]]
+version = "0.13.8"
+criteria = "too-big-to-fail"
+
+[[audits.aws-lc-rs]]
+version = "1.14.1"
+criteria = "too-big-to-fail"
+
+[[audits.aws-lc-sys]]
+version = "0.32.1"
+criteria = "too-big-to-fail"
+
+[[audits.tokio-rustls]]
+version = "0.26.3"
+criteria = "blobs-ok"
+notes = "pem files in tests"
+
+[[audits.tokio-rustls]]
+delta = "0.26.3 -> 0.26.4"
+criteria = "blobs-ok"
+
+[[audits.tokio-rustls]]
+delta = "0.26.3 -> 0.26.4"
+criteria = "skimmed"
+
+[[audits.cc]]
+delta = "1.2.38 -> 1.2.39"
+criteria = "blobs-ok"
+notes = "has some trivial generated code"
+
+[[audits.cc]]
+delta = "1.2.38 -> 1.2.39"
+criteria = "skimmed"
+
+[[audits.regex-automata]]
+delta = "0.4.10 -> 0.4.11"
+criteria = "blobs-ok"
+notes = "serialized data in tests, has command to generate them in documentation"
+
+[[audits.regex-automata]]
+delta = "0.4.10 -> 0.4.11"
+criteria = "skimmed"
+
+[[audits.regex]]
+delta = "1.11.2 -> 1.11.3"
+criteria = "skimmed"
+
+[[audits.regex]]
+version = "1.11.3"
+criteria = "no-sus-blobs"
+notes = 'fuzz data got excluded from the crate \o/'
