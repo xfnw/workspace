@@ -7,6 +7,8 @@ SPDX-License-Identifier: MPL-2.0
 # vancouver
 dependency auditing that meows
 
+it is like cargo-vet but kitty cat sized
+
 ## is this cargo-vet compatible?
 not really. while vancouver's `audits.toml` is superficially similar
 to cargo-vet's, the semantics and supported features are different.
