@@ -16,6 +16,8 @@ pub enum Error {
     AuditsOpen(std::io::Error),
     /// could not write audits file
     AuditsWrite(std::io::Error),
+    /// could not open merge source
+    MergeSourceOpen(std::io::Error),
     /// could not deserialize toml
     #[err(from)]
     Deserialize(toml_edit::de::Error),

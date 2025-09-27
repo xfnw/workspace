@@ -8,6 +8,7 @@ use std::{path::PathBuf, process::ExitCode};
 mod audit;
 mod check;
 mod de;
+mod merge;
 mod metadata;
 mod types;
 
@@ -24,6 +25,7 @@ struct Opt {
 enum Cmds {
     Check(CheckArgs),
     Audit(AuditArgs),
+    Merge(MergeArgs),
 }
 
 /// do a checkup on your dependencies
@@ -78,11 +80,29 @@ pub struct AuditArgs {
     notes: Option<String>,
 }
 
+/// merge audits from another file
+#[derive(Debug, FromArgs)]
+#[argh(subcommand)]
+#[argh(name = "merge")]
+#[argh(help_triggers("-h", "--help"))]
+pub struct MergeArgs {
+    /// path to your audits file
+    #[argh(option, default = "PathBuf::from(\"audits.toml\")")]
+    audits: PathBuf,
+    /// the name you want to use for the merge source
+    #[argh(positional)]
+    identifier: String,
+    /// the path to what you want to merge from
+    #[argh(positional, default = "PathBuf::from(\"/dev/stdin\")")]
+    file: PathBuf,
+}
+
 fn main() -> ExitCode {
     let opt: Opt = from_env();
     match match opt.command {
         Cmds::Check(args) => check::do_check(&args),
         Cmds::Audit(args) => audit::add_audit(&args),
+        Cmds::Merge(args) => merge::do_merge(&args),
     } {
         Ok(c) => c,
         Err(e) => {
