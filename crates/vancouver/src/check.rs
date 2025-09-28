@@ -309,6 +309,8 @@ impl Rules {
         criteria: &str,
         recursion_limit: usize,
     ) -> Option<Version> {
+        let recursion_limit = recursion_limit.checked_sub(1)?;
+
         let versions: BTreeSet<_> = self
             .trust_roots
             .values()
