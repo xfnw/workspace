@@ -124,3 +124,27 @@ criteria = "skimmed"
 version = "1.11.3"
 criteria = "no-sus-blobs"
 notes = 'fuzz data got excluded from the crate \o/'
+
+[[audits.addr2line]]
+delta = "0.24.2 -> 0.25.1"
+criteria = "skimmed"
+
+[[audits.addr2line]]
+version = "0.25.1"
+criteria = "no-sus-blobs"
+
+[[audits.windows-link]]
+version = "0.2.0"
+criteria = "no-sus-blobs"
+
+[[audits.windows-link]]
+version = "0.2.0"
+criteria = "skimmed"
+
+[[audits.object]]
+delta = "0.36.7 -> 0.37.3"
+criteria = "blobs-ok"
+
+[[audits.object]]
+delta = "0.36.7 -> 0.37.3"
+criteria = "skimmed"
