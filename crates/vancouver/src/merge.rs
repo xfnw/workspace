@@ -4,7 +4,7 @@ use std::{
     io::{Seek, Write},
     process::ExitCode,
 };
-use toml_edit::{ArrayOfTables, DocumentMut, Item, Table, Value, value};
+use toml_edit::{ArrayOfTables, DocumentMut, Formatted, Item, Table, Value, value};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct DupeKey {
@@ -96,7 +96,14 @@ pub fn do_merge(args: &crate::MergeArgs) -> Result<ExitCode, Error> {
             {
                 continue;
             }
-            let Some(dup) = DupeKey::new(dep, audit) else {
+            let mut t = audit.clone();
+            if args.isolate
+                && let Some(Item::Value(Value::String(s))) = t.get_mut("criteria")
+            {
+                // FIXME: this eats comments on the criteria key :/
+                *s = Formatted::new(format!("{}:{}", args.identifier, s.value()));
+            }
+            let Some(dup) = DupeKey::new(dep, &t) else {
                 continue;
             };
             let exists = existing.contains(&dup);
@@ -104,8 +111,10 @@ pub fn do_merge(args: &crate::MergeArgs) -> Result<ExitCode, Error> {
             if exists {
                 continue;
             }
-            let mut t = audit.clone();
             t["merged-from"] = value(args.identifier.clone());
+            if args.isolate {
+                t["private"] = value(true);
+            }
             darr.push(t);
         }
     }

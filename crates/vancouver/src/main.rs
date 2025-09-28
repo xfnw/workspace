@@ -95,6 +95,10 @@ pub struct MergeArgs {
     /// the path to what you want to merge from
     #[argh(positional, default = "PathBuf::from(\"/dev/stdin\")")]
     file: PathBuf,
+    /// set all merged entries private and prefix criteria with
+    /// identifier
+    #[argh(switch)]
+    isolate: bool,
 }
 
 fn main() -> ExitCode {
