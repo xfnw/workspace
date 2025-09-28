@@ -91,6 +91,11 @@ pub fn do_merge(args: &crate::MergeArgs) -> Result<ExitCode, Error> {
             return Err(Error::TomlBorked);
         };
         for audit in inner {
+            if let Some(Item::Value(Value::Boolean(b))) = audit.get("private")
+                && *b.value()
+            {
+                continue;
+            }
             let Some(dup) = DupeKey::new(dep, audit) else {
                 continue;
             };
