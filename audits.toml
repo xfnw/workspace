@@ -70,7 +70,7 @@ criteria = "skimmed"
 
 [[audits.libloading]]
 delta = "0.8.8 -> 0.8.9"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 notes = "does have weird dlls in tests, but they were not modified in this update"
 
 [[audits.aws-lc-fips-sys]]
@@ -92,7 +92,8 @@ notes = "pem files in tests"
 
 [[audits.tokio-rustls]]
 delta = "0.26.3 -> 0.26.4"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
+notes = "pem files in tests not touched"
 
 [[audits.tokio-rustls]]
 delta = "0.26.3 -> 0.26.4"
@@ -143,7 +144,7 @@ criteria = "skimmed"
 
 [[audits.object]]
 delta = "0.36.7 -> 0.37.3"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[audits.object]]
 delta = "0.36.7 -> 0.37.3"
@@ -151,7 +152,7 @@ criteria = "skimmed"
 
 [[audits.memchr]]
 delta = "2.7.5 -> 2.7.6"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[audits.memchr]]
 delta = "2.7.5 -> 2.7.6"
@@ -159,7 +160,7 @@ criteria = "skimmed"
 
 [[audits.backtrace]]
 delta = "0.3.75 -> 0.3.76"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[audits.backtrace]]
 delta = "0.3.75 -> 0.3.76"
@@ -167,7 +168,7 @@ criteria = "skimmed"
 
 [[audits.gimli]]
 delta = "0.31.1 -> 0.32.3"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[audits.gimli]]
 delta = "0.31.1 -> 0.32.3"
@@ -175,7 +176,7 @@ criteria = "skimmed"
 
 [[audits.quote]]
 delta = "1.0.40 -> 1.0.41"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[audits.quote]]
 delta = "1.0.40 -> 1.0.41"
