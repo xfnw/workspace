@@ -156,3 +156,11 @@ criteria = "blobs-ok"
 [[audits.memchr]]
 delta = "2.7.5 -> 2.7.6"
 criteria = "skimmed"
+
+[[audits.backtrace]]
+delta = "0.3.75 -> 0.3.76"
+criteria = "blobs-ok"
+
+[[audits.backtrace]]
+delta = "0.3.75 -> 0.3.76"
+criteria = "skimmed"
