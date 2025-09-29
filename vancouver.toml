@@ -7,10 +7,6 @@ require-all = ["blobs-ok", "skimmed"]
 
 [[exempt.addr2line]]
 version = "0.24.2"
-criteria = "blobs-ok"
-
-[[exempt.addr2line]]
-version = "0.24.2"
 criteria = "skimmed"
 
 [[exempt.adler2]]
