@@ -164,3 +164,11 @@ criteria = "blobs-ok"
 [[audits.backtrace]]
 delta = "0.3.75 -> 0.3.76"
 criteria = "skimmed"
+
+[[audits.gimli]]
+delta = "0.31.1 -> 0.32.3"
+criteria = "blobs-ok"
+
+[[audits.gimli]]
+delta = "0.31.1 -> 0.32.3"
+criteria = "skimmed"
