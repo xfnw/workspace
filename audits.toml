@@ -172,3 +172,11 @@ criteria = "blobs-ok"
 [[audits.gimli]]
 delta = "0.31.1 -> 0.32.3"
 criteria = "skimmed"
+
+[[audits.quote]]
+delta = "1.0.40 -> 1.0.41"
+criteria = "blobs-ok"
+
+[[audits.quote]]
+delta = "1.0.40 -> 1.0.41"
+criteria = "skimmed"
