@@ -106,6 +106,29 @@ struct TrustDelta {
     parent_version: Version,
 }
 
+#[derive(Debug)]
+struct CriteriaCons<'a>(&'a str, Option<&'a CriteriaCons<'a>>);
+
+impl<'a> CriteriaCons<'a> {
+    fn iter(&'a self) -> CriteriaConsIter<'a> {
+        CriteriaConsIter(Some(self))
+    }
+}
+
+struct CriteriaConsIter<'a>(Option<&'a CriteriaCons<'a>>);
+
+impl<'a> Iterator for CriteriaConsIter<'a> {
+    type Item = &'a str;
+
+    #[allow(clippy::similar_names)]
+    fn next(&mut self) -> Option<Self::Item> {
+        let CriteriaCons(car, cdr) = self.0?;
+
+        self.0 = *cdr;
+        Some(car)
+    }
+}
+
 type CriteriaMap<T> = BTreeMap<String, T>;
 type DepMap<T> = BTreeMap<String, T>;
 
@@ -257,6 +280,7 @@ impl Rules {
         name: &str,
         version: &Version,
         criteria: &str,
+        implied_criteria: Option<&CriteriaCons>,
         recursion_limit: usize,
     ) -> bool {
         if let Some(trust) = self
@@ -264,6 +288,17 @@ impl Rules {
             .get(criteria)
             .and_then(|d| d.get(name))
             .and_then(|v| v.get(version))
+            .or_else(|| {
+                implied_criteria
+                    .iter()
+                    .flat_map(|c| c.iter())
+                    .find_map(|cr| {
+                        self.trust_roots
+                            .get(cr)
+                            .and_then(|d| d.get(name))
+                            .and_then(|v| v.get(version))
+                    })
+            })
         {
             trust.used.mark_used();
             return true;
@@ -278,23 +313,52 @@ impl Rules {
             .get(criteria)
             .and_then(|d| d.get(name))
             .and_then(|v| v.get(version))
+            .or_else(|| {
+                implied_criteria
+                    .iter()
+                    .flat_map(|c| c.iter())
+                    .find_map(|cr| {
+                        self.trust_deltas
+                            .get(cr)
+                            .and_then(|d| d.get(name))
+                            .and_then(|v| v.get(version))
+                    })
+            })
         {
-            return self.check_criteria(name, &trust.parent_version, criteria, recursion_limit - 1);
+            return self.check_criteria(
+                name,
+                &trust.parent_version,
+                criteria,
+                implied_criteria,
+                recursion_limit - 1,
+            );
         }
 
-        if let Some(criteria) = self.implied_all.get(criteria)
-            && !criteria.is_empty()
-            && criteria
-                .iter()
-                .all(|c| self.check_criteria(name, version, c, recursion_limit - 1))
+        if let Some(cr) = self.implied_all.get(criteria)
+            && !cr.is_empty()
+            && cr.iter().all(|c| {
+                self.check_criteria(
+                    name,
+                    version,
+                    c,
+                    Some(&CriteriaCons(criteria, implied_criteria)),
+                    recursion_limit - 1,
+                )
+            })
         {
             return true;
         }
 
-        if let Some(criteria) = self.implied_any.get(criteria)
-            && criteria
-                .iter()
-                .any(|c| self.check_criteria(name, version, c, recursion_limit - 1))
+        if let Some(cr) = self.implied_any.get(criteria)
+            && cr.iter().any(|c| {
+                self.check_criteria(
+                    name,
+                    version,
+                    c,
+                    Some(&CriteriaCons(criteria, implied_criteria)),
+                    recursion_limit - 1,
+                )
+            })
         {
             return true;
         }
@@ -327,7 +391,7 @@ impl Rules {
             .collect();
 
         for &potential in versions.range::<&Version, _>(..version).rev() {
-            if self.check_criteria(name, potential, criteria, recursion_limit) {
+            if self.check_criteria(name, potential, criteria, None, recursion_limit) {
                 return Some(potential.clone());
             }
         }
@@ -341,7 +405,7 @@ impl Rules {
         let fails: Vec<_> = require_all
             .iter()
             .filter_map(|c| {
-                if self.check_criteria(&name, &version, c, recursion_limit) {
+                if self.check_criteria(&name, &version, c, None, recursion_limit) {
                     None
                 } else {
                     Some(Fail {
