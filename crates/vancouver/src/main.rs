@@ -55,6 +55,26 @@ pub struct CheckArgs {
     /// remove unused exempts from the config
     #[argh(switch)]
     ratchet: bool,
+    /// the output format to use (human or json)
+    #[argh(option, default = "OutputFormat::Human")]
+    output: OutputFormat,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum OutputFormat {
+    Human,
+    Json,
+}
+
+impl std::str::FromStr for OutputFormat {
+    type Err = &'static str;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "human" => Ok(Self::Human),
+            "json" => Ok(Self::Json),
+            _ => Err("output format must be human or json"),
+        }
+    }
 }
 
 /// record that you audited a dependency

@@ -3,11 +3,13 @@
 // SPDX-License-Identifier: MPL-2.0
 
 use crate::{
+    OutputFormat,
     de::string_or_bset,
     types::{Error, Version},
 };
 use rayon::prelude::*;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize, ser::SerializeStruct};
+use serde_json::json;
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs::read_to_string,
@@ -459,7 +461,7 @@ impl Rules {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 struct UnusedExempt {
     name: String,
     version: String,
@@ -477,7 +479,7 @@ fn parse_delta(delta: &str) -> Result<(Version, Version), Error> {
     ))
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 struct Fail {
     needed: String,
     prev_version: Option<Version>,
@@ -489,10 +491,33 @@ enum Status {
     Fail(Vec<Fail>),
 }
 
-#[derive(Debug, Clone)]
+impl Serialize for Status {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            Self::Passed => {
+                let mut s = serializer.serialize_struct("Status", 1)?;
+                s.serialize_field("status", "passed")?;
+                s.skip_field("fails")?;
+                s.end()
+            }
+            Self::Fail(fails) => {
+                let mut s = serializer.serialize_struct("Status", 2)?;
+                s.serialize_field("status", "failed")?;
+                s.serialize_field("fails", fails)?;
+                s.end()
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
 struct Receipt {
     name: String,
     version: Version,
+    #[serde(flatten)]
     status: Status,
 }
 
@@ -518,12 +543,30 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
         .map(|(name, version)| rules.check(name, version, args.recursion_limit))
         .collect();
     let total = receipts.len();
+    let unused = rules.unused_exempts();
+
+    if args.output == OutputFormat::Json {
+        let passed = receipts
+            .iter()
+            .filter(|&r| matches!(r.status, Status::Passed))
+            .count();
+        println!(
+            "{}",
+            json!({
+                "dependencies": receipts,
+                "total": total,
+                "total_failed": total - passed,
+                "total_passed": passed,
+                "unused_exempts": unused,
+            })
+        );
+    }
+
     let fails: Vec<_> = receipts
         .into_iter()
         .filter(|r| !matches!(r.status, Status::Passed))
         .collect();
 
-    let unused = rules.unused_exempts();
     if args.ratchet && !unused.is_empty() {
         let mut file = open_config(args)?;
         let mut toml: DocumentMut = config_mut(&file)?;
@@ -532,7 +575,7 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
 
         write_config(&mut file, toml.to_string().as_bytes())?;
         eprintln!("removed {} unused exempts :3", unused.len());
-    } else {
+    } else if args.output == OutputFormat::Human {
         for UnusedExempt {
             name,
             version,
@@ -560,30 +603,32 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
         return Ok(ExitCode::from(3));
     }
 
-    for Receipt {
-        name,
-        version,
-        status,
-    } in &fails
-    {
-        println!("{name} {version}");
-        match status {
-            Status::Passed => unreachable!(),
-            Status::Fail(v) => {
-                for Fail {
-                    needed,
-                    prev_version,
-                } in v
-                {
-                    println!(" needs {needed}");
-                    if let Some(prev) = prev_version {
-                        println!("  help: found a previous audit for {prev}");
-                        println!("  review https://diff.rs/{name}/{prev}/{version}");
-                        println!("  and then vancouver audit {name} -b {prev} {version} {needed}");
-                    } else {
-                        println!("  help: could not find previous audits :(");
-                        println!("  review https://diff.rs/browse/{name}/{version}");
-                        println!("  and then vancouver audit {name} {version} {needed}");
+    if args.output == OutputFormat::Human {
+        for Receipt {
+            name,
+            version,
+            status,
+        } in &fails
+        {
+            println!("{name} {version}");
+            match status {
+                Status::Passed => unreachable!(),
+                Status::Fail(v) => {
+                    for Fail {
+                        needed,
+                        prev_version,
+                    } in v
+                    {
+                        println!(" needs {needed}");
+                        if let Some(prev) = prev_version {
+                            println!("  help: found a previous audit for {prev}");
+                            println!("  review https://diff.rs/{name}/{prev}/{version}");
+                            println!("  then vancouver audit {name} -b {prev} {version} {needed}");
+                        } else {
+                            println!("  help: could not find previous audits :(");
+                            println!("  review https://diff.rs/browse/{name}/{version}");
+                            println!("  then vancouver audit {name} {version} {needed}");
+                        }
                     }
                 }
             }

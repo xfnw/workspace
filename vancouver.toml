@@ -1260,3 +1260,11 @@ criteria = "blobs-ok"
 [[exempt.zerovec-derive]]
 version = "0.11.1"
 criteria = "skimmed"
+
+[[exempt.serde_json]]
+version = "1.0.145"
+criteria = "blobs-ok"
+
+[[exempt.serde_json]]
+version = "1.0.145"
+criteria = "skimmed"
