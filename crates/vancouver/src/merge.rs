@@ -12,6 +12,7 @@ struct DupeKey {
     criteria: String,
     delta: Option<String>,
     version: Option<String>,
+    violation: Option<String>,
 }
 
 impl DupeKey {
@@ -29,11 +30,17 @@ impl DupeKey {
         } else {
             None
         };
+        let violation = if let Some(Item::Value(Value::String(s))) = audit.get("violation") {
+            Some(s.value().clone())
+        } else {
+            None
+        };
         Some(Self {
             name: name.to_string(),
             criteria: criteria.value().clone(),
             delta,
             version,
+            violation,
         })
     }
 }
