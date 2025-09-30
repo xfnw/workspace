@@ -425,7 +425,7 @@ impl Rules {
         let status = if fails.is_empty() {
             Status::Passed
         } else {
-            Status::Fail(fails)
+            Status::Failed(fails)
         };
 
         Receipt {
@@ -488,7 +488,7 @@ struct Fail {
 #[derive(Debug, Clone)]
 enum Status {
     Passed,
-    Fail(Vec<Fail>),
+    Failed(Vec<Fail>),
 }
 
 impl Serialize for Status {
@@ -503,7 +503,7 @@ impl Serialize for Status {
                 s.skip_field("fails")?;
                 s.end()
             }
-            Self::Fail(fails) => {
+            Self::Failed(fails) => {
                 let mut s = serializer.serialize_struct("Status", 2)?;
                 s.serialize_field("status", "failed")?;
                 s.serialize_field("fails", fails)?;
@@ -613,7 +613,7 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
             println!("{name} {version}");
             match status {
                 Status::Passed => unreachable!(),
-                Status::Fail(v) => {
+                Status::Failed(v) => {
                     for Fail {
                         needed,
                         prev_version,
@@ -687,7 +687,7 @@ fn add_exempts(fails: &Vec<Receipt>, toml: &mut DocumentMut) -> Result<(), Error
 
         match status {
             Status::Passed => unreachable!(),
-            Status::Fail(f) => {
+            Status::Failed(f) => {
                 for Fail { needed, .. } in f {
                     let mut t = Table::new();
                     t["version"] = value(version.to_string());
