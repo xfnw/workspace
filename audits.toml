@@ -197,3 +197,11 @@ criteria = "no-sus-blobs"
 [[audits.serde_core]]
 delta = "1.0.226 -> 1.0.228"
 criteria = "skimmed"
+
+[[audits.itoa]]
+version = "1.0.15"
+criteria = "no-sus-blobs"
+
+[[audits.itoa]]
+version = "1.0.15"
+criteria = "skimmed"
