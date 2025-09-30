@@ -205,3 +205,12 @@ criteria = "no-sus-blobs"
 [[audits.itoa]]
 version = "1.0.15"
 criteria = "skimmed"
+
+[[audits.ryu]]
+version = "1.0.20"
+criteria = "blobs-ok"
+notes = "has long lists of probably harmless magic numbers"
+
+[[audits.ryu]]
+version = "1.0.20"
+criteria = "skimmed"
