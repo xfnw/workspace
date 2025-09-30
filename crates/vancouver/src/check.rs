@@ -511,7 +511,7 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
         ratchet_exempts(&unused, &mut toml)?;
 
         write_config(&mut file, toml.to_string().as_bytes())?;
-        println!("removed {} unused exempts :3", unused.len());
+        eprintln!("removed {} unused exempts :3", unused.len());
     } else {
         for (n, v, c) in unused {
             println!("unused exempt: {n} {v} {c}");
