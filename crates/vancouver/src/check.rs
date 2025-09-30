@@ -136,7 +136,7 @@ type DepMap<T> = BTreeMap<String, T>;
 struct Rules {
     trust_roots: CriteriaMap<DepMap<BTreeMap<Version, TrustRoot>>>,
     trust_deltas: CriteriaMap<DepMap<BTreeMap<Version, TrustDelta>>>,
-    extra_unused: BTreeSet<(String, String, String)>,
+    extra_unused: BTreeSet<UnusedExempt>,
     implied_all: CriteriaMap<BTreeSet<String>>,
     implied_any: CriteriaMap<BTreeSet<String>>,
     default_policy: Policy,
@@ -234,7 +234,11 @@ impl Rules {
                         )
                         .is_some()
                 {
-                    extra_unused.insert((name.clone(), version.clone(), criteria));
+                    extra_unused.insert(UnusedExempt {
+                        name: name.clone(),
+                        version: version.clone(),
+                        criteria,
+                    });
                 }
             }
         }
@@ -429,7 +433,7 @@ impl Rules {
         }
     }
 
-    fn unused_exempts(&self) -> BTreeSet<(String, String, String)> {
+    fn unused_exempts(&self) -> BTreeSet<UnusedExempt> {
         let mut out = self.extra_unused.clone();
 
         for (criteria, map) in &self.trust_roots {
@@ -441,7 +445,11 @@ impl Rules {
                         .as_ref()
                         .is_some_and(|b| !b.load(Ordering::Relaxed))
                     {
-                        out.insert((dep.clone(), version.to_string(), criteria.clone()));
+                        out.insert(UnusedExempt {
+                            name: dep.clone(),
+                            version: version.to_string(),
+                            criteria: criteria.clone(),
+                        });
                     }
                 }
             }
@@ -449,6 +457,13 @@ impl Rules {
 
         out
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+struct UnusedExempt {
+    name: String,
+    version: String,
+    criteria: String,
 }
 
 fn parse_delta(delta: &str) -> Result<(Version, Version), Error> {
@@ -518,8 +533,13 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
         write_config(&mut file, toml.to_string().as_bytes())?;
         eprintln!("removed {} unused exempts :3", unused.len());
     } else {
-        for (n, v, c) in unused {
-            println!("unused exempt: {n} {v} {c}");
+        for UnusedExempt {
+            name,
+            version,
+            criteria,
+        } in unused
+        {
+            println!("unused exempt: {name} {version} {criteria}");
         }
     }
 
@@ -636,10 +656,7 @@ fn add_exempts(fails: &Vec<Receipt>, toml: &mut DocumentMut) -> Result<(), Error
     Ok(())
 }
 
-fn ratchet_exempts(
-    unused: &BTreeSet<(String, String, String)>,
-    toml: &mut DocumentMut,
-) -> Result<(), Error> {
+fn ratchet_exempts(unused: &BTreeSet<UnusedExempt>, toml: &mut DocumentMut) -> Result<(), Error> {
     let Item::Table(etable) = toml
         .entry("exempt")
         .or_insert_with(|| Item::Table(Table::new()))
@@ -659,7 +676,11 @@ fn ratchet_exempts(
             let Some(Item::Value(Value::String(c))) = t.get("criteria") else {
                 return true;
             };
-            !unused.contains(&(dep.to_string(), v.value().clone(), c.value().clone()))
+            !unused.contains(&UnusedExempt {
+                name: dep.to_string(),
+                version: v.value().clone(),
+                criteria: c.value().clone(),
+            })
         });
 
         !inner.is_empty()
