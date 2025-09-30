@@ -488,9 +488,14 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
     }
 
     let config = read_to_string(&args.config).map_err(Error::ConfigOpen)?;
-    let config: Config = toml_edit::de::from_str(&config)?;
+    let mut config: Config = toml_edit::de::from_str(&config)?;
     let audits = read_to_string(&args.audits).map_err(Error::AuditsOpen)?;
     let audits: Audits = toml_edit::de::from_str(&audits)?;
+
+    if args.ignore_exempts {
+        config.exempt.clear();
+    }
+
     let rules = Rules::new(config, audits)?;
 
     let receipts: Vec<_> = dependencies
