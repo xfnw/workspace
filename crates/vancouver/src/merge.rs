@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2025 xfnw
+//
+// SPDX-License-Identifier: MPL-2.0
+
 use crate::types::Error;
 use std::{
     collections::BTreeSet,
