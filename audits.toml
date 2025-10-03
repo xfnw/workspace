@@ -85,6 +85,10 @@ criteria = "too-big-to-fail"
 version = "0.32.1"
 criteria = "too-big-to-fail"
 
+[[audits.aws-lc-sys]]
+version = "0.32.2"
+criteria = "too-big-to-fail"
+
 [[audits.tokio-rustls]]
 version = "0.26.3"
 criteria = "blobs-ok"
