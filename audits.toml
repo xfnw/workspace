@@ -252,3 +252,11 @@ notes = "some generated files with rather silly formatting"
 [[audits.typenum]]
 delta = "1.18.0 -> 1.19.0"
 criteria = "skimmed"
+
+[[audits.serde_derive]]
+delta = "1.0.226 -> 1.0.228"
+criteria = "no-sus-blobs"
+
+[[audits.serde_derive]]
+delta = "1.0.226 -> 1.0.228"
+criteria = "skimmed"
