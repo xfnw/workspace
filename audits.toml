@@ -260,3 +260,11 @@ criteria = "no-sus-blobs"
 [[audits.serde_derive]]
 delta = "1.0.226 -> 1.0.228"
 criteria = "skimmed"
+
+[[audits.serde]]
+version = "1.0.228"
+criteria = "no-sus-blobs"
+
+[[audits.serde]]
+version = "1.0.228"
+criteria = "skimmed"
