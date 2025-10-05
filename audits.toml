@@ -18,7 +18,6 @@ description = "i glanced at it and nothing seemed too suspicious"
 
 [criteria.too-big-to-fail]
 description = "popular enough that i dont think it needs to be audited (famous last words)"
-implies = ["blobs-ok", "skimmed"]
 
 [[audits.foxerror]]
 version = "0.1.0"
