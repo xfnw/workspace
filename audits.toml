@@ -43,22 +43,6 @@ criteria = "by-xfnw"
 version = "0.2.0"
 criteria = "by-xfnw"
 
-[[audits.vasm]]
-version = "1.0.0"
-criteria = "by-xfnw"
-
-[[audits.mark-tree]]
-version = "0.1.0"
-criteria = "by-xfnw"
-
-[[audits.maw]]
-version = "0.1.0"
-criteria = "by-xfnw"
-
-[[audits.vancouver]]
-version = "0.1.0"
-criteria = "by-xfnw"
-
 [[audits.libloading]]
 version = "0.8.8"
 criteria = "skimmed"
