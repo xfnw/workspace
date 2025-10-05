@@ -36,19 +36,16 @@ pub use tokio_rustls;
 mod danger;
 
 /// error type returned by `irc_connect`
-#[derive(Debug, foxerror::FoxError)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
     /// you specified a tls client cert without using tls
     ClientCertNoTls,
     /// failed to connect
-    #[err(from)]
     Connect(std::io::Error),
     /// could not sock
-    #[err(from)]
     Socks(tokio_socks::Error),
     /// could not rustls
-    #[err(from)]
     Rustls(tokio_rustls::rustls::Error),
     /// socks cannot connect to unix sockets
     SocksToUnsupported,
@@ -56,6 +53,40 @@ pub enum Error {
     InvalidTarget(tokio_socks::Error),
     /// no tls servername provided and failed to guess it
     NoServerName,
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::ClientCertNoTls => write!(f, "you specified a client cert without using tls"),
+            Self::Connect(e) => write!(f, "failed to connect: {e}"),
+            Self::Socks(e) => write!(f, "could not sock: {e}"),
+            Self::Rustls(e) => write!(f, "could not rustls: {e}"),
+            Self::SocksToUnsupported => write!(f, "socks cannot connect to unix sockets"),
+            Self::InvalidTarget(e) => write!(f, "invalid target address: {e}"),
+            Self::NoServerName => write!(f, "no tls servername provided and failed to guess it"),
+        }
+    }
+}
+
+impl std::error::Error for Error {}
+
+impl From<std::io::Error> for Error {
+    fn from(value: std::io::Error) -> Self {
+        Self::Connect(value)
+    }
+}
+
+impl From<tokio_socks::Error> for Error {
+    fn from(value: tokio_socks::Error) -> Self {
+        Self::Socks(value)
+    }
+}
+
+impl From<tokio_rustls::rustls::Error> for Error {
+    fn from(value: tokio_rustls::rustls::Error) -> Self {
+        Self::Rustls(value)
+    }
 }
 
 pin_project! {

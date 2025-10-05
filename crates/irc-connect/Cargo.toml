@@ -11,7 +11,6 @@ description = "an abstraction over the kinds of connections useful for irc clien
 repository.workspace = true
 
 [dependencies]
-foxerror = { version = "0.1.1", path = "../foxerror" }
 pin-project-lite = "0.2.16"
 tokio = { version = "1.46.1", features = ["net"] }
 tokio-rustls = { version = "0.26.2", default-features = false }
