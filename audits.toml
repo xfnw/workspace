@@ -283,3 +283,11 @@ criteria = "no-sus-blobs"
 [[audits.anstyle]]
 delta = "1.0.11 -> 1.0.13"
 criteria = "skimmed"
+
+[[audits.libc]]
+delta = "0.2.175 -> 0.2.176"
+criteria = "no-sus-blobs"
+
+[[audits.libc]]
+delta = "0.2.175 -> 0.2.176"
+criteria = "skimmed"
