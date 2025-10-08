@@ -137,6 +137,14 @@ criteria = "no-sus-blobs"
 version = "0.2.0"
 criteria = "skimmed"
 
+[[audits.windows-link]]
+delta = "0.2.0 -> 0.2.1"
+criteria = "no-sus-blobs"
+
+[[audits.windows-link]]
+delta = "0.2.0 -> 0.2.1"
+criteria = "skimmed"
+
 [[audits.object]]
 delta = "0.36.7 -> 0.37.3"
 criteria = "no-sus-blobs"
