@@ -8,22 +8,6 @@ implies = ["blobs-ok", "skimmed"]
 [default-policy]
 require-all = ["blobs-ok", "skimmed"]
 
-[[exempt.mark-tree]]
-version = "0.1.0"
-criteria = "by-xfnw"
-
-[[exempt.maw]]
-version = "0.1.0"
-criteria = "by-xfnw"
-
-[[exempt.vancouver]]
-version = "0.1.0"
-criteria = "by-xfnw"
-
-[[exempt.vasm]]
-version = "1.0.0"
-criteria = "by-xfnw"
-
 [[exempt.addr2line]]
 version = "0.24.2"
 criteria = "skimmed"

@@ -6,6 +6,8 @@ use crate::types::{Error, Version};
 use serde::Deserialize;
 use std::{fs::read_to_string, path::Path};
 
+const REGISTRY: &str = "registry+https://github.com/rust-lang/crates.io-index";
+
 #[derive(Debug, Deserialize)]
 struct CargoLock {
     package: Vec<CargoLockPackage>,
@@ -15,6 +17,7 @@ struct CargoLock {
 struct CargoLockPackage {
     name: String,
     version: String,
+    source: Option<String>,
 }
 
 pub fn get_dependencies(lock_file: &Path) -> Result<Vec<(String, Version)>, Error> {
@@ -23,6 +26,10 @@ pub fn get_dependencies(lock_file: &Path) -> Result<Vec<(String, Version)>, Erro
     Ok(lock
         .package
         .into_iter()
-        .map(|p| (p.name, Version::new(&p.version)))
+        .filter_map(|p| {
+            p.source
+                .is_some_and(|s| s == REGISTRY)
+                .then(|| (p.name, Version::new(&p.version)))
+        })
         .collect())
 }
