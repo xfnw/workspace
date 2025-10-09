@@ -284,6 +284,14 @@ criteria = "no-sus-blobs"
 delta = "0.2.175 -> 0.2.176"
 criteria = "skimmed"
 
+[[audits.libc]]
+delta = "0.2.176 -> 0.2.177"
+criteria = "no-sus-blobs"
+
+[[audits.libc]]
+delta = "0.2.176 -> 0.2.177"
+criteria = "skimmed"
+
 [[audits.axum]]
 delta = "0.8.4 -> 0.8.5"
 criteria = "no-sus-blobs"
