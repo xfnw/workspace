@@ -421,3 +421,11 @@ notes = "contains a precompiled lib file, but its windows stuff published by mic
 version = "0.53.1"
 criteria = "too-big-to-fail"
 notes = "contains a precompiled lib file, but its windows stuff published by microsoft so *shrug*"
+
+[[audits.toml_datetime]]
+delta = "0.7.2 -> 0.7.3"
+criteria = "no-sus-blobs"
+
+[[audits.toml_datetime]]
+delta = "0.7.2 -> 0.7.3"
+criteria = "skimmed"
