@@ -331,3 +331,11 @@ criteria = "skimmed"
 [[audits.stable_deref_trait]]
 version = "1.2.1"
 criteria = "skimmed"
+
+[[audits.serde_spanned]]
+version = "1.0.3"
+criteria = "no-sus-blobs"
+
+[[audits.serde_spanned]]
+version = "1.0.3"
+criteria = "skimmed"
