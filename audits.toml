@@ -365,3 +365,11 @@ notes = "pile of generated code, but its windows stuff published by microsoft so
 version = "0.61.2"
 criteria = "too-big-to-fail"
 notes = "pile of generated code, but its windows stuff published by microsoft so *shrug*"
+
+[[audits.windows-targets]]
+delta = "0.52.6 -> 0.53.5"
+criteria = "no-sus-blobs"
+
+[[audits.windows-targets]]
+delta = "0.52.6 -> 0.53.5"
+criteria = "skimmed"
