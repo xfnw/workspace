@@ -373,3 +373,43 @@ criteria = "no-sus-blobs"
 [[audits.windows-targets]]
 delta = "0.52.6 -> 0.53.5"
 criteria = "skimmed"
+
+[[audits.windows_x86_64_msvc]]
+version = "0.53.1"
+criteria = "too-big-to-fail"
+notes = "contains a precompiled lib file, but its windows stuff published by microsoft so *shrug*"
+
+[[audits.windows_x86_64_gnullvm]]
+version = "0.53.1"
+criteria = "too-big-to-fail"
+notes = "contains a precompiled lib file, but its windows stuff published by microsoft so *shrug*"
+
+[[audits.windows_x86_64_gnu]]
+version = "0.53.1"
+criteria = "too-big-to-fail"
+notes = "contains a precompiled lib file, but its windows stuff published by microsoft so *shrug*"
+
+[[audits.windows_i686_msvc]]
+version = "0.53.1"
+criteria = "too-big-to-fail"
+notes = "contains a precompiled lib file, but its windows stuff published by microsoft so *shrug*"
+
+[[audits.windows_i686_gnu]]
+version = "0.53.1"
+criteria = "too-big-to-fail"
+notes = "contains a precompiled lib file, but its windows stuff published by microsoft so *shrug*"
+
+[[audits.windows_i686_gnullvm]]
+version = "0.53.1"
+criteria = "too-big-to-fail"
+notes = "contains a precompiled lib file, but its windows stuff published by microsoft so *shrug*"
+
+[[audits.windows_aarch64_msvc]]
+version = "0.53.1"
+criteria = "too-big-to-fail"
+notes = "contains a precompiled lib file, but its windows stuff published by microsoft so *shrug*"
+
+[[audits.windows_aarch64_gnullvm]]
+version = "0.53.1"
+criteria = "too-big-to-fail"
+notes = "contains a precompiled lib file, but its windows stuff published by microsoft so *shrug*"
