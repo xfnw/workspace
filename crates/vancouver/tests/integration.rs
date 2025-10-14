@@ -14,18 +14,22 @@ fn command_output(args: impl IntoIterator<Item = impl AsRef<OsStr>>) -> Output {
     Command::new(BIN).args(args).output().unwrap()
 }
 
-#[test]
-fn workspace_check() {
+fn test_success(name: &str, should_succeed: bool) {
     let output = command_output([
         "check",
         "--lock",
-        &format!("{WORKSPACE}Cargo.lock"),
+        &format!("{name}Cargo.lock"),
         "--config",
-        &format!("{WORKSPACE}vancouver.toml"),
+        &format!("{name}vancouver.toml"),
         "--audits",
-        &format!("{WORKSPACE}audits.toml"),
+        &format!("{name}audits.toml"),
     ]);
     dbg!(str::from_utf8(&output.stdout).unwrap());
     dbg!(str::from_utf8(&output.stderr).unwrap());
-    assert!(output.status.success());
+    assert_eq!(output.status.success(), should_succeed);
+}
+
+#[test]
+fn workspace_check() {
+    test_success(WORKSPACE, true);
 }
