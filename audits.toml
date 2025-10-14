@@ -339,3 +339,11 @@ criteria = "no-sus-blobs"
 [[audits.serde_spanned]]
 version = "1.0.3"
 criteria = "skimmed"
+
+[[audits.toml_edit]]
+delta = "0.23.6 -> 0.23.7"
+criteria = "no-sus-blobs"
+
+[[audits.toml_edit]]
+delta = "0.23.6 -> 0.23.7"
+criteria = "skimmed"
