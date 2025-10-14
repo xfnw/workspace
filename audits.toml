@@ -355,3 +355,13 @@ criteria = "no-sus-blobs"
 [[audits.tokio-macros]]
 delta = "2.5.0 -> 2.6.0"
 criteria = "skimmed"
+
+[[audits.windows-sys]]
+version = "0.60.2"
+criteria = "too-big-to-fail"
+notes = "pile of generated code, but its windows stuff published by microsoft so *shrug*"
+
+[[audits.windows-sys]]
+version = "0.61.2"
+criteria = "too-big-to-fail"
+notes = "pile of generated code, but its windows stuff published by microsoft so *shrug*"
