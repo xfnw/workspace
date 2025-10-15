@@ -526,3 +526,11 @@ criteria = "no-sus-blobs"
 [[audits.toml_writer]]
 delta = "1.0.3 -> 1.0.4"
 criteria = "skimmed"
+
+[[audits.tokio]]
+delta = "1.47.1 -> 1.48.0"
+criteria = "no-sus-blobs"
+
+[[audits.tokio]]
+delta = "1.47.1 -> 1.48.0"
+criteria = "skimmed"
