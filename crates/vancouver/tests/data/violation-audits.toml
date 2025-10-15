@@ -1,0 +1,23 @@
+[[audits.yip]]
+version = "0.1.0"
+criteria = "yote"
+
+[[audits.yip]]
+delta = "0.1.0 -> 0.2.0"
+criteria = "yote"
+
+[[audits.yip]]
+delta = "0.2.0 -> 0.3.0"
+criteria = "yote"
+
+[[audits.yip]]
+violation = "0.2.0"
+criteria = "yote"
+
+[[audits.yap]]
+violation = "1.0.0"
+criteria = "yote"
+
+[[audits.yap]]
+version = "1.0.0"
+criteria = "yote"

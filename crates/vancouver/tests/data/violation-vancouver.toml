@@ -1,0 +1,2 @@
+[default-policy]
+require-all = ["yote"]

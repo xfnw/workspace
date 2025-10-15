@@ -14,7 +14,7 @@ fn command_output(args: impl IntoIterator<Item = impl AsRef<OsStr>>) -> Output {
     Command::new(BIN).args(args).output().unwrap()
 }
 
-fn test_success(name: &str, should_succeed: bool) {
+fn test_success(name: &str, code: i32) {
     let output = command_output([
         "check",
         "--lock",
@@ -26,10 +26,18 @@ fn test_success(name: &str, should_succeed: bool) {
     ]);
     dbg!(str::from_utf8(&output.stdout).unwrap());
     dbg!(str::from_utf8(&output.stderr).unwrap());
-    assert_eq!(output.status.success(), should_succeed);
+    assert_eq!(output.status.code().unwrap(), code);
 }
 
 #[test]
 fn workspace_check() {
-    test_success(WORKSPACE, true);
+    test_success(WORKSPACE, 0);
+}
+
+#[test]
+fn violation() {
+    test_success(
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/violation-"),
+        1,
+    );
 }

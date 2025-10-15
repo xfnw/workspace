@@ -64,6 +64,12 @@ struct Audit {
     /// the version for a standalone audit of an entire version
     #[serde(default)]
     version: Option<String>,
+    /// the version for a standalone violation of an entire version
+    ///
+    /// unlike cargo-vet, this must be a single specific version,
+    /// rather than a version range
+    #[serde(default)]
+    violation: Option<String>,
     /// do not warn when this is an unused exemption
     ///
     /// this is only meaningful when specified on exemptions in the
@@ -138,6 +144,7 @@ type DepMap<T> = BTreeMap<String, T>;
 struct Rules {
     trust_roots: CriteriaMap<DepMap<BTreeMap<Version, TrustRoot>>>,
     trust_deltas: CriteriaMap<DepMap<BTreeMap<Version, TrustDelta>>>,
+    violations: CriteriaMap<DepMap<BTreeSet<Version>>>,
     extra_unused: BTreeSet<UnusedExempt>,
     implied_all: CriteriaMap<BTreeSet<String>>,
     implied_any: CriteriaMap<BTreeSet<String>>,
@@ -172,6 +179,7 @@ impl Rules {
 
         let mut trust_roots: CriteriaMap<DepMap<BTreeMap<Version, TrustRoot>>> = BTreeMap::new();
         let mut trust_deltas: CriteriaMap<DepMap<BTreeMap<Version, TrustDelta>>> = BTreeMap::new();
+        let mut violations: CriteriaMap<DepMap<BTreeSet<Version>>> = BTreeMap::new();
 
         // TODO: squish this into a macro
         for (name, aset) in config.exempt {
@@ -205,6 +213,7 @@ impl Rules {
                 criteria,
                 delta,
                 version,
+                violation,
                 ..
             } in aset
             {
@@ -239,8 +248,16 @@ impl Rules {
                     extra_unused.insert(UnusedExempt {
                         name: name.clone(),
                         version: version.clone(),
-                        criteria,
+                        criteria: criteria.clone(),
                     });
+                }
+                if let Some(violation) = &violation {
+                    violations
+                        .entry(criteria)
+                        .or_default()
+                        .entry(name.clone())
+                        .or_default()
+                        .insert(Version::new(violation));
                 }
             }
         }
@@ -269,6 +286,7 @@ impl Rules {
         Ok(Self {
             trust_roots,
             trust_deltas,
+            violations,
             extra_unused,
             implied_all,
             implied_any,
@@ -289,6 +307,15 @@ impl Rules {
         implied_criteria: Option<&CriteriaCons>,
         recursion_limit: usize,
     ) -> bool {
+        if self
+            .violations
+            .get(criteria)
+            .and_then(|d| d.get(name))
+            .is_some_and(|v| v.contains(version))
+        {
+            return false;
+        }
+
         if let Some(trust) = self
             .trust_roots
             .get(criteria)

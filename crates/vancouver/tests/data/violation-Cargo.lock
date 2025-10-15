@@ -1,0 +1,9 @@
+[[package]]
+name = "yip"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "yap"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
