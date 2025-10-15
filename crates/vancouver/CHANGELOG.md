@@ -8,6 +8,8 @@ SPDX-License-Identifier: MPL-2.0
 
 ## unreleased
 
+## 0.1.1 - 2025-10-15
+
 ### fixes
 - version sorting to find a previous audited version is now in the
   correct order
