@@ -437,3 +437,11 @@ criteria = "no-sus-blobs"
 [[audits.toml_datetime]]
 delta = "0.7.2 -> 0.7.3"
 criteria = "skimmed"
+
+[[audits.socket2]]
+delta = "0.6.0 -> 0.6.1"
+criteria = "no-sus-blobs"
+
+[[audits.socket2]]
+delta = "0.6.0 -> 0.6.1"
+criteria = "skimmed"
