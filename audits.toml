@@ -509,3 +509,11 @@ criteria = "no-sus-blobs"
 [[audits.toml_parser]]
 delta = "1.0.3 -> 1.0.4"
 criteria = "skimmed"
+
+[[audits.toml_writer]]
+delta = "1.0.3 -> 1.0.4"
+criteria = "no-sus-blobs"
+
+[[audits.toml_writer]]
+delta = "1.0.3 -> 1.0.4"
+criteria = "skimmed"
