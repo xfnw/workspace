@@ -469,3 +469,11 @@ criteria = "no-sus-blobs"
 [[audits.generic-array]]
 delta = "0.14.7 -> 0.14.9"
 criteria = "skimmed"
+
+[[audits.regex-syntax]]
+delta = "0.8.6 -> 0.8.8"
+criteria = "no-sus-blobs"
+
+[[audits.regex-syntax]]
+delta = "0.8.6 -> 0.8.8"
+criteria = "skimmed"
