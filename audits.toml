@@ -111,6 +111,15 @@ criteria = "no-sus-blobs"
 delta = "1.2.39 -> 1.2.40"
 criteria = "skimmed"
 
+[[audits.cc]]
+delta = "1.2.40 -> 1.2.41"
+criteria = "blobs-ok"
+notes = "trivial generated code for list of llvm targets had 1 entry added"
+
+[[audits.cc]]
+delta = "1.2.40 -> 1.2.41"
+criteria = "skimmed"
+
 [[audits.regex-automata]]
 delta = "0.4.10 -> 0.4.11"
 criteria = "blobs-ok"
