@@ -101,6 +101,9 @@ pub struct AuditArgs {
     /// additional notes to include
     #[argh(option, short = 'n')]
     notes: Option<String>,
+    /// record a violation
+    #[argh(switch, short = 'x')]
+    fail: bool,
 }
 
 /// merge audits from another file

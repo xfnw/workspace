@@ -35,6 +35,8 @@ pub enum Error {
     Toml(toml_edit::TomlError),
     /// please do not the toml
     TomlBorked,
+    /// the fail and base options are mutually exclusive
+    FailAndBase,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -10,6 +10,10 @@ use std::{
 use toml_edit::{ArrayOfTables, DocumentMut, Item, Table, value};
 
 pub fn add_audit(args: &crate::AuditArgs) -> Result<ExitCode, Error> {
+    if args.fail && args.base.is_some() {
+        return Err(Error::FailAndBase);
+    }
+
     let mut file = std::fs::OpenOptions::new()
         .read(true)
         .write(true)
@@ -37,7 +41,10 @@ pub fn add_audit(args: &crate::AuditArgs) -> Result<ExitCode, Error> {
     };
 
     let mut t = Table::new();
-    if let Some(base) = &args.base {
+    if args.fail {
+        assert!(args.base.is_none());
+        t["violation"] = value(&args.version);
+    } else if let Some(base) = &args.base {
         t["delta"] = value(format!("{base} -> {}", args.version));
     } else {
         t["version"] = value(&args.version);
