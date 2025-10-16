@@ -306,14 +306,14 @@ impl Rules {
         criteria: &str,
         implied_criteria: Option<&CriteriaCons>,
         recursion_limit: usize,
-    ) -> bool {
+    ) -> CheckResult {
         if self
             .violations
             .get(criteria)
             .and_then(|d| d.get(name))
             .is_some_and(|v| v.contains(version))
         {
-            return false;
+            return CheckResult::Violation;
         }
 
         if let Some(trust) = self
@@ -334,11 +334,11 @@ impl Rules {
             })
         {
             trust.used.mark_used();
-            return true;
+            return CheckResult::Validated;
         }
 
         if recursion_limit == 0 {
-            return false;
+            return CheckResult::RecursionLimitReached;
         }
 
         if let Some(trust) = self
@@ -376,10 +376,10 @@ impl Rules {
                     c,
                     Some(&CriteriaCons(criteria, implied_criteria)),
                     recursion_limit - 1,
-                )
+                ) == CheckResult::Validated
             })
         {
-            return true;
+            return CheckResult::Validated;
         }
 
         if let Some(cr) = self.implied_any.get(criteria)
@@ -390,13 +390,13 @@ impl Rules {
                     c,
                     Some(&CriteriaCons(criteria, implied_criteria)),
                     recursion_limit - 1,
-                )
+                ) == CheckResult::Validated
             })
         {
-            return true;
+            return CheckResult::Validated;
         }
 
-        false
+        CheckResult::Missing
     }
 
     fn find_prev(
@@ -424,7 +424,9 @@ impl Rules {
             .collect();
 
         for &potential in versions.range::<&Version, _>(..version).rev() {
-            if self.check_criteria(name, potential, criteria, None, recursion_limit) {
+            if self.check_criteria(name, potential, criteria, None, recursion_limit)
+                == CheckResult::Validated
+            {
                 return Some(potential.clone());
             }
         }
@@ -437,16 +439,15 @@ impl Rules {
 
         let fails: Vec<_> = require_all
             .iter()
-            .filter_map(|c| {
-                if self.check_criteria(&name, &version, c, None, recursion_limit) {
-                    None
-                } else {
-                    Some(Fail {
+            .filter_map(
+                |c| match self.check_criteria(&name, &version, c, None, recursion_limit) {
+                    CheckResult::Validated => None,
+                    _ => Some(Fail {
                         needed: c.to_string(),
                         prev_version: self.find_prev(&name, &version, c, recursion_limit),
-                    })
-                }
-            })
+                    }),
+                },
+            )
             .collect();
 
         let status = if fails.is_empty() {
@@ -504,6 +505,14 @@ fn parse_delta(delta: &str) -> Result<(Version, Version), Error> {
         Version::new(prev.trim_ascii()),
         Version::new(next.trim_ascii()),
     ))
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+enum CheckResult {
+    Validated,
+    Missing,
+    RecursionLimitReached,
+    Violation,
 }
 
 #[derive(Debug, Clone, Serialize)]
