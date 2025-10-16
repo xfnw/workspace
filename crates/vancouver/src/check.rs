@@ -243,7 +243,7 @@ impl Rules {
                                 used: UsedMarker(None),
                             },
                         )
-                        .is_some()
+                        .is_some_and(|r| r.used.0.is_some())
                 {
                     extra_unused.insert(UnusedExempt {
                         name: name.clone(),
