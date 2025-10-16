@@ -442,8 +442,14 @@ impl Rules {
             .filter_map(
                 |c| match self.check_criteria(&name, &version, c, None, recursion_limit) {
                     CheckResult::Validated => None,
-                    _ => Some(Fail {
+                    f => Some(Fail {
                         needed: c.to_string(),
+                        reason: match f {
+                            CheckResult::Validated => unreachable!(),
+                            CheckResult::Missing => FailReason::Missing,
+                            CheckResult::RecursionLimitReached => FailReason::RecursionLimitReached,
+                            CheckResult::Violation => FailReason::Violation,
+                        },
                         prev_version: self.find_prev(&name, &version, c, recursion_limit),
                     }),
                 },
@@ -516,8 +522,16 @@ enum CheckResult {
 }
 
 #[derive(Debug, Clone, Serialize)]
+enum FailReason {
+    Missing,
+    RecursionLimitReached,
+    Violation,
+}
+
+#[derive(Debug, Clone, Serialize)]
 struct Fail {
     needed: String,
+    reason: FailReason,
     prev_version: Option<Version>,
 }
 
@@ -557,6 +571,7 @@ struct Receipt {
     status: Status,
 }
 
+#[allow(clippy::too_many_lines)]
 pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
     let dependencies = crate::metadata::get_dependencies(&args.lock)?;
     if dependencies.is_empty() {
@@ -652,18 +667,43 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
                 Status::Failed(v) => {
                     for Fail {
                         needed,
+                        reason,
                         prev_version,
                     } in v
                     {
                         println!(" needs {needed}");
-                        if let Some(prev) = prev_version {
-                            println!("  help: found a previous audit for {prev}");
-                            println!("  review https://diff.rs/{name}/{prev}/{version}");
-                            println!("  then vancouver audit {name} -b {prev} {version} {needed}");
-                        } else {
-                            println!("  help: could not find previous audits :(");
-                            println!("  review https://diff.rs/browse/{name}/{version}");
-                            println!("  then vancouver audit {name} {version} {needed}");
+                        match reason {
+                            FailReason::Missing => {
+                                if let Some(prev) = prev_version {
+                                    println!("  help: found a previous audit for {prev}");
+                                    println!("  review https://diff.rs/{name}/{prev}/{version}");
+                                    println!(
+                                        "  then vancouver audit {name} -b {prev} {version} {needed}"
+                                    );
+                                } else {
+                                    println!("  help: could not find previous audits :(");
+                                    println!("  review https://diff.rs/browse/{name}/{version}");
+                                    println!("  then vancouver audit {name} {version} {needed}");
+                                }
+                            }
+                            FailReason::RecursionLimitReached => {
+                                println!("  recursion limit reached!");
+                                if prev_version.is_some() {
+                                    println!("  help: try doing a full audit of a newer version");
+                                    println!("  or increase the limit with --recursion-limit");
+                                } else {
+                                    println!("  help: no acceptable previous audits");
+                                    println!("  you might have a loop of criteria implies");
+                                    println!("  or delta audits somewhere");
+                                }
+                            }
+                            FailReason::Violation => {
+                                println!("  matched violation in audits file!");
+                                if let Some(prev) = prev_version {
+                                    println!("  help: found a previous audit for {prev}");
+                                    println!("  consider downgrading to that version");
+                                }
+                            }
                         }
                     }
                 }
