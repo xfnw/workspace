@@ -307,24 +307,23 @@ impl Rules {
         implied_criteria: Option<&CriteriaCons>,
         recursion_limit: usize,
     ) -> CheckResult {
-        if self
+        let is_violation = self
             .violations
             .get(criteria)
             .and_then(|d| d.get(name))
-            .is_some_and(|v| v.contains(version))
-        {
-            return CheckResult::Violation;
-        }
+            .is_some_and(|v| v.contains(version));
 
         if let Some(trust) = self
             .trust_roots
             .get(criteria)
             .and_then(|d| d.get(name))
             .and_then(|v| v.get(version))
+            .filter(|_| !is_violation)
             .or_else(|| {
                 implied_criteria
                     .iter()
                     .flat_map(|c| c.iter())
+                    .filter(|&cr| cr != criteria)
                     .find_map(|cr| {
                         self.trust_roots
                             .get(cr)
@@ -338,6 +337,9 @@ impl Rules {
         }
 
         if recursion_limit == 0 {
+            if is_violation {
+                return CheckResult::Violation;
+            }
             return CheckResult::RecursionLimitReached;
         }
 
@@ -346,10 +348,12 @@ impl Rules {
             .get(criteria)
             .and_then(|d| d.get(name))
             .and_then(|v| v.get(version))
+            .filter(|_| !is_violation)
             .or_else(|| {
                 implied_criteria
                     .iter()
                     .flat_map(|c| c.iter())
+                    .filter(|&cr| cr != criteria)
                     .find_map(|cr| {
                         self.trust_deltas
                             .get(cr)
@@ -365,6 +369,10 @@ impl Rules {
                 implied_criteria,
                 recursion_limit - 1,
             );
+        }
+
+        if is_violation {
+            return CheckResult::Violation;
         }
 
         if let Some(cr) = self.implied_all.get(criteria)
