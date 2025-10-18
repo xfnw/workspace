@@ -141,10 +141,56 @@ type CriteriaMap<T> = BTreeMap<String, T>;
 type DepMap<T> = BTreeMap<String, T>;
 
 #[derive(Debug)]
+struct TrustMap<T>(CriteriaMap<DepMap<BTreeMap<Version, T>>>);
+
+impl<T> TrustMap<T> {
+    fn new() -> Self {
+        Self(BTreeMap::new())
+    }
+
+    fn insert(&mut self, criteria: String, name: String, version: Version, value: T) -> Option<T> {
+        self.0
+            .entry(criteria)
+            .or_default()
+            .entry(name)
+            .or_default()
+            .insert(version, value)
+    }
+
+    fn get(&self, criteria: &str, name: &str, version: &Version) -> Option<&T> {
+        self.0
+            .get(criteria)
+            .and_then(|d| d.get(name))
+            .and_then(|v| v.get(version))
+    }
+}
+
+#[derive(Debug, Default)]
+struct ViolationMap(CriteriaMap<DepMap<BTreeSet<Version>>>);
+
+impl ViolationMap {
+    fn insert(&mut self, criteria: String, name: String, version: Version) {
+        self.0
+            .entry(criteria)
+            .or_default()
+            .entry(name)
+            .or_default()
+            .insert(version);
+    }
+
+    fn contains(&self, criteria: &str, name: &str, version: &Version) -> bool {
+        self.0
+            .get(criteria)
+            .and_then(|d| d.get(name))
+            .is_some_and(|v| v.contains(version))
+    }
+}
+
+#[derive(Debug)]
 struct Rules {
-    trust_roots: CriteriaMap<DepMap<BTreeMap<Version, TrustRoot>>>,
-    trust_deltas: CriteriaMap<DepMap<BTreeMap<Version, TrustDelta>>>,
-    violations: CriteriaMap<DepMap<BTreeSet<Version>>>,
+    trust_roots: TrustMap<TrustRoot>,
+    trust_deltas: TrustMap<TrustDelta>,
+    violations: ViolationMap,
     extra_unused: BTreeSet<UnusedExempt>,
     implied_all: CriteriaMap<BTreeSet<String>>,
     implied_any: CriteriaMap<BTreeSet<String>>,
@@ -177,11 +223,10 @@ impl Rules {
             implied_any.entry(criteria).or_default().append(&mut any);
         }
 
-        let mut trust_roots: CriteriaMap<DepMap<BTreeMap<Version, TrustRoot>>> = BTreeMap::new();
-        let mut trust_deltas: CriteriaMap<DepMap<BTreeMap<Version, TrustDelta>>> = BTreeMap::new();
-        let mut violations: CriteriaMap<DepMap<BTreeSet<Version>>> = BTreeMap::new();
+        let mut trust_roots = TrustMap::<TrustRoot>::new();
+        let mut trust_deltas = TrustMap::<TrustDelta>::new();
+        let mut violations = ViolationMap::default();
 
-        // TODO: squish this into a macro
         for (name, aset) in config.exempt {
             for Audit {
                 criteria,
@@ -191,17 +236,14 @@ impl Rules {
             } in aset
             {
                 if let Some(version) = &version {
-                    trust_roots
-                        .entry(criteria.clone())
-                        .or_default()
-                        .entry(name.clone())
-                        .or_default()
-                        .insert(
-                            Version::new(version),
-                            TrustRoot {
-                                used: UsedMarker(Some(allow_unused.into())),
-                            },
-                        );
+                    trust_roots.insert(
+                        criteria.clone(),
+                        name.clone(),
+                        Version::new(version),
+                        TrustRoot {
+                            used: UsedMarker(Some(allow_unused.into())),
+                        },
+                    );
                 }
             }
         }
@@ -219,25 +261,20 @@ impl Rules {
             {
                 if let Some(delta) = &delta {
                     let (prev, next) = parse_delta(delta)?;
-                    trust_deltas
-                        .entry(criteria.clone())
-                        .or_default()
-                        .entry(name.clone())
-                        .or_default()
-                        .insert(
-                            next,
-                            TrustDelta {
-                                parent_version: prev,
-                            },
-                        );
+                    trust_deltas.insert(
+                        criteria.clone(),
+                        name.clone(),
+                        next,
+                        TrustDelta {
+                            parent_version: prev,
+                        },
+                    );
                 }
                 if let Some(version) = &version
                     && trust_roots
-                        .entry(criteria.clone())
-                        .or_default()
-                        .entry(name.clone())
-                        .or_default()
                         .insert(
+                            criteria.clone(),
+                            name.clone(),
                             Version::new(version),
                             TrustRoot {
                                 used: UsedMarker(None),
@@ -252,12 +289,7 @@ impl Rules {
                     });
                 }
                 if let Some(violation) = &violation {
-                    violations
-                        .entry(criteria)
-                        .or_default()
-                        .entry(name.clone())
-                        .or_default()
-                        .insert(Version::new(violation));
+                    violations.insert(criteria, name.clone(), Version::new(violation));
                 }
             }
         }
@@ -299,7 +331,6 @@ impl Rules {
         self.policy.get(name).unwrap_or(&self.default_policy)
     }
 
-    #[allow(clippy::too_many_lines)]
     fn check_criteria(
         &self,
         name: &str,
@@ -308,35 +339,18 @@ impl Rules {
         implied_criteria: Option<&CriteriaCons>,
         recursion_limit: usize,
     ) -> CheckResult {
-        let is_violation = self
-            .violations
-            .get(criteria)
-            .and_then(|d| d.get(name))
-            .is_some_and(|v| v.contains(version));
+        let is_violation = self.violations.contains(criteria, name, version);
 
         if let Some(trust) = self
             .trust_roots
-            .get(criteria)
-            .and_then(|d| d.get(name))
-            .and_then(|v| v.get(version))
+            .get(criteria, name, version)
             .filter(|_| !is_violation)
             .or_else(|| {
                 implied_criteria
                     .iter()
                     .flat_map(|c| c.iter())
-                    .filter(|&cr| {
-                        !self
-                            .violations
-                            .get(cr)
-                            .and_then(|d| d.get(name))
-                            .is_some_and(|v| v.contains(version))
-                    })
-                    .find_map(|cr| {
-                        self.trust_roots
-                            .get(cr)
-                            .and_then(|d| d.get(name))
-                            .and_then(|v| v.get(version))
-                    })
+                    .filter(|&cr| !self.violations.contains(cr, name, version))
+                    .find_map(|cr| self.trust_roots.get(cr, name, version))
             })
         {
             trust.used.mark_used();
@@ -352,27 +366,14 @@ impl Rules {
 
         if let Some(trust) = self
             .trust_deltas
-            .get(criteria)
-            .and_then(|d| d.get(name))
-            .and_then(|v| v.get(version))
+            .get(criteria, name, version)
             .filter(|_| !is_violation)
             .or_else(|| {
                 implied_criteria
                     .iter()
                     .flat_map(|c| c.iter())
-                    .filter(|&cr| {
-                        !self
-                            .violations
-                            .get(cr)
-                            .and_then(|d| d.get(name))
-                            .is_some_and(|v| v.contains(version))
-                    })
-                    .find_map(|cr| {
-                        self.trust_deltas
-                            .get(cr)
-                            .and_then(|d| d.get(name))
-                            .and_then(|v| v.get(version))
-                    })
+                    .filter(|&cr| !self.violations.contains(cr, name, version))
+                    .find_map(|cr| self.trust_deltas.get(cr, name, version))
             })
         {
             return self.check_criteria(
@@ -431,12 +432,14 @@ impl Rules {
 
         let versions: BTreeSet<_> = self
             .trust_roots
+            .0
             .values()
             .filter_map(|d| d.get(name))
             .flatten()
             .map(|(v, _)| v)
             .chain(
                 self.trust_deltas
+                    .0
                     .values()
                     .filter_map(|d| d.get(name))
                     .flatten()
@@ -493,7 +496,7 @@ impl Rules {
     fn unused_exempts(&self) -> BTreeSet<UnusedExempt> {
         let mut out = self.extra_unused.clone();
 
-        for (criteria, map) in &self.trust_roots {
+        for (criteria, map) in &self.trust_roots.0 {
             for (dep, map) in map {
                 for (version, root) in map {
                     if root
