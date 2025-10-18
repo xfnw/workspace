@@ -299,6 +299,7 @@ impl Rules {
         self.policy.get(name).unwrap_or(&self.default_policy)
     }
 
+    #[allow(clippy::too_many_lines)]
     fn check_criteria(
         &self,
         name: &str,
@@ -323,7 +324,13 @@ impl Rules {
                 implied_criteria
                     .iter()
                     .flat_map(|c| c.iter())
-                    .filter(|&cr| cr != criteria)
+                    .filter(|&cr| {
+                        !self
+                            .violations
+                            .get(cr)
+                            .and_then(|d| d.get(name))
+                            .is_some_and(|v| v.contains(version))
+                    })
                     .find_map(|cr| {
                         self.trust_roots
                             .get(cr)
@@ -353,7 +360,13 @@ impl Rules {
                 implied_criteria
                     .iter()
                     .flat_map(|c| c.iter())
-                    .filter(|&cr| cr != criteria)
+                    .filter(|&cr| {
+                        !self
+                            .violations
+                            .get(cr)
+                            .and_then(|d| d.get(name))
+                            .is_some_and(|v| v.contains(version))
+                    })
                     .find_map(|cr| {
                         self.trust_deltas
                             .get(cr)
