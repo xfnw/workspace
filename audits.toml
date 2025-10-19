@@ -542,3 +542,7 @@ criteria = "no-sus-blobs"
 [[audits.rustls]]
 delta = "0.23.32 -> 0.23.33"
 criteria = "skimmed"
+
+[[audits.mark-tree]]
+version = "0.1.0"
+criteria = "by-xfnw"
