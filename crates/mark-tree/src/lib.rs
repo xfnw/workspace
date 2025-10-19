@@ -218,9 +218,7 @@ impl MarkTree {
     pub fn mark(&mut self, mut bits: impl Iterator<Item = bool>) {
         let new = if let Some(bit) = bits.next() {
             match self {
-                Self::AllMarked => {
-                    return;
-                }
+                Self::AllMarked => return,
                 Self::AllUnmarked => {
                     let mut deeper = Self::new();
                     deeper.mark(bits);
@@ -239,6 +237,33 @@ impl MarkTree {
             }
         } else {
             Self::AllMarked
+        };
+        _ = std::mem::replace(self, new);
+    }
+
+    /// unmark the position in the tree dictated by an iterator
+    pub fn unmark(&mut self, mut bits: impl Iterator<Item = bool>) {
+        let new = if let Some(bit) = bits.next() {
+            match self {
+                Self::AllUnmarked => return,
+                Self::AllMarked => {
+                    let mut deeper = Self::AllMarked;
+                    deeper.unmark(bits);
+                    let mut other = Self::AllMarked;
+
+                    if bit {
+                        std::mem::swap(&mut deeper, &mut other);
+                    }
+                    Self::Branch(Box::new(deeper), Box::new(other))
+                }
+                Self::Branch(a, b) => {
+                    let deeper = if bit { b } else { a };
+                    deeper.unmark(bits);
+                    return;
+                }
+            }
+        } else {
+            Self::AllUnmarked
         };
         _ = std::mem::replace(self, new);
     }
@@ -431,6 +456,19 @@ mod tests {
                 assert_ne!(path, [true, false, true, false]);
             }
         });
+    }
+
+    #[test]
+    fn tree_unmark() {
+        let mut tree = MarkTree::new();
+        tree.mark([true].into_iter());
+        assert!(tree.is_marked([true].into_iter()));
+        assert!(tree.is_marked([true, false].into_iter()));
+        assert!(tree.is_marked([true, true].into_iter()));
+        tree.unmark([true, true].into_iter());
+        assert!(tree.is_marked([true, false].into_iter()));
+        assert!(!tree.is_marked([true, true].into_iter()));
+        assert!(!tree.is_marked([true, true, false].into_iter()));
     }
 
     #[test]
