@@ -269,6 +269,10 @@ impl MarkTree {
     }
 
     /// check if a position in the tree dictated by an iterator is marked
+    ///
+    /// note that this does not consider branches that have all marked leaves
+    /// to be marked. if this is undesirable, [`MarkTree::optimize`] can be
+    /// used to clean these branches up
     pub fn is_marked(&self, mut bits: impl Iterator<Item = bool>) -> bool {
         match self {
             Self::AllUnmarked => false,
