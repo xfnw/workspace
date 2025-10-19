@@ -7,6 +7,7 @@ name = "mark-tree"
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
+description = "questionable tree-shaped thing"
 repository.workspace = true
 
 [dependencies]
