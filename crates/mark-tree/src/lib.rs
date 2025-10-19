@@ -243,6 +243,19 @@ impl MarkTree {
         _ = std::mem::replace(self, new);
     }
 
+    /// check if a position in the tree dictated by an iterator is marked
+    pub fn is_marked(&self, mut bits: impl Iterator<Item = bool>) -> bool {
+        match self {
+            Self::AllUnmarked => false,
+            Self::AllMarked => true,
+            Self::Branch(a, b) => match bits.next() {
+                Some(false) => a.is_marked(bits),
+                Some(true) => b.is_marked(bits),
+                None => false,
+            },
+        }
+    }
+
     /// clean up branches that are entirely marked or unmarked
     pub fn optimize(&mut self) {
         if let Self::Branch(a, b) = self {
@@ -378,6 +391,10 @@ mod tests {
     fn tree_dedup() {
         let mut tree = MarkTree::new();
         tree.mark(BitRangeIter::from((0b11000000u8, 3)));
+        assert!(tree.is_marked(BitRangeIter::from((0b11000000u8, 3))));
+        assert!(tree.is_marked(BitRangeIter::from((0b11000000u8, 5))));
+        assert!(!tree.is_marked(BitRangeIter::from((0b11000000u8, 2))));
+        assert!(!tree.is_marked(BitRangeIter::from((0b10000000u8, 3))));
         let old = tree.clone();
         tree.mark(BitRangeIter::from((0b11010100u8, 6)));
         assert_eq!(old, tree);
