@@ -151,7 +151,8 @@ impl IntoIterator for &IpRange {
 
 impl std::fmt::Display for IpRange {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}/{}", self.ip, self.mask_len)
+        let (ip, mask_len) = self.into_parts();
+        write!(f, "{ip}/{mask_len}")
     }
 }
 
