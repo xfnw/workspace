@@ -546,3 +546,11 @@ criteria = "skimmed"
 [[audits.mark-tree]]
 version = "0.1.0"
 criteria = "by-xfnw"
+
+[[audits.bitflags]]
+delta = "2.9.4 -> 2.10.0"
+criteria = "no-sus-blobs"
+
+[[audits.bitflags]]
+delta = "2.9.4 -> 2.10.0"
+criteria = "skimmed"
