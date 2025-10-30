@@ -562,3 +562,11 @@ criteria = "no-sus-blobs"
 [[audits.mio]]
 delta = "1.0.4 -> 1.1.0"
 criteria = "skimmed"
+
+[[audits.utf8-width]]
+version = "0.1.7"
+criteria = "no-sus-blobs"
+
+[[audits.utf8-width]]
+version = "0.1.7"
+criteria = "skimmed"
