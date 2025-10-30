@@ -570,3 +570,12 @@ criteria = "no-sus-blobs"
 [[audits.utf8-width]]
 version = "0.1.7"
 criteria = "skimmed"
+
+[[audits.html-escape]]
+version = "0.2.13"
+criteria = "blobs-ok"
+notes = "has a table of html entity names"
+
+[[audits.html-escape]]
+version = "0.2.13"
+criteria = "skimmed"
