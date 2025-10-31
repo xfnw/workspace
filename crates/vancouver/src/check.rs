@@ -467,7 +467,7 @@ impl Rules {
                 |c| match self.check_criteria(&name, &version, c, None, recursion_limit) {
                     CheckResult::Validated => None,
                     f => Some(Fail {
-                        needed: c.to_string(),
+                        needed: c.clone(),
                         reason: match f {
                             CheckResult::Validated => unreachable!(),
                             CheckResult::Missing => FailReason::Missing,
