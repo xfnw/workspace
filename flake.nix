@@ -52,27 +52,22 @@
           inherit src;
         };
         cargoArtifacts = buildDepsOnly common;
-        commonCrates = [
-          "foxerror"
-        ];
-        commonFileSet = fileset.unions ([
-          ./Cargo.toml
-          ./Cargo.lock
-        ] ++ map (p: crane'.fileset.commonCargoSources ./crates/${p}) commonCrates);
-        commonSrc = fileset.toSource {
-          root = ./.;
-          fileset = commonFileSet;
-        };
-        buildPackage = pname: let
+        commonFileSet = fileset.union ./Cargo.toml ./Cargo.lock;
+        buildPackage = pname: deps: let
           inherit (crane'.crateNameFromCargoToml {
             src = "${src}/crates/${pname}";
           }) version;
           cargoExtraArgs = "--offline -p ${pname}";
+          depsFileSet = fileset.unions ([
+            commonFileSet
+          ] ++ map (p: crane'.fileset.commonCargoSources ./crates/${p}) deps);
+          depsSrc = fileset.toSource {
+            root = ./.;
+            fileset = depsFileSet;
+          };
           src = fileset.toSource {
             root = ./.;
-            fileset = fileset.union
-              commonFileSet
-              (crane'.fileset.commonCargoSources ./crates/${pname});
+            fileset = fileset.union depsFileSet (crane'.fileset.commonCargoSources ./crates/${pname});
           };
         in crane'.buildPackage (common // {
           inherit pname version src cargoExtraArgs;
@@ -80,22 +75,22 @@
             inherit pname version src cargoExtraArgs cargoArtifacts;
             extraDummyScript = ''
               # mkDummySrc tries to eat workspace lints. put them back
-              ln -sf ${commonSrc}/Cargo.toml $out/Cargo.toml
+              ln -sf ${depsSrc}/Cargo.toml $out/Cargo.toml
 
               ${concatLines (map (crate: ''
                 rm -r $out/crates/${crate}
-                ln -s ${commonSrc}/crates/${crate} $out/crates
-              '') commonCrates)}
+                ln -s ${depsSrc}/crates/${crate} $out/crates
+              '') deps)}
             '';
             doCheck = false; # the workspace deps build checks deps already
           });
           doCheck = false; # tests are run as a flake check
         });
-        members = genAttrs [
-          "maw"
-          "vancouver"
-          "vasm"
-        ] buildPackage;
+        members = {
+          maw = buildPackage "maw" [ ];
+          vancouver = buildPackage "vancouver" [ "foxerror" ];
+          vasm = buildPackage "vasm" [ "foxerror" ];
+        };
       in {
         checks = {
           clippy = crane'.cargoClippy (common // {
