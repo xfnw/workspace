@@ -579,3 +579,11 @@ notes = "has a table of html entity names"
 [[audits.html-escape]]
 version = "0.2.13"
 criteria = "skimmed"
+
+[[audits.signal-hook-registry]]
+version = "1.4.6"
+criteria = "no-sus-blobs"
+
+[[audits.signal-hook-registry]]
+version = "1.4.6"
+criteria = "skimmed"
