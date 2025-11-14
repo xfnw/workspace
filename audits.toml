@@ -120,6 +120,15 @@ notes = "trivial generated code for list of llvm targets had 1 entry added"
 delta = "1.2.40 -> 1.2.41"
 criteria = "skimmed"
 
+[[audits.cc]]
+delta = "1.2.41 -> 1.2.46"
+criteria = "blobs-ok"
+notes = "trivial generated target info"
+
+[[audits.cc]]
+delta = "1.2.41 -> 1.2.46"
+criteria = "skimmed"
+
 [[audits.regex-automata]]
 delta = "0.4.10 -> 0.4.11"
 criteria = "blobs-ok"
