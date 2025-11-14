@@ -964,14 +964,6 @@ criteria = "blobs-ok"
 version = "0.52.0"
 criteria = "skimmed"
 
-[[exempt.windows-sys]]
-version = "0.59.0"
-criteria = "blobs-ok"
-
-[[exempt.windows-sys]]
-version = "0.59.0"
-criteria = "skimmed"
-
 [[exempt.windows-targets]]
 version = "0.52.6"
 criteria = "blobs-ok"
