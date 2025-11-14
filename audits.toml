@@ -607,3 +607,11 @@ criteria = "skimmed"
 [[audits.rustls-pki-types]]
 delta = "1.12.0 -> 1.13.0"
 criteria = "skimmed"
+
+[[audits.lazy-regex]]
+delta = "3.4.1 -> 3.4.2"
+criteria = "no-sus-blobs"
+
+[[audits.lazy-regex]]
+delta = "3.4.1 -> 3.4.2"
+criteria = "skimmed"
