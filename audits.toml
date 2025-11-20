@@ -656,3 +656,11 @@ criteria = "no-sus-blobs"
 [[audits.crypto-common]]
 delta = "0.1.6 -> 0.1.7"
 criteria = "skimmed"
+
+[[audits.asyncfd]]
+version = "0.1.3"
+criteria = "no-sus-blobs"
+
+[[audits.asyncfd]]
+version = "0.1.3"
+criteria = "skimmed"
