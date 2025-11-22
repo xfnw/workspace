@@ -672,3 +672,11 @@ criteria = "no-sus-blobs"
 [[audits.icu_provider]]
 delta = "2.0.0 -> 2.1.1"
 criteria = "skimmed"
+
+[[audits.icu_locale_core]]
+delta = "2.0.0 -> 2.1.1"
+criteria = "no-sus-blobs"
+
+[[audits.icu_locale_core]]
+delta = "2.0.0 -> 2.1.1"
+criteria = "skimmed"
