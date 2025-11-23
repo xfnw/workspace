@@ -688,3 +688,11 @@ criteria = "no-sus-blobs"
 [[audits.litemap]]
 delta = "0.8.0 -> 0.8.1"
 criteria = "skimmed"
+
+[[audits.indexmap]]
+delta = "2.11.4 -> 2.12.1"
+criteria = "no-sus-blobs"
+
+[[audits.indexmap]]
+delta = "2.11.4 -> 2.12.1"
+criteria = "skimmed"
