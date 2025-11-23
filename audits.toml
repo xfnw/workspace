@@ -129,6 +129,14 @@ notes = "trivial generated target info"
 delta = "1.2.41 -> 1.2.46"
 criteria = "skimmed"
 
+[[audits.cc]]
+delta = "1.2.46 -> 1.2.47"
+criteria = "no-sus-blobs"
+
+[[audits.cc]]
+delta = "1.2.46 -> 1.2.47"
+criteria = "skimmed"
+
 [[audits.regex-automata]]
 delta = "0.4.10 -> 0.4.11"
 criteria = "blobs-ok"
