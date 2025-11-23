@@ -712,3 +712,11 @@ criteria = "no-sus-blobs"
 [[audits.hashbrown]]
 delta = "0.16.0 -> 0.16.1"
 criteria = "skimmed"
+
+[[audits.bytes]]
+delta = "1.10.1 -> 1.11.0"
+criteria = "no-sus-blobs"
+
+[[audits.bytes]]
+delta = "1.10.1 -> 1.11.0"
+criteria = "skimmed"
