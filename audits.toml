@@ -696,3 +696,11 @@ criteria = "no-sus-blobs"
 [[audits.indexmap]]
 delta = "2.11.4 -> 2.12.1"
 criteria = "skimmed"
+
+[[audits.hashbrown]]
+delta = "0.16.0 -> 0.16.1"
+criteria = "no-sus-blobs"
+
+[[audits.hashbrown]]
+delta = "0.16.0 -> 0.16.1"
+criteria = "skimmed"
