@@ -680,3 +680,11 @@ criteria = "no-sus-blobs"
 [[audits.icu_locale_core]]
 delta = "2.0.0 -> 2.1.1"
 criteria = "skimmed"
+
+[[audits.litemap]]
+delta = "0.8.0 -> 0.8.1"
+criteria = "no-sus-blobs"
+
+[[audits.litemap]]
+delta = "0.8.0 -> 0.8.1"
+criteria = "skimmed"
