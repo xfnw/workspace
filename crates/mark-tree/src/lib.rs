@@ -197,7 +197,7 @@ impl std::fmt::Display for ParseIpRangeError {
 
 impl std::error::Error for ParseIpRangeError {}
 
-/// a binary tree where branches get marked based on where an iterator of bools ends
+/// a trie where branches get marked based on where an iterator of bools ends
 ///
 /// probably only useful when [`BitRangeIter`] is used as the iterator
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
