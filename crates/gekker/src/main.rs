@@ -2,8 +2,12 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use axum::{Json, Router, extract::State, routing::get};
-use serde::Serialize;
+use axum::{
+    Json, Router,
+    extract::{Query, State},
+    routing::{get, post},
+};
+use serde::{Deserialize, Serialize};
 use std::{
     collections::BTreeSet,
     hash::Hasher,
@@ -84,6 +88,21 @@ fn hash_line(nick: &[u8], command: &[u8], trail: &[u8]) -> u64 {
     hasher.finish()
 }
 
+#[derive(Debug, Deserialize)]
+struct ConnectArgs {
+    nick: String,
+    host: String,
+    socks5: Option<SocketAddr>,
+    #[serde(default)]
+    plaintext: bool,
+    #[serde(default)]
+    insecure: bool,
+}
+
+async fn connect(State(state): State<Arc<AppState>>, Query(args): Query<ConnectArgs>) {
+    dbg!(args);
+}
+
 #[tokio::main]
 async fn main() {
     let addr: SocketAddr = std::env::args()
@@ -103,6 +122,7 @@ async fn main() {
     });
     let app = Router::new()
         .route("/status", get(status))
+        .route("/connect", post(connect))
         .with_state(state);
 
     let listen = TcpListener::bind(addr).await.unwrap();
