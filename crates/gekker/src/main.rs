@@ -8,7 +8,6 @@ use std::{
     collections::BTreeSet,
     hash::Hasher,
     net::SocketAddr,
-    str::FromStr,
     sync::{
         Arc,
         atomic::{AtomicUsize, Ordering},
@@ -39,16 +38,6 @@ struct AppState {
     job: RwLock<Option<Job>>,
     job_sent: AtomicUsize,
     job_total: AtomicUsize,
-}
-
-fn hash_line(nick: &[u8], command: &[u8], trail: &[u8]) -> u64 {
-    let mut hasher = std::hash::DefaultHasher::new();
-    hasher.write(nick);
-    hasher.write(b" ");
-    hasher.write(command);
-    hasher.write(b" ");
-    hasher.write(trail);
-    hasher.finish()
 }
 
 #[derive(Debug, Serialize)]
@@ -83,6 +72,16 @@ async fn status(State(state): State<Arc<AppState>>) -> Json<StatusReply> {
         job_sent,
         job_total,
     })
+}
+
+fn hash_line(nick: &[u8], command: &[u8], trail: &[u8]) -> u64 {
+    let mut hasher = std::hash::DefaultHasher::new();
+    hasher.write(nick);
+    hasher.write(b" ");
+    hasher.write(command);
+    hasher.write(b" ");
+    hasher.write(trail);
+    hasher.finish()
 }
 
 #[tokio::main]
