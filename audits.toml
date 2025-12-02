@@ -736,3 +736,11 @@ criteria = "no-sus-blobs"
 [[audits.potential_utf]]
 delta = "0.1.3 -> 0.1.4"
 criteria = "skimmed"
+
+[[audits.irctokens]]
+version = "0.1.3"
+criteria = "no-sus-blobs"
+
+[[audits.irctokens]]
+version = "0.1.3"
+criteria = "skimmed"
