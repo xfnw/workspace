@@ -1315,3 +1315,27 @@ criteria = "blobs-ok"
 [[exempt.tracing-core]]
 version = "0.1.35"
 criteria = "skimmed"
+
+[[exempt.tokio-stream]]
+version = "0.1.17"
+criteria = "blobs-ok"
+
+[[exempt.tokio-stream]]
+version = "0.1.17"
+criteria = "skimmed"
+
+[[exempt.futures-sink]]
+version = "0.3.31"
+criteria = "blobs-ok"
+
+[[exempt.futures-sink]]
+version = "0.3.31"
+criteria = "skimmed"
+
+[[exempt.tokio-util]]
+version = "0.7.17"
+criteria = "blobs-ok"
+
+[[exempt.tokio-util]]
+version = "0.7.17"
+criteria = "skimmed"
