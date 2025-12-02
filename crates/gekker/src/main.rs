@@ -2,8 +2,13 @@
 //
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use std::{collections::BTreeSet, hash::Hasher};
-use tokio::sync::{RwLock, mpsc};
+use axum::{Json, Router, extract::State, routing::get};
+use serde::Serialize;
+use std::{collections::BTreeSet, hash::Hasher, net::SocketAddr, str::FromStr, sync::Arc};
+use tokio::{
+    net::TcpListener,
+    sync::{RwLock, mpsc},
+};
 
 #[derive(Debug)]
 struct Client {
@@ -12,7 +17,7 @@ struct Client {
 }
 
 #[derive(Debug)]
-struct State {
+struct AppState {
     clients: RwLock<Vec<Option<Client>>>,
     active: RwLock<BTreeSet<usize>>,
     callback: RwLock<mpsc::Sender<u64>>,
@@ -28,6 +33,34 @@ fn hash_line(nick: &[u8], command: &[u8], trail: &[u8]) -> u64 {
     hasher.finish()
 }
 
-fn main() {
-    println!("Hello, world!");
+#[derive(Debug, Serialize)]
+struct StatusReply {}
+
+async fn status(State(state): State<Arc<AppState>>) -> Json<StatusReply> {
+    Json(StatusReply {})
+}
+
+#[tokio::main]
+async fn main() {
+    let addr: SocketAddr = std::env::args()
+        .nth(1)
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(SocketAddr::new(
+            std::net::IpAddr::V6(std::net::Ipv6Addr::UNSPECIFIED),
+            8667,
+        ));
+
+    let state = Arc::new(AppState {
+        clients: RwLock::new(vec![]),
+        active: RwLock::new(BTreeSet::new()),
+        // fake channel that is automatically closed because we immediately drop the receiver
+        callback: RwLock::new(mpsc::channel(1).0),
+    });
+    let app = Router::new()
+        .route("/status", get(status))
+        .with_state(state);
+
+    let listen = TcpListener::bind(addr).await.unwrap();
+    eprintln!("listening on {}", listen.local_addr().unwrap());
+    axum::serve(listen, app.into_make_service()).await.unwrap();
 }
