@@ -4,10 +4,20 @@
 
 use axum::{Json, Router, extract::State, routing::get};
 use serde::Serialize;
-use std::{collections::BTreeSet, hash::Hasher, net::SocketAddr, str::FromStr, sync::Arc};
+use std::{
+    collections::BTreeSet,
+    hash::Hasher,
+    net::SocketAddr,
+    str::FromStr,
+    sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    },
+};
 use tokio::{
     net::TcpListener,
     sync::{RwLock, mpsc},
+    task::AbortHandle,
 };
 
 #[derive(Debug)]
@@ -17,10 +27,18 @@ struct Client {
 }
 
 #[derive(Debug)]
+struct Job {
+    callback: mpsc::Sender<u64>,
+    handle: AbortHandle,
+}
+
+#[derive(Debug)]
 struct AppState {
     clients: RwLock<Vec<Option<Client>>>,
     active: RwLock<BTreeSet<usize>>,
-    callback: RwLock<mpsc::Sender<u64>>,
+    job: RwLock<Option<Job>>,
+    job_sent: AtomicUsize,
+    job_total: AtomicUsize,
 }
 
 fn hash_line(nick: &[u8], command: &[u8], trail: &[u8]) -> u64 {
@@ -34,10 +52,37 @@ fn hash_line(nick: &[u8], command: &[u8], trail: &[u8]) -> u64 {
 }
 
 #[derive(Debug, Serialize)]
-struct StatusReply {}
+struct StatusClient {
+    nick: String,
+    active: bool,
+}
+
+#[derive(Debug, Serialize)]
+struct StatusReply {
+    clients: Vec<Option<StatusClient>>,
+    job_sent: usize,
+    job_total: usize,
+}
 
 async fn status(State(state): State<Arc<AppState>>) -> Json<StatusReply> {
-    Json(StatusReply {})
+    let clients = state.clients.read().await;
+    let active = state.active.read().await;
+    let job_sent = state.job_sent.load(Ordering::SeqCst);
+    let job_total = state.job_total.load(Ordering::SeqCst);
+    Json(StatusReply {
+        clients: clients
+            .iter()
+            .enumerate()
+            .map(|(n, c)| {
+                c.as_ref().map(|c| StatusClient {
+                    nick: c.nick.clone(),
+                    active: active.contains(&n),
+                })
+            })
+            .collect(),
+        job_sent,
+        job_total,
+    })
 }
 
 #[tokio::main]
@@ -53,8 +98,9 @@ async fn main() {
     let state = Arc::new(AppState {
         clients: RwLock::new(vec![]),
         active: RwLock::new(BTreeSet::new()),
-        // fake channel that is automatically closed because we immediately drop the receiver
-        callback: RwLock::new(mpsc::channel(1).0),
+        job: RwLock::new(Option::None),
+        job_sent: AtomicUsize::new(0),
+        job_total: AtomicUsize::new(0),
     });
     let app = Router::new()
         .route("/status", get(status))
