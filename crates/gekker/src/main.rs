@@ -411,6 +411,22 @@ async fn cancel(State(state): State<Arc<AppState>>) {
     state.job.read().await.handle.abort();
 }
 
+async fn activate(State(state): State<Arc<AppState>>, Path(slot): Path<usize>) {
+    if state
+        .clients
+        .read()
+        .await
+        .get(slot)
+        .is_some_and(Option::is_some)
+    {
+        state.active.write().await.insert(slot);
+    }
+}
+
+async fn deactivate(State(state): State<Arc<AppState>>, Path(slot): Path<usize>) {
+    state.active.write().await.remove(&slot);
+}
+
 #[tokio::main]
 async fn main() {
     let addr: SocketAddr = std::env::args()
@@ -449,6 +465,8 @@ async fn main() {
         .route("/raw/{slot}", post(raw_slot))
         .route("/send", post(send))
         .route("/cancel", post(cancel))
+        .route("/activate/{slot}", post(activate))
+        .route("/deactivate/{slot}", post(deactivate))
         .with_state(state);
 
     let listen = TcpListener::bind(addr).await.unwrap();
