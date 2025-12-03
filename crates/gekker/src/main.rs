@@ -4,7 +4,8 @@
 
 use axum::{
     Json, Router,
-    extract::{Query, State},
+    body::Bytes,
+    extract::{Path, Query, State},
     http::StatusCode,
     routing::{get, post},
 };
@@ -264,6 +265,132 @@ async fn set_autojoin(
     *state.autojoin.write().await = channel;
 }
 
+async fn dispatch_job<F>(
+    state: Arc<AppState>,
+    body: Bytes,
+    callback: impl FnOnce(Arc<AppState>, Vec<Vec<u8>>) -> F + Send + 'static,
+) -> Result<(), (StatusCode, &'static str)>
+where
+    F: Future<Output = ()> + Send + 'static,
+{
+    let lines: Vec<Vec<u8>> = body
+        .split(|&b| b == b'\n')
+        .filter(|l| !l.is_empty())
+        .map(<[u8]>::to_vec)
+        .collect();
+    let mut job = state.job.write().await;
+    if !job.handle.is_finished() {
+        return Err((
+            StatusCode::CONFLICT,
+            "there is already a job running. cancel it to start a new one",
+        ));
+    }
+    state.job_sent.store(0, Ordering::SeqCst);
+    state.job_total.store(lines.len(), Ordering::SeqCst);
+
+    let state = state.clone();
+    let task = tokio::spawn(async move { callback(state, lines).await });
+    job.handle = task.abort_handle();
+
+    Ok(())
+}
+
+async fn raw_all(
+    State(state): State<Arc<AppState>>,
+    body: Bytes,
+) -> Result<(), (StatusCode, &'static str)> {
+    dispatch_job(state, body, async |state, lines| {
+        for line in lines {
+            for client in state.clients.read().await.iter().flatten() {
+                _ = client.sender.try_send(line.clone());
+            }
+            state.job_sent.fetch_add(1, Ordering::SeqCst);
+        }
+    })
+    .await
+}
+
+async fn raw_slot(
+    State(state): State<Arc<AppState>>,
+    Path(slot): Path<usize>,
+    body: Bytes,
+) -> Result<(), (StatusCode, &'static str)> {
+    dispatch_job(state, body, async move |state, lines| {
+        for line in lines {
+            let clients = state.clients.read().await;
+            let Some(Some(client)) = clients.get(slot) else {
+                return;
+            };
+            if client.sender.try_send(line).is_err() {
+                return;
+            }
+            state.job_sent.fetch_add(1, Ordering::SeqCst);
+        }
+    })
+    .await
+}
+
+#[derive(Debug, Deserialize)]
+struct SendOpt {
+    command: Option<String>,
+    arg: Option<String>,
+}
+
+async fn send(
+    State(state): State<Arc<AppState>>,
+    Query(opt): Query<SendOpt>,
+    body: Bytes,
+) -> Result<(), (StatusCode, &'static str)> {
+    dispatch_job(state, body, async move |state, lines| {
+        let mut lines = lines.into_iter();
+        let mut command = opt.command.unwrap_or_else(|| "PRIVMSG".to_string());
+        command.make_ascii_uppercase();
+        let command = command;
+        let args: Vec<Vec<u8>> = opt.arg.into_iter().map(String::into_bytes).collect();
+        let mut hashes = Vec::with_capacity(128);
+        let (sender, mut receiver) = mpsc::channel(128);
+        state.job.write().await.callback = sender;
+
+        loop {
+            for slot in state.active.read().await.clone() {
+                let hash = {
+                    let clients = state.clients.read().await;
+                    let Some(client) = &clients[slot] else {
+                        state.active.write().await.remove(&slot);
+                        continue;
+                    };
+                    let nick = &client.nick;
+                    let Some(trail) = lines.next() else {
+                        return;
+                    };
+                    let hash = hash_line(nick.as_bytes(), &command, &trail);
+                    let mut line = irctokens::Line {
+                        tags: None,
+                        source: None,
+                        command: command.clone(),
+                        arguments: args.clone(),
+                    };
+                    line.arguments.push(trail);
+                    _ = client.sender.try_send(line.format());
+                    hash
+                };
+
+                while !hashes.contains(&hash) {
+                    hashes.clear();
+                    receiver.recv_many(&mut hashes, 128).await;
+                }
+
+                state.job_sent.fetch_add(1, Ordering::SeqCst);
+            }
+        }
+    })
+    .await
+}
+
+async fn cancel(State(state): State<Arc<AppState>>) {
+    state.job.read().await.handle.abort();
+}
+
 #[tokio::main]
 async fn main() {
     let addr: SocketAddr = std::env::args()
@@ -298,6 +425,10 @@ async fn main() {
         .route("/status", get(status))
         .route("/autojoin", post(set_autojoin))
         .route("/connect", post(connect))
+        .route("/raw/all", post(raw_all))
+        .route("/raw/{slot}", post(raw_slot))
+        .route("/send", post(send))
+        .route("/cancel", post(cancel))
         .with_state(state);
 
     let listen = TcpListener::bind(addr).await.unwrap();
