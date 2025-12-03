@@ -353,6 +353,9 @@ async fn send(
 
         loop {
             let active = state.active.read().await.clone();
+            if active.is_empty() {
+                return;
+            }
             for &slot in &active {
                 let hash = {
                     let clients = state.clients.read().await;
