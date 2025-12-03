@@ -45,7 +45,7 @@ struct Job {
 struct AppState {
     clients: RwLock<Vec<Option<Client>>>,
     active: RwLock<BTreeSet<usize>>,
-    job: RwLock<Option<Job>>,
+    job: RwLock<Job>,
     job_sent: AtomicUsize,
     job_total: AtomicUsize,
     ca_certs: Arc<RootCertStore>,
@@ -68,12 +68,7 @@ struct StatusReply {
 async fn status(State(state): State<Arc<AppState>>) -> Json<StatusReply> {
     let clients = state.clients.read().await;
     let active = state.active.read().await;
-    let job_active = state
-        .job
-        .read()
-        .await
-        .as_ref()
-        .is_some_and(|j| !j.handle.is_finished());
+    let job_active = !state.job.read().await.handle.is_finished();
     let job_sent = state.job_sent.load(Ordering::SeqCst);
     let job_total = state.job_total.load(Ordering::SeqCst);
     Json(StatusReply {
@@ -213,11 +208,15 @@ async fn main() {
             .unwrap()
             .flatten(),
     );
+    let fake_job = Job {
+        callback: mpsc::channel(1).0,
+        handle: tokio::spawn(async {}).abort_handle(),
+    };
 
     let state = Arc::new(AppState {
         clients: RwLock::new(vec![]),
         active: RwLock::new(BTreeSet::new()),
-        job: RwLock::new(Option::None),
+        job: RwLock::new(fake_job),
         job_sent: AtomicUsize::new(0),
         job_total: AtomicUsize::new(0),
         ca_certs: Arc::new(ca_certs),
