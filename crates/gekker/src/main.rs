@@ -88,11 +88,11 @@ async fn status(State(state): State<Arc<AppState>>) -> Json<StatusReply> {
     })
 }
 
-fn hash_line(nick: &[u8], command: &[u8], trail: &[u8]) -> u64 {
+fn hash_line(nick: &[u8], command: &str, trail: &[u8]) -> u64 {
     let mut hasher = std::hash::DefaultHasher::new();
     hasher.write(nick);
     hasher.write(b" ");
-    hasher.write(command);
+    hasher.write(command.as_bytes());
     hasher.write(b" ");
     hasher.write(trail);
     hasher.finish()
@@ -177,7 +177,41 @@ async fn client_loop(
                 if len == 0 {
                     return;
                 }
+                while ircbuf.pop_if(|c| b"\r\n".contains(c)).is_some() {}
+                let Ok(mut line) = irctokens::Line::tokenise(&ircbuf) else {
+                    return;
+                };
                 ircbuf.clear();
+                line.command.make_ascii_uppercase();
+                let source_nick = line.source.as_ref().and_then(|s| s.split(|&b| b == b'!').next());
+                if let Some(nick) = source_nick
+                    && let Some(trailing) = line.arguments.iter().next_back()
+                {
+                    let h = hash_line(nick, &line.command, trailing);
+                    _ = state.job.read().await.callback.send(h).await;
+                }
+                match line.command.as_ref() {
+                    "PING" => {
+                        line.source = None;
+                        line.command = "PONG".to_string();
+                        let mut out = line.format();
+                        out.extend_from_slice(b"\r\n");
+                        if write.write_all(&out).await.is_err() {
+                            return;
+                        }
+                        continue;
+                    }
+                    "001" => {
+                        if let Some(mynick) = line.arguments.iter().next().and_then(|n| str::from_utf8(n).ok()) {
+                            let mut clients = state.clients.write().await;
+                            let Some(client) = &mut clients[slot] else {
+                                return;
+                            };
+                            client.nick = mynick.to_string();
+                        }
+                    }
+                    _ => (),
+                }
             }
             Some(mut line) = receiver.recv() => {
                 line.extend_from_slice(b"\r\n");
