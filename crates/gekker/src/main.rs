@@ -205,6 +205,15 @@ async fn client_loop(
                         }
                         continue;
                     }
+                    "NICK" => {
+                        if let Some(oldnick) = source_nick.and_then(|n| str::from_utf8(n).ok())
+                            && oldnick == state.clients.read().await[slot].as_ref().unwrap().nick
+                            && let Some(newnick) = line.arguments.first().and_then(|n| str::from_utf8(n).ok())
+                        {
+                            let mut clients = state.clients.write().await;
+                            clients[slot].as_mut().unwrap().nick = newnick.to_string();
+                        }
+                    }
                     "001" => {
                         if let Some(mynick) = line.arguments.first().and_then(|n| str::from_utf8(n).ok()) {
                             let mut clients = state.clients.write().await;
