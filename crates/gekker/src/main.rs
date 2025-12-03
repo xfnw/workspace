@@ -26,7 +26,7 @@ use std::{
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
     net::TcpListener,
-    sync::{RwLock, mpsc},
+    sync::{RwLock, broadcast, mpsc},
     task::AbortHandle,
 };
 
@@ -34,6 +34,7 @@ use tokio::{
 struct Client {
     nick: RwLock<String>,
     sender: mpsc::Sender<Vec<u8>>,
+    broadcast: broadcast::Sender<Bytes>,
 }
 
 #[derive(Debug)]
@@ -136,13 +137,13 @@ async fn connect(
         .connect()
         .await
         .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
-    let (slot, receiver) = reserve_client_slot(&state.clients).await;
+    let (slot, receiver, broadcast) = reserve_client_slot(&state.clients).await;
     conn.write_all(format!("NICK {}\r\nUSER {0} 0 * {0}\r\n", args.nick).as_bytes())
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     tokio::spawn(async move {
         eprintln!("{slot} connected!");
-        client_loop(state.clone(), slot, conn, receiver).await;
+        client_loop(state.clone(), slot, conn, receiver, broadcast).await;
         eprintln!("{slot} disconnected!");
         state.clients.write().await[slot] = None;
     });
@@ -151,11 +152,13 @@ async fn connect(
 
 async fn reserve_client_slot(
     clients: &RwLock<Vec<Option<Client>>>,
-) -> (usize, mpsc::Receiver<Vec<u8>>) {
+) -> (usize, mpsc::Receiver<Vec<u8>>, broadcast::Sender<Bytes>) {
     let (sender, receiver) = mpsc::channel(6);
+    let broadcast = broadcast::channel(64).0;
     let client = Client {
         nick: RwLock::new("???".to_string()),
         sender,
+        broadcast: broadcast.clone(),
     };
     let mut clients = clients.write().await;
     let slot = clients.iter().position(Option::is_none).unwrap_or_else(|| {
@@ -165,7 +168,7 @@ async fn reserve_client_slot(
     });
     assert!(clients[slot].is_none());
     clients[slot] = Some(client);
-    (slot, receiver)
+    (slot, receiver, broadcast)
 }
 
 async fn client_loop(
@@ -173,6 +176,7 @@ async fn client_loop(
     slot: usize,
     conn: irc_connect::Stream,
     mut receiver: mpsc::Receiver<Vec<u8>>,
+    broadcast: broadcast::Sender<Bytes>,
 ) {
     let (read, mut write) = tokio::io::split(conn);
     let mut read = BufReader::new(read);
@@ -183,6 +187,7 @@ async fn client_loop(
                 if len == 0 {
                     return;
                 }
+                _ = broadcast.send(Bytes::copy_from_slice(&ircbuf));
                 while ircbuf.pop_if(|c| b"\r\n".contains(c)).is_some() {}
                 let Ok(mut line) = irctokens::Line::tokenise(&ircbuf) else {
                     return;
