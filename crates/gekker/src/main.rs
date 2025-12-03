@@ -60,6 +60,7 @@ struct StatusClient {
 #[derive(Debug, Serialize)]
 struct StatusReply {
     clients: Vec<Option<StatusClient>>,
+    job_active: bool,
     job_sent: usize,
     job_total: usize,
 }
@@ -67,6 +68,12 @@ struct StatusReply {
 async fn status(State(state): State<Arc<AppState>>) -> Json<StatusReply> {
     let clients = state.clients.read().await;
     let active = state.active.read().await;
+    let job_active = state
+        .job
+        .read()
+        .await
+        .as_ref()
+        .is_some_and(|j| !j.handle.is_finished());
     let job_sent = state.job_sent.load(Ordering::SeqCst);
     let job_total = state.job_total.load(Ordering::SeqCst);
     Json(StatusReply {
@@ -80,6 +87,7 @@ async fn status(State(state): State<Arc<AppState>>) -> Json<StatusReply> {
                 })
             })
             .collect(),
+        job_active,
         job_sent,
         job_total,
     })
