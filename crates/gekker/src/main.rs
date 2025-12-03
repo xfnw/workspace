@@ -208,10 +208,7 @@ async fn client_loop(
                     "001" => {
                         if let Some(mynick) = line.arguments.iter().next().and_then(|n| str::from_utf8(n).ok()) {
                             let mut clients = state.clients.write().await;
-                            let Some(client) = &mut clients[slot] else {
-                                return;
-                            };
-                            client.nick = mynick.to_string();
+                            clients[slot].as_mut().unwrap().nick = mynick.to_string();
                         }
                         if let Some(channel) = state.autojoin.read().await.as_ref() {
                             let out = irctokens::Line {
