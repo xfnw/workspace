@@ -5,7 +5,12 @@
 use axum::{
     Json, Router,
     extract::{Query, State},
+    http::StatusCode,
     routing::{get, post},
+};
+use irc_connect::tokio_rustls::rustls::{
+    RootCertStore,
+    pki_types::{CertificateDer, pem::PemObject},
 };
 use serde::{Deserialize, Serialize};
 use std::{
@@ -18,6 +23,7 @@ use std::{
     },
 };
 use tokio::{
+    io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
     net::TcpListener,
     sync::{RwLock, mpsc},
     task::AbortHandle,
@@ -42,6 +48,7 @@ struct AppState {
     job: RwLock<Option<Job>>,
     job_sent: AtomicUsize,
     job_total: AtomicUsize,
+    ca_certs: Arc<RootCertStore>,
 }
 
 #[derive(Debug, Serialize)]
@@ -99,8 +106,87 @@ struct ConnectArgs {
     insecure: bool,
 }
 
-async fn connect(State(state): State<Arc<AppState>>, Query(args): Query<ConnectArgs>) {
-    dbg!(args);
+async fn connect(
+    State(state): State<Arc<AppState>>,
+    Query(args): Query<ConnectArgs>,
+) -> Result<(), (StatusCode, String)> {
+    let conn = irc_connect::Stream::new_tcp(args.host);
+    let conn = if let Some(addr) = args.socks5 {
+        conn.socks5(addr)
+    } else {
+        conn
+    };
+    let conn = if args.plaintext {
+        conn
+    } else if args.insecure {
+        conn.tls_danger_insecure(None)
+    } else {
+        conn.tls_with_root(None, state.ca_certs.clone())
+    };
+    let mut conn = conn
+        .connect()
+        .await
+        .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
+    let (slot, receiver) = reserve_client_slot(&state.clients).await;
+    conn.write_all(format!("NICK {}\r\nUSER {0} 0 * {0}\r\n", args.nick).as_bytes())
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    tokio::spawn(async move {
+        eprintln!("{slot} connected!");
+        client_loop(state.clone(), slot, conn, receiver).await;
+        eprintln!("{slot} disconnected!");
+        state.clients.write().await[slot] = None;
+    });
+    Ok(())
+}
+
+async fn reserve_client_slot(
+    clients: &RwLock<Vec<Option<Client>>>,
+) -> (usize, mpsc::Receiver<Vec<u8>>) {
+    let (sender, receiver) = mpsc::channel(6);
+    let client = Client {
+        nick: "???".to_string(),
+        sender,
+    };
+    let mut clients = clients.write().await;
+    let slot = clients.iter().position(|i| i.is_none()).unwrap_or_else(|| {
+        let len = clients.len();
+        clients.push(None);
+        len
+    });
+    assert!(clients[slot].is_none());
+    clients[slot] = Some(client);
+    (slot, receiver)
+}
+
+async fn client_loop(
+    state: Arc<AppState>,
+    slot: usize,
+    conn: irc_connect::Stream,
+    mut receiver: mpsc::Receiver<Vec<u8>>,
+) {
+    let (read, mut write) = tokio::io::split(conn);
+    let mut read = BufReader::new(read);
+    let mut ircbuf = Vec::with_capacity(512);
+    loop {
+        tokio::select! {
+            Ok(len) = read.read_until(b'\n', &mut ircbuf) => {
+                if len == 0 {
+                    return;
+                }
+                ircbuf.clear();
+            }
+            Some(mut line) = receiver.recv() => {
+                line.extend_from_slice(b"\r\n");
+                if write.write_all(&line).await.is_err() {
+                    return;
+                }
+            }
+            else => {
+                return;
+            }
+        }
+    }
 }
 
 #[tokio::main]
@@ -113,12 +199,20 @@ async fn main() {
             8667,
         ));
 
+    let mut ca_certs = RootCertStore::empty();
+    ca_certs.add_parsable_certificates(
+        CertificateDer::pem_file_iter("/etc/ssl/certs/ca-bundle.crt")
+            .unwrap()
+            .flatten(),
+    );
+
     let state = Arc::new(AppState {
         clients: RwLock::new(vec![]),
         active: RwLock::new(BTreeSet::new()),
         job: RwLock::new(Option::None),
         job_sent: AtomicUsize::new(0),
         job_total: AtomicUsize::new(0),
+        ca_certs: Arc::new(ca_certs),
     });
     let app = Router::new()
         .route("/status", get(status))
