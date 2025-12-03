@@ -152,7 +152,7 @@ async fn reserve_client_slot(
         sender,
     };
     let mut clients = clients.write().await;
-    let slot = clients.iter().position(|i| i.is_none()).unwrap_or_else(|| {
+    let slot = clients.iter().position(Option::is_none).unwrap_or_else(|| {
         let len = clients.len();
         clients.push(None);
         len
