@@ -45,6 +45,7 @@ struct Job {
 struct AppState {
     clients: RwLock<Vec<Option<Client>>>,
     active: RwLock<BTreeSet<usize>>,
+    autojoin: RwLock<Option<String>>,
     job: RwLock<Job>,
     job_sent: AtomicUsize,
     job_total: AtomicUsize,
@@ -60,6 +61,7 @@ struct StatusClient {
 #[derive(Debug, Serialize)]
 struct StatusReply {
     clients: Vec<Option<StatusClient>>,
+    autojoin: Option<String>,
     job_active: bool,
     job_sent: usize,
     job_total: usize,
@@ -68,6 +70,7 @@ struct StatusReply {
 async fn status(State(state): State<Arc<AppState>>) -> Json<StatusReply> {
     let clients = state.clients.read().await;
     let active = state.active.read().await;
+    let autojoin = state.autojoin.read().await.clone();
     let job_active = !state.job.read().await.handle.is_finished();
     let job_sent = state.job_sent.load(Ordering::SeqCst);
     let job_total = state.job_total.load(Ordering::SeqCst);
@@ -82,6 +85,7 @@ async fn status(State(state): State<Arc<AppState>>) -> Json<StatusReply> {
                 })
             })
             .collect(),
+        autojoin,
         job_active,
         job_sent,
         job_total,
@@ -209,6 +213,22 @@ async fn client_loop(
                             };
                             client.nick = mynick.to_string();
                         }
+                        if let Some(channel) = state.autojoin.read().await.as_ref() {
+                            let out = irctokens::Line {
+                                tags: None,
+                                source: None,
+                                command: "JOIN".to_string(),
+                                arguments: vec![channel.as_bytes().to_vec()],
+                            };
+                            let mut out = out.format();
+                            out.extend_from_slice(b"\r\n");
+                            if write.write_all(&out).await.is_err() {
+                                return;
+                            }
+                        }
+                    }
+                    "366" => {
+                        state.active.write().await.insert(slot);
                     }
                     _ => (),
                 }
@@ -224,6 +244,18 @@ async fn client_loop(
             }
         }
     }
+}
+
+#[derive(Debug, Deserialize)]
+struct MaybeChannel {
+    channel: Option<String>,
+}
+
+async fn set_autojoin(
+    State(state): State<Arc<AppState>>,
+    Query(MaybeChannel { channel }): Query<MaybeChannel>,
+) {
+    *state.autojoin.write().await = channel;
 }
 
 #[tokio::main]
@@ -250,6 +282,7 @@ async fn main() {
     let state = Arc::new(AppState {
         clients: RwLock::new(vec![]),
         active: RwLock::new(BTreeSet::new()),
+        autojoin: RwLock::new(None),
         job: RwLock::new(fake_job),
         job_sent: AtomicUsize::new(0),
         job_total: AtomicUsize::new(0),
@@ -257,6 +290,7 @@ async fn main() {
     });
     let app = Router::new()
         .route("/status", get(status))
+        .route("/autojoin", post(set_autojoin))
         .route("/connect", post(connect))
         .with_state(state);
 
