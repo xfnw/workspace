@@ -187,7 +187,6 @@ async fn client_loop(
                 let Ok(mut line) = irctokens::Line::tokenise(&ircbuf) else {
                     return;
                 };
-                ircbuf.clear();
                 line.command.make_ascii_uppercase();
                 let source_nick = line.source.as_ref().and_then(|s| s.split(|&b| b == b'!').next());
                 if let Some(nick) = source_nick
@@ -205,6 +204,11 @@ async fn client_loop(
                         if write.write_all(&out).await.is_err() {
                             return;
                         }
+                        ircbuf.clear();
+                        continue;
+                    }
+                    "PRIVMSG" | "NOTICE" => {
+                        ircbuf.clear();
                         continue;
                     }
                     "NICK" => {
@@ -240,6 +244,9 @@ async fn client_loop(
                     }
                     _ => (),
                 }
+
+                println!("{slot}> {}", String::from_utf8_lossy(&ircbuf));
+                ircbuf.clear();
             }
             Some(mut line) = receiver.recv() => {
                 line.extend_from_slice(b"\r\n");
