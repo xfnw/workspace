@@ -4,9 +4,10 @@
 
 use axum::{
     Json, Router,
-    body::Bytes,
+    body::{Body, Bytes},
     extract::{Path, Query, State},
     http::StatusCode,
+    response::IntoResponse,
     routing::{get, post},
 };
 use irc_connect::tokio_rustls::rustls::{
@@ -432,6 +433,26 @@ async fn deactivate(State(state): State<Arc<AppState>>, Path(slot): Path<usize>)
     state.active.write().await.remove(&slot);
 }
 
+async fn subscribe(
+    State(state): State<Arc<AppState>>,
+    Path(slot): Path<usize>,
+) -> Result<impl IntoResponse, StatusCode> {
+    let Some(handle) = state
+        .clients
+        .read()
+        .await
+        .get(slot)
+        .and_then(|c| c.as_ref())
+        .map(|c| c.broadcast.subscribe())
+    else {
+        return Err(StatusCode::NOT_FOUND);
+    };
+    let stream = tokio_stream::wrappers::BroadcastStream::new(handle);
+    let body = Body::from_stream(stream);
+
+    Ok(body)
+}
+
 #[tokio::main]
 async fn main() {
     let addr: SocketAddr = std::env::args()
@@ -472,6 +493,7 @@ async fn main() {
         .route("/cancel", post(cancel))
         .route("/activate/{slot}", post(activate))
         .route("/deactivate/{slot}", post(deactivate))
+        .route("/subscribe/{slot}", get(subscribe))
         .with_state(state);
 
     let listen = TcpListener::bind(addr).await.unwrap();
