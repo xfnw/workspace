@@ -32,7 +32,7 @@ use tokio::{
 
 #[derive(Debug)]
 struct Client {
-    nick: String,
+    nick: RwLock<String>,
     sender: mpsc::Sender<Vec<u8>>,
 }
 
@@ -69,23 +69,24 @@ struct StatusReply {
 }
 
 async fn status(State(state): State<Arc<AppState>>) -> Json<StatusReply> {
-    let clients = state.clients.read().await;
     let active = state.active.read().await;
+    let mut clients = Vec::new();
+    for (n, client) in state.clients.read().await.iter().enumerate() {
+        clients.push(if let Some(client) = client {
+            Some(StatusClient {
+                nick: client.nick.read().await.clone(),
+                active: active.contains(&n),
+            })
+        } else {
+            None
+        });
+    }
     let autojoin = state.autojoin.read().await.clone();
     let job_active = !state.job.read().await.handle.is_finished();
     let job_sent = state.job_sent.load(Ordering::SeqCst);
     let job_total = state.job_total.load(Ordering::SeqCst);
     Json(StatusReply {
-        clients: clients
-            .iter()
-            .enumerate()
-            .map(|(n, c)| {
-                c.as_ref().map(|c| StatusClient {
-                    nick: c.nick.clone(),
-                    active: active.contains(&n),
-                })
-            })
-            .collect(),
+        clients,
         autojoin,
         job_active,
         job_sent,
@@ -153,7 +154,7 @@ async fn reserve_client_slot(
 ) -> (usize, mpsc::Receiver<Vec<u8>>) {
     let (sender, receiver) = mpsc::channel(6);
     let client = Client {
-        nick: "???".to_string(),
+        nick: RwLock::new("???".to_string()),
         sender,
     };
     let mut clients = clients.write().await;
@@ -208,17 +209,17 @@ async fn client_loop(
                     }
                     "NICK" => {
                         if let Some(oldnick) = source_nick.and_then(|n| str::from_utf8(n).ok())
-                            && oldnick == state.clients.read().await[slot].as_ref().unwrap().nick
+                            && oldnick == *state.clients.read().await[slot].as_ref().unwrap().nick.read().await
                             && let Some(newnick) = line.arguments.first().and_then(|n| str::from_utf8(n).ok())
                         {
-                            let mut clients = state.clients.write().await;
-                            clients[slot].as_mut().unwrap().nick = newnick.to_string();
+                            let clients = state.clients.read().await;
+                            *clients[slot].as_ref().unwrap().nick.write().await = newnick.to_string();
                         }
                     }
                     "001" => {
                         if let Some(mynick) = line.arguments.first().and_then(|n| str::from_utf8(n).ok()) {
-                            let mut clients = state.clients.write().await;
-                            clients[slot].as_mut().unwrap().nick = mynick.to_string();
+                            let clients = state.clients.read().await;
+                            *clients[slot].as_ref().unwrap().nick.write().await = mynick.to_string();
                         }
                         if let Some(channel) = state.autojoin.read().await.as_ref() {
                             let out = irctokens::Line {
@@ -363,7 +364,7 @@ async fn send(
                         state.active.write().await.remove(&slot);
                         continue;
                     };
-                    let nick = &client.nick;
+                    let nick = &client.nick.read().await;
                     let Some(trail) = lines.next() else {
                         return;
                     };
