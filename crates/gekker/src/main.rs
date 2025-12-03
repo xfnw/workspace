@@ -352,7 +352,8 @@ async fn send(
         state.job.write().await.callback = sender;
 
         loop {
-            for slot in state.active.read().await.clone() {
+            let active = state.active.read().await.clone();
+            for &slot in &active {
                 let hash = {
                     let clients = state.clients.read().await;
                     let Some(client) = &clients[slot] else {
@@ -375,9 +376,17 @@ async fn send(
                     hash
                 };
 
-                while !hashes.contains(&hash) {
-                    hashes.clear();
-                    receiver.recv_many(&mut hashes, 128).await;
+                if tokio::time::timeout(std::time::Duration::from_secs(1), async {
+                    while !hashes.contains(&hash) {
+                        hashes.clear();
+                        receiver.recv_many(&mut hashes, 128).await;
+                    }
+                })
+                .await
+                .is_err()
+                    && active.len() > 1
+                {
+                    state.active.write().await.remove(&slot);
                 }
 
                 state.job_sent.fetch_add(1, Ordering::SeqCst);
