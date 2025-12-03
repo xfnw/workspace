@@ -189,7 +189,7 @@ async fn client_loop(
                 line.command.make_ascii_uppercase();
                 let source_nick = line.source.as_ref().and_then(|s| s.split(|&b| b == b'!').next());
                 if let Some(nick) = source_nick
-                    && let Some(trailing) = line.arguments.iter().next_back()
+                    && let Some(trailing) = line.arguments.last()
                 {
                     let h = hash_line(nick, &line.command, trailing);
                     _ = state.job.read().await.callback.send(h).await;
@@ -206,7 +206,7 @@ async fn client_loop(
                         continue;
                     }
                     "001" => {
-                        if let Some(mynick) = line.arguments.iter().next().and_then(|n| str::from_utf8(n).ok()) {
+                        if let Some(mynick) = line.arguments.first().and_then(|n| str::from_utf8(n).ok()) {
                             let mut clients = state.clients.write().await;
                             clients[slot].as_mut().unwrap().nick = mynick.to_string();
                         }
