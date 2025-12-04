@@ -97,7 +97,9 @@ fn hash_line(nick: &[u8], command: &str, trail: &[u8]) -> u64 {
     hasher.write(b" ");
     hasher.write(command.as_bytes());
     hasher.write(b" ");
-    hasher.write(trail.trim_ascii());
+    if matches!(command, "PRIVMSG" | "NOTICE") {
+        hasher.write(trail.trim_ascii());
+    }
     hasher.finish()
 }
 
