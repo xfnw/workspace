@@ -3,12 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use axum::{
-    Json, Router,
-    body::{Body, Bytes},
-    extract::{Path, Query, State},
-    http::StatusCode,
-    response::IntoResponse,
-    routing::{get, post},
+    body::{Body, Bytes}, extract::{Path, Query, State}, http::StatusCode, response::{Html, IntoResponse}, routing::{get, post}, Json, Router
 };
 use irc_connect::tokio_rustls::rustls::{
     RootCertStore,
@@ -453,6 +448,10 @@ async fn subscribe(
     Ok(body)
 }
 
+async fn dashboard() -> Html<&'static str> {
+    Html(include_str!("dashboard.html"))
+}
+
 #[tokio::main]
 async fn main() {
     let addr: SocketAddr = std::env::args()
@@ -494,6 +493,7 @@ async fn main() {
         .route("/activate/{slot}", post(activate))
         .route("/deactivate/{slot}", post(deactivate))
         .route("/subscribe/{slot}", get(subscribe))
+        .route("/", get(dashboard))
         .with_state(state);
 
     let listen = TcpListener::bind(addr).await.unwrap();
