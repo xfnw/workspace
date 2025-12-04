@@ -60,14 +60,14 @@
           cargoExtraArgs = "--offline -p ${pname}";
           depsFileSet = fileset.unions ([
             commonFileSet
-          ] ++ map (p: crane'.fileset.commonCargoSources ./crates/${p}) deps);
+          ] ++ map (p: ./crates/${p}) deps);
           depsSrc = fileset.toSource {
             root = ./.;
             fileset = depsFileSet;
           };
           src = fileset.toSource {
             root = ./.;
-            fileset = fileset.union depsFileSet (crane'.fileset.commonCargoSources ./crates/${pname});
+            fileset = fileset.union depsFileSet ./crates/${pname};
           };
         in crane'.buildPackage (common // {
           inherit pname version src cargoExtraArgs;
