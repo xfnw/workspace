@@ -3,7 +3,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use axum::{
-    body::{Body, Bytes}, extract::{Path, Query, State}, http::StatusCode, response::{Html, IntoResponse}, routing::{get, post}, Json, Router
+    Json, Router,
+    body::{Body, Bytes},
+    extract::{Path, Query, State},
+    http::StatusCode,
+    response::{Html, IntoResponse},
+    routing::{get, post},
 };
 use irc_connect::tokio_rustls::rustls::{
     RootCertStore,
@@ -66,17 +71,20 @@ struct StatusReply {
 }
 
 async fn status(State(state): State<Arc<AppState>>) -> Json<StatusReply> {
-    let active = state.active.read().await;
     let mut clients = Vec::new();
-    for (n, client) in state.clients.read().await.iter().enumerate() {
-        clients.push(if let Some(client) = client {
-            Some(StatusClient {
-                nick: client.nick.read().await.clone(),
-                active: active.contains(&n),
-            })
-        } else {
-            None
-        });
+    {
+        let clients_handle = state.clients.read().await;
+        let active = state.active.read().await;
+        for (n, client) in clients_handle.iter().enumerate() {
+            clients.push(if let Some(client) = client {
+                Some(StatusClient {
+                    nick: client.nick.read().await.clone(),
+                    active: active.contains(&n),
+                })
+            } else {
+                None
+            });
+        }
     }
     let autojoin = state.autojoin.read().await.clone();
     let job_active = !state.job.read().await.handle.is_finished();
