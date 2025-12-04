@@ -186,6 +186,7 @@ async fn client_loop(
                 let Ok(mut line) = irctokens::Line::tokenise(&ircbuf) else {
                     return;
                 };
+                ircbuf.clear();
                 line.command.make_ascii_uppercase();
                 let source_nick = line.source.as_ref().and_then(|s| s.split(|&b| b == b'!').next());
                 if let Some(nick) = source_nick
@@ -237,8 +238,6 @@ async fn client_loop(
                     }
                     _ => (),
                 }
-
-                ircbuf.clear();
             }
             Some(mut line) = receiver.recv() => {
                 line.extend_from_slice(b"\r\n");
