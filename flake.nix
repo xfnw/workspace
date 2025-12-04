@@ -87,7 +87,7 @@
           doCheck = false; # tests are run as a flake check
         });
         members = {
-          gekker = buildPackage "gekker" [ "foxerror" "irc-connect" ];
+          gekker = buildPackage "gekker" [ "irc-connect" ];
           maw = buildPackage "maw" [ ];
           vancouver = buildPackage "vancouver" [ "foxerror" ];
           vasm = buildPackage "vasm" [ "foxerror" ];
