@@ -138,9 +138,7 @@ async fn connect(
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     tokio::spawn(async move {
-        eprintln!("{slot} connected!");
         client_loop(state.clone(), slot, conn, receiver, broadcast).await;
-        eprintln!("{slot} disconnected!");
         state.clients.write().await[slot] = None;
     });
     Ok(())
@@ -205,12 +203,6 @@ async fn client_loop(
                         if write.write_all(&out).await.is_err() {
                             return;
                         }
-                        ircbuf.clear();
-                        continue;
-                    }
-                    "PRIVMSG" | "NOTICE" => {
-                        ircbuf.clear();
-                        continue;
                     }
                     "NICK" => {
                         if let Some(oldnick) = source_nick.and_then(|n| str::from_utf8(n).ok())
@@ -246,7 +238,6 @@ async fn client_loop(
                     _ => (),
                 }
 
-                println!("{slot}> {}", String::from_utf8_lossy(&ircbuf));
                 ircbuf.clear();
             }
             Some(mut line) = receiver.recv() => {
@@ -497,6 +488,6 @@ async fn main() {
         .with_state(state);
 
     let listen = TcpListener::bind(addr).await.unwrap();
-    eprintln!("listening on {}", listen.local_addr().unwrap());
+    println!("listening on {}", listen.local_addr().unwrap());
     axum::serve(listen, app.into_make_service()).await.unwrap();
 }
