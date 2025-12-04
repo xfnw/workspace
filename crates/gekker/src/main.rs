@@ -149,7 +149,10 @@ async fn connect(
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     tokio::spawn(async move {
         client_loop(state.clone(), slot, conn, receiver, broadcast).await;
-        state.clients.write().await[slot] = None;
+        let mut clients = state.clients.write().await;
+        let mut active = state.active.write().await;
+        clients[slot] = None;
+        active.remove(&slot);
     });
     Ok(())
 }
