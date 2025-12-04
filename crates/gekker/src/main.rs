@@ -431,7 +431,7 @@ async fn deactivate(State(state): State<Arc<AppState>>, Path(slot): Path<usize>)
     state.active.write().await.remove(&slot);
 }
 
-async fn subscribe(
+async fn get_raw(
     State(state): State<Arc<AppState>>,
     Path(slot): Path<usize>,
 ) -> Result<impl IntoResponse, StatusCode> {
@@ -491,11 +491,11 @@ async fn main() {
         .route("/connect", post(connect))
         .route("/raw/all", post(raw_all))
         .route("/raw/{slot}", post(raw_slot))
+        .route("/raw/{slot}", get(get_raw))
         .route("/send", post(send))
         .route("/cancel", post(cancel))
         .route("/activate/{slot}", post(activate))
         .route("/deactivate/{slot}", post(deactivate))
-        .route("/subscribe/{slot}", get(subscribe))
         .route("/", get(dashboard))
         .with_state(state);
 
