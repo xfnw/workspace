@@ -399,7 +399,6 @@ async fn send(
                 })
                 .await
                 .is_err()
-                    && active.len() > 1
                 {
                     state.active.write().await.remove(&slot);
                 }
