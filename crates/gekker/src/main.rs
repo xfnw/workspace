@@ -286,7 +286,7 @@ where
     F: Future<Output = ()> + Send + 'static,
 {
     let lines: Vec<Vec<u8>> = body
-        .split(|&b| b == b'\n')
+        .split(|b| b"\r\n".contains(b))
         .filter(|l| !l.is_empty())
         .map(<[u8]>::to_vec)
         .collect();
