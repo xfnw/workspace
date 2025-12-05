@@ -104,9 +104,10 @@ fn hash_line(nick: &[u8], command: &str, trail: &[u8]) -> u64 {
     hasher.write(nick);
     hasher.write(b" ");
     hasher.write(command.as_bytes());
-    hasher.write(b" ");
     if matches!(command, "PRIVMSG" | "NOTICE") {
-        hasher.write(trail.trim_ascii());
+        hasher.write(b" ");
+        let trail = trail.trim_ascii();
+        hasher.write(&trail[..std::cmp::min(trail.len(), 300)]);
     }
     hasher.finish()
 }
