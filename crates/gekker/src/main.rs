@@ -391,7 +391,7 @@ async fn send(
                     hash
                 };
 
-                if tokio::time::timeout(std::time::Duration::from_secs(1), async {
+                if tokio::time::timeout(std::time::Duration::from_millis(1200), async {
                     while !hashes.contains(&hash) {
                         hashes.clear();
                         receiver.recv_many(&mut hashes, 128).await;
