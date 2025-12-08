@@ -148,6 +148,9 @@ async fn connect(
     conn.write_all(format!("NICK {}\r\nUSER {0} 0 * {0}\r\n", args.nick).as_bytes())
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    conn.flush()
+        .await
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     tokio::spawn(async move {
         client_loop(state.clone(), slot, conn, receiver, broadcast).await;
         let mut clients = state.clients.write().await;
@@ -218,6 +221,9 @@ async fn client_loop(
                         if write.write_all(&out).await.is_err() {
                             return;
                         }
+                        if write.flush().await.is_err() {
+                            return;
+                        }
                     }
                     "NICK" => {
                         if let Some(oldnick) = source_nick.and_then(|n| str::from_utf8(n).ok())
@@ -245,6 +251,9 @@ async fn client_loop(
                             if write.write_all(&out).await.is_err() {
                                 return;
                             }
+                            if write.flush().await.is_err() {
+                                return;
+                            }
                         }
                     }
                     "366" => {
@@ -256,6 +265,9 @@ async fn client_loop(
             Some(mut line) = receiver.recv() => {
                 line.extend_from_slice(b"\r\n");
                 if write.write_all(&line).await.is_err() {
+                    return;
+                }
+                if write.flush().await.is_err() {
                     return;
                 }
             }
