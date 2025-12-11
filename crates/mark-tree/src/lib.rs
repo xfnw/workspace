@@ -3,6 +3,11 @@
 // SPDX-License-Identifier: MIT
 
 //! questionable tree-shaped thing
+//!
+//! this crate is primarily useful for merging ip ranges together, by
+//! sticking [`IpRange`] into [`MarkTree`]. there is an example for this
+//! in `examples/ipropt.rs`. however, it can be used with any
+//! [`Iterator<Item = bool>`]
 #![allow(clippy::precedence)]
 
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
