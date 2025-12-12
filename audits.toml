@@ -438,6 +438,15 @@ criteria = "no-sus-blobs"
 delta = "0.23.6 -> 0.23.7"
 criteria = "skimmed"
 
+[[audits.toml_edit]]
+delta = "0.23.7 -> 0.23.9"
+criteria = "no-sus-blobs"
+
+[[audits.toml_edit]]
+delta = "0.23.7 -> 0.23.9"
+criteria = "skimmed"
+notes = "no code changes"
+
 [[audits.tokio-macros]]
 delta = "2.5.0 -> 2.6.0"
 criteria = "no-sus-blobs"
