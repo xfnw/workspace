@@ -115,7 +115,7 @@ struct TrustDelta {
 }
 
 #[derive(Debug)]
-struct CriteriaCons<'a>(&'a str, Option<&'a CriteriaCons<'a>>);
+struct CriteriaCons<'a>(&'a str, Option<&'a Self>);
 
 impl<'a> CriteriaCons<'a> {
     fn iter(&'a self) -> CriteriaConsIter<'a> {

@@ -210,7 +210,7 @@ pub enum MarkTree {
     #[default]
     AllUnmarked,
     AllMarked,
-    Branch(Box<MarkTree>, Box<MarkTree>),
+    Branch(Box<Self>, Box<Self>),
 }
 
 impl MarkTree {
