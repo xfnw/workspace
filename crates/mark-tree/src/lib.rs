@@ -10,7 +10,10 @@
 //! [`Iterator<Item = bool>`]
 #![allow(clippy::precedence)]
 
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+use std::{
+    iter::empty,
+    net::{IpAddr, Ipv4Addr, Ipv6Addr},
+};
 
 /// a more flexible way to turn a slice of bools into something
 pub trait ConvertBits {
@@ -276,9 +279,8 @@ impl MarkTree {
 
     /// check if a position in the tree dictated by an iterator is marked
     ///
-    /// note that this does not consider branches that have all marked leaves
-    /// to be marked. if this is undesirable, [`MarkTree::optimize`] can be
-    /// used to clean these branches up
+    /// if the iterator runs out of items while at a branch, both sides of the
+    /// branch will be recursively checked.
     pub fn is_marked(&self, mut bits: impl Iterator<Item = bool>) -> bool {
         match self {
             Self::AllUnmarked => false,
@@ -286,7 +288,7 @@ impl MarkTree {
             Self::Branch(a, b) => match bits.next() {
                 Some(false) => a.is_marked(bits),
                 Some(true) => b.is_marked(bits),
-                None => false,
+                None => a.is_marked(empty()) && b.is_marked(empty()),
             },
         }
     }
@@ -450,6 +452,9 @@ mod tests {
         simple.mark(BitRangeIter::from((0b01100000u8, 3)));
 
         assert_ne!(tree, simple);
+        assert!(tree.is_marked(BitRangeIter::from((0b01100000u8, 3))));
+        assert!(!tree.is_marked(BitRangeIter::from((0b01010000u8, 3))));
+
         tree.optimize();
         assert_eq!(tree, simple);
     }
