@@ -105,6 +105,11 @@
           test = crane'.cargoTest (common // {
             inherit cargoArtifacts;
           });
+          reuse = pkgs.runCommand "workspace-reuse" { } ''
+            cd ${src}
+            ${pkgs.reuse}/bin/reuse lint
+            touch $out
+          '';
         };
 
         packages = members // {
