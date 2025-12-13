@@ -6,7 +6,7 @@ SPDX-License-Identifier: MPL-2.0
 
 # changelog
 
-## unreleased
+## 0.1.2 - 2025-12-13
 
 ### fixes
 - duplicate full audits will no longer cause spurious unused exempt
