@@ -121,6 +121,24 @@
             inherit cargoArtifacts;
             cargoDocExtraArgs = "";
           });
+          coverage = crane'.mkCargoDerivation (common // {
+            pnameSuffix = "-coverage";
+            # we rebuild everything regardless
+            cargoArtifacts = null;
+            doInstallCargoArtifacts = false;
+            buildPhaseCargoCommand = "cargo test";
+            installPhaseCommand = ''
+              ${pkgs.grcov}/bin/grcov "$TMPDIR/prof" \
+                --llvm --llvm-path ${pkgs.llvm}/bin \
+                --binary-path target/debug/deps \
+                -s . -t html -o $out
+            '';
+            # TODO: add --persist-doctests once stabilized,
+            # so we can get doctest coverage too
+            # https://github.com/rust-lang/rust/issues/56925
+            RUSTFLAGS = "-Cinstrument-coverage";
+            LLVM_PROFILE_FILE = "%t/prof/%p-%m.profraw";
+          });
         };
 
         devShells.default = crane'.devShell {
