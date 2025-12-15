@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 # changelog
 
-## unreleased
+## 0.1.1 - 2025-12-15
 
 ### fixes
 - the output of `MarkTree::is_marked` will no longer erroneously be
