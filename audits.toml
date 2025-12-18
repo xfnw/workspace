@@ -828,3 +828,11 @@ criteria = "no-sus-blobs"
 [[audits.cmake]]
 delta = "0.1.55 -> 0.1.57"
 criteria = "skimmed"
+
+[[audits.unicode-ident]]
+delta = "1.0.19 -> 1.0.22"
+criteria = "no-sus-blobs"
+
+[[audits.unicode-ident]]
+delta = "1.0.19 -> 1.0.22"
+criteria = "skimmed"
