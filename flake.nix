@@ -133,11 +133,13 @@
                 --binary-path target/debug/deps \
                 -s . -t html -o $out
             '';
-            # TODO: add --persist-doctests once stabilized,
-            # so we can get doctest coverage too
-            # https://github.com/rust-lang/rust/issues/56925
-            RUSTFLAGS = "-Cinstrument-coverage";
-            LLVM_PROFILE_FILE = "%t/prof/%p-%m.profraw";
+            env = {
+              # TODO: add --persist-doctests once stabilized,
+              # so we can get doctest coverage too
+              # https://github.com/rust-lang/rust/issues/56925
+              RUSTFLAGS = "-Cinstrument-coverage";
+              LLVM_PROFILE_FILE = "%t/prof/%p-%m.profraw";
+            };
           });
         };
 
