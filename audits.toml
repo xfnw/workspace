@@ -407,6 +407,15 @@ criteria = "no-sus-blobs"
 delta = "0.8.6 -> 0.8.7"
 criteria = "skimmed"
 
+[[audits.axum]]
+delta = "0.8.7 -> 0.8.8"
+criteria = "no-sus-blobs"
+
+[[audits.axum]]
+delta = "0.8.7 -> 0.8.8"
+criteria = "skimmed"
+notes = "no code changes"
+
 [[audits.half]]
 delta = "2.6.0 -> 2.7.0"
 criteria = "no-sus-blobs"
