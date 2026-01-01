@@ -208,8 +208,9 @@ async fn client_loop(
                 let Ok(mut line) = irctokens::Line::tokenise(&ircbuf) else {
                     return;
                 };
-                ircbuf.clear();
                 line.command.make_ascii_uppercase();
+                let line = line;
+                ircbuf.clear();
                 let source_nick = line.source.as_ref().and_then(|s| s.split(|&b| b == b'!').next());
                 if let Some(nick) = source_nick
                     && let Some(trailing) = line.arguments.last()
@@ -219,9 +220,13 @@ async fn client_loop(
                 }
                 match line.command.as_ref() {
                     "PING" => {
-                        line.source = None;
-                        line.command = "PONG".to_string();
-                        let mut out = line.format();
+                        let out = irctokens::Line {
+                            tags: None,
+                            source: None,
+                            command: "PONG".to_string(),
+                            arguments: line.arguments,
+                        };
+                        let mut out = out.format();
                         out.extend_from_slice(b"\r\n");
                         if write.write_all(&out).await.is_err() {
                             return;
