@@ -35,7 +35,7 @@ use tokio::{
 struct Client {
     nick: RwLock<String>,
     sender: mpsc::Sender<Vec<u8>>,
-    broadcast: broadcast::Sender<Bytes>,
+    raw_feed: broadcast::Sender<Bytes>,
 }
 
 #[derive(Debug)]
@@ -170,11 +170,11 @@ async fn reserve_client_slot(
     clients: &RwLock<Vec<Option<Client>>>,
 ) -> (usize, mpsc::Receiver<Vec<u8>>, broadcast::Sender<Bytes>) {
     let (sender, receiver) = mpsc::channel(6);
-    let broadcast = broadcast::channel(32).0;
+    let raw_feed = broadcast::channel(32).0;
     let client = Client {
         nick: RwLock::new("???".to_string()),
         sender,
-        broadcast: broadcast.clone(),
+        raw_feed: raw_feed.clone(),
     };
     let mut clients = clients.write().await;
     let slot = clients.iter().position(Option::is_none).unwrap_or_else(|| {
@@ -184,7 +184,7 @@ async fn reserve_client_slot(
     });
     assert!(clients[slot].is_none());
     clients[slot] = Some(client);
-    (slot, receiver, broadcast)
+    (slot, receiver, raw_feed)
 }
 
 async fn client_loop(
@@ -192,7 +192,7 @@ async fn client_loop(
     slot: usize,
     conn: irc_connect::Stream,
     mut receiver: mpsc::Receiver<Vec<u8>>,
-    broadcast: broadcast::Sender<Bytes>,
+    raw_feed: broadcast::Sender<Bytes>,
 ) {
     let (read, mut write) = tokio::io::split(conn);
     let mut read = BufReader::new(read);
@@ -203,7 +203,7 @@ async fn client_loop(
                 if len == 0 {
                     return;
                 }
-                _ = broadcast.send(Bytes::copy_from_slice(&ircbuf));
+                _ = raw_feed.send(Bytes::copy_from_slice(&ircbuf));
                 while ircbuf.pop_if(|c| b"\r\n".contains(c)).is_some() {}
                 let Ok(mut line) = irctokens::Line::tokenise(&ircbuf) else {
                     return;
@@ -463,7 +463,7 @@ async fn get_raw(
         .await
         .get(slot)
         .and_then(|c| c.as_ref())
-        .map(|c| c.broadcast.subscribe())
+        .map(|c| c.raw_feed.subscribe())
     else {
         return Err(StatusCode::NOT_FOUND);
     };
