@@ -144,7 +144,8 @@ async fn connect(
         .connect()
         .await
         .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
-    let (slot, receiver, broadcast) = reserve_client_slot(&state.clients).await;
+    let slot_info = reserve_client_slot(&state.clients).await;
+    let slot = slot_info.slot;
     conn.write_all(format!("NICK {}\r\nUSER {0} 0 * {0}\r\n", args.nick).as_bytes())
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
@@ -154,7 +155,7 @@ async fn connect(
     tokio::spawn(async move {
         let state_ = state.clone();
         _ = tokio::spawn(async move {
-            client_loop(state_, slot, conn, receiver, broadcast).await;
+            client_loop(state_, conn, slot_info).await;
         })
         .await;
 
@@ -166,9 +167,13 @@ async fn connect(
     Ok(())
 }
 
-async fn reserve_client_slot(
-    clients: &RwLock<Vec<Option<Client>>>,
-) -> (usize, mpsc::Receiver<Vec<u8>>, broadcast::Sender<Bytes>) {
+struct SlotInfo {
+    slot: usize,
+    receiver: mpsc::Receiver<Vec<u8>>,
+    raw_feed: broadcast::Sender<Bytes>,
+}
+
+async fn reserve_client_slot(clients: &RwLock<Vec<Option<Client>>>) -> SlotInfo {
     let (sender, receiver) = mpsc::channel(6);
     let raw_feed = broadcast::channel(32).0;
     let client = Client {
@@ -184,16 +189,19 @@ async fn reserve_client_slot(
     });
     assert!(clients[slot].is_none());
     clients[slot] = Some(client);
-    (slot, receiver, raw_feed)
+    SlotInfo {
+        slot,
+        receiver,
+        raw_feed,
+    }
 }
 
-async fn client_loop(
-    state: Arc<AppState>,
-    slot: usize,
-    conn: irc_connect::Stream,
-    mut receiver: mpsc::Receiver<Vec<u8>>,
-    raw_feed: broadcast::Sender<Bytes>,
-) {
+async fn client_loop(state: Arc<AppState>, conn: irc_connect::Stream, slot_info: SlotInfo) {
+    let SlotInfo {
+        slot,
+        mut receiver,
+        raw_feed,
+    } = slot_info;
     let (read, mut write) = tokio::io::split(conn);
     let mut read = BufReader::new(read);
     let mut ircbuf = Vec::with_capacity(512);
