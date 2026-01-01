@@ -170,7 +170,7 @@ async fn reserve_client_slot(
     clients: &RwLock<Vec<Option<Client>>>,
 ) -> (usize, mpsc::Receiver<Vec<u8>>, broadcast::Sender<Bytes>) {
     let (sender, receiver) = mpsc::channel(6);
-    let broadcast = broadcast::channel(64).0;
+    let broadcast = broadcast::channel(32).0;
     let client = Client {
         nick: RwLock::new("???".to_string()),
         sender,
