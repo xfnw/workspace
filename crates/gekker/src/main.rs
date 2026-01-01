@@ -36,6 +36,7 @@ struct Client {
     nick: RwLock<String>,
     sender: mpsc::Sender<Vec<u8>>,
     raw_feed: broadcast::Sender<Bytes>,
+    hash_feed: broadcast::Sender<u64>,
 }
 
 #[derive(Debug)]
@@ -171,15 +172,18 @@ struct SlotInfo {
     slot: usize,
     receiver: mpsc::Receiver<Vec<u8>>,
     raw_feed: broadcast::Sender<Bytes>,
+    hash_feed: broadcast::Sender<u64>,
 }
 
 async fn reserve_client_slot(clients: &RwLock<Vec<Option<Client>>>) -> SlotInfo {
     let (sender, receiver) = mpsc::channel(6);
     let raw_feed = broadcast::channel(32).0;
+    let hash_feed = broadcast::channel(32).0;
     let client = Client {
         nick: RwLock::new("???".to_string()),
         sender,
         raw_feed: raw_feed.clone(),
+        hash_feed: hash_feed.clone(),
     };
     let mut clients = clients.write().await;
     let slot = clients.iter().position(Option::is_none).unwrap_or_else(|| {
@@ -193,6 +197,7 @@ async fn reserve_client_slot(clients: &RwLock<Vec<Option<Client>>>) -> SlotInfo 
         slot,
         receiver,
         raw_feed,
+        hash_feed,
     }
 }
 
@@ -201,6 +206,7 @@ async fn client_loop(state: Arc<AppState>, conn: irc_connect::Stream, slot_info:
         slot,
         mut receiver,
         raw_feed,
+        hash_feed,
     } = slot_info;
     let (read, mut write) = tokio::io::split(conn);
     let mut read = BufReader::new(read);
@@ -224,6 +230,7 @@ async fn client_loop(state: Arc<AppState>, conn: irc_connect::Stream, slot_info:
                     && let Some(trailing) = line.arguments.last()
                 {
                     let h = hash_line(nick, &line.command, trailing);
+                    _ = hash_feed.send(h);
                     _ = state.job.read().await.callback.send(h).await;
                 }
                 match line.command.as_ref() {
