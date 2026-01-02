@@ -40,17 +40,11 @@ struct Client {
 }
 
 #[derive(Debug)]
-struct Job {
-    callback: mpsc::Sender<u64>,
-    handle: AbortHandle,
-}
-
-#[derive(Debug)]
 struct AppState {
     clients: RwLock<Vec<Option<Client>>>,
     active: RwLock<BTreeSet<usize>>,
     autojoin: RwLock<Option<String>>,
-    job: RwLock<Job>,
+    job: RwLock<AbortHandle>,
     job_sent: AtomicUsize,
     job_total: AtomicUsize,
     ca_certs: Arc<RootCertStore>,
@@ -88,7 +82,7 @@ async fn status(State(state): State<Arc<AppState>>) -> Json<StatusReply> {
         }
     }
     let autojoin = state.autojoin.read().await.clone();
-    let job_active = !state.job.read().await.handle.is_finished();
+    let job_active = !state.job.read().await.is_finished();
     let job_sent = state.job_sent.load(Ordering::SeqCst);
     let job_total = state.job_total.load(Ordering::SeqCst);
     Json(StatusReply {
@@ -231,7 +225,6 @@ async fn client_loop(state: Arc<AppState>, conn: irc_connect::Stream, slot_info:
                 {
                     let h = hash_line(nick, &line.command, trailing);
                     _ = hash_feed.send(h);
-                    _ = state.job.read().await.callback.send(h).await;
                 }
                 match line.command.as_ref() {
                     "PING" => {
@@ -329,7 +322,7 @@ where
         .map(<[u8]>::to_vec)
         .collect();
     let mut job = state.job.write().await;
-    if !job.handle.is_finished() {
+    if !job.is_finished() {
         return Err((
             StatusCode::CONFLICT,
             "there is already a job running. cancel it to start a new one",
@@ -340,7 +333,7 @@ where
 
     let state = state.clone();
     let task = tokio::spawn(async move { callback(state, lines).await });
-    job.handle = task.abort_handle();
+    *job = task.abort_handle();
 
     Ok(())
 }
@@ -447,7 +440,7 @@ async fn send(
 }
 
 async fn cancel(State(state): State<Arc<AppState>>) {
-    state.job.read().await.handle.abort();
+    state.job.read().await.abort();
 }
 
 async fn activate(State(state): State<Arc<AppState>>, Path(slot): Path<usize>) {
@@ -506,10 +499,7 @@ async fn main() {
             .unwrap()
             .flatten(),
     );
-    let fake_job = Job {
-        callback: mpsc::channel(1).0,
-        handle: tokio::spawn(async {}).abort_handle(),
-    };
+    let fake_job = tokio::spawn(async {}).abort_handle();
 
     let state = Arc::new(AppState {
         clients: RwLock::new(vec![]),
