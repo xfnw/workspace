@@ -427,7 +427,7 @@ async fn send(
             };
 
             if let Some(mut sub) = sub {
-                _ = tokio::time::timeout(std::time::Duration::from_millis(1200), async {
+                _ = tokio::time::timeout(std::time::Duration::from_secs(1), async {
                     while sub.recv().await.is_ok_and(|h| h != hash) {}
                 })
                 .await;
