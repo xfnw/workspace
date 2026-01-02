@@ -397,52 +397,50 @@ async fn send(
         command.make_ascii_uppercase();
         let command = command;
         let args: Vec<Vec<u8>> = opt.arg.into_iter().map(String::into_bytes).collect();
-        let mut hashes = Vec::with_capacity(128);
-        let (sender, mut receiver) = mpsc::channel(128);
-        state.job.write().await.callback = sender;
 
-        loop {
-            let active = state.active.read().await.clone();
-            if active.is_empty() {
-                return;
+        let mut active = state.active.read().await.clone().into_iter();
+        let mut next = active.next();
+
+        while let Some(slot) = next {
+            next = active.next();
+            if next.is_none() {
+                active = state.active.read().await.clone().into_iter();
+                next = active.next();
             }
-            for &slot in &active {
-                let hash = {
-                    let clients = state.clients.read().await;
-                    let Some(client) = &clients[slot] else {
-                        state.active.write().await.remove(&slot);
-                        continue;
-                    };
-                    let nick = &client.nick.read().await;
-                    let Some(trail) = lines.next() else {
-                        return;
-                    };
-                    let hash = hash_line(nick.as_bytes(), &command, &trail);
-                    let mut line = irctokens::Line {
-                        tags: None,
-                        source: None,
-                        command: command.clone(),
-                        arguments: args.clone(),
-                    };
-                    line.arguments.push(trail);
-                    _ = client.sender.try_send(line.format());
-                    hash
-                };
 
-                if tokio::time::timeout(std::time::Duration::from_millis(1200), async {
-                    while !hashes.contains(&hash) {
-                        hashes.clear();
-                        receiver.recv_many(&mut hashes, 128).await;
-                    }
-                })
-                .await
-                .is_err()
-                {
+            let (hash, sub) = {
+                let clients = state.clients.read().await;
+                let Some(client) = &clients[slot] else {
                     state.active.write().await.remove(&slot);
-                }
+                    continue;
+                };
+                let nick = &client.nick.read().await;
+                let Some(trail) = lines.next() else {
+                    return;
+                };
+                let hash = hash_line(nick.as_bytes(), &command, &trail);
+                let mut line = irctokens::Line {
+                    tags: None,
+                    source: None,
+                    command: command.clone(),
+                    arguments: args.clone(),
+                };
+                line.arguments.push(trail);
 
-                state.job_sent.fetch_add(1, Ordering::SeqCst);
+                let sub = next.and_then(|n| clients[n].as_ref().map(|c| c.hash_feed.subscribe()));
+
+                _ = client.sender.try_send(line.format());
+                (hash, sub)
+            };
+
+            if let Some(mut sub) = sub {
+                _ = tokio::time::timeout(std::time::Duration::from_millis(1200), async {
+                    while sub.recv().await.is_ok_and(|h| h != hash) {}
+                })
+                .await;
             }
+
+            state.job_sent.fetch_add(1, Ordering::SeqCst);
         }
     })
     .await
