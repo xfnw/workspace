@@ -455,8 +455,12 @@ async fn activate(State(state): State<Arc<AppState>>, Path(slot): Path<usize>) {
     }
 }
 
-async fn deactivate(State(state): State<Arc<AppState>>, Path(slot): Path<usize>) {
+async fn deactivate_slot(State(state): State<Arc<AppState>>, Path(slot): Path<usize>) {
     state.active.write().await.remove(&slot);
+}
+
+async fn deactivate_all(State(state): State<Arc<AppState>>) {
+    state.active.write().await.clear();
 }
 
 async fn get_raw(
@@ -520,7 +524,8 @@ async fn main() {
         .route("/send", post(send))
         .route("/cancel", post(cancel))
         .route("/activate/{slot}", post(activate))
-        .route("/deactivate/{slot}", post(deactivate))
+        .route("/deactivate/all", post(deactivate_all))
+        .route("/deactivate/{slot}", post(deactivate_slot))
         .route("/", get(dashboard))
         .with_state(state);
 
