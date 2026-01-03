@@ -353,6 +353,25 @@ async fn raw_all(
     .await
 }
 
+async fn raw_active(
+    State(state): State<Arc<AppState>>,
+    body: Bytes,
+) -> Result<(), (StatusCode, &'static str)> {
+    dispatch_job(state, body, async |state, lines| {
+        for line in lines {
+            let active = state.active.read().await.clone();
+            for slot in active {
+                let Some(client) = &state.clients.read().await[slot] else {
+                    continue;
+                };
+                _ = client.sender.try_send(line.clone());
+            }
+            state.job_sent.fetch_add(1, Ordering::SeqCst);
+        }
+    })
+    .await
+}
+
 async fn raw_slot(
     State(state): State<Arc<AppState>>,
     Path(slot): Path<usize>,
@@ -519,6 +538,7 @@ async fn main() {
         .route("/autojoin", post(set_autojoin))
         .route("/connect", post(connect))
         .route("/raw/all", post(raw_all))
+        .route("/raw/active", post(raw_active))
         .route("/raw/{slot}", post(raw_slot))
         .route("/raw/{slot}", get(get_raw))
         .route("/send", post(send))
