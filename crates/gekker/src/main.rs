@@ -110,6 +110,8 @@ fn hash_line(nick: &[u8], command: &str, trail: &[u8]) -> u64 {
 #[derive(Debug, Deserialize)]
 struct ConnectArgs {
     nick: String,
+    user: Option<String>,
+    gecos: Option<String>,
     host: String,
     socks5: Option<SocketAddr>,
     #[serde(default)]
@@ -141,9 +143,17 @@ async fn connect(
         .map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
     let slot_info = reserve_client_slot(&state.clients).await;
     let slot = slot_info.slot;
-    conn.write_all(format!("NICK {}\r\nUSER {0} 0 * {0}\r\n", args.nick).as_bytes())
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    conn.write_all(
+        format!(
+            "NICK {}\r\nUSER {} 0 * :{}\r\n",
+            args.nick,
+            args.user.as_ref().unwrap_or(&args.nick),
+            args.gecos.as_ref().unwrap_or(&args.nick)
+        )
+        .as_bytes(),
+    )
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     conn.flush()
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
