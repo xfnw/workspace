@@ -887,3 +887,11 @@ criteria = "no-sus-blobs"
 [[audits.unicode-ident]]
 delta = "1.0.19 -> 1.0.22"
 criteria = "skimmed"
+
+[[audits.axum-core]]
+delta = "0.5.5 -> 0.5.6"
+criteria = "no-sus-blobs"
+
+[[audits.axum-core]]
+delta = "0.5.5 -> 0.5.6"
+criteria = "skimmed"
