@@ -911,3 +911,11 @@ criteria = "no-sus-blobs"
 [[audits.axum-core]]
 delta = "0.5.5 -> 0.5.6"
 criteria = "skimmed"
+
+[[audits.url]]
+delta = "2.5.7 -> 2.5.8"
+criteria = "no-sus-blobs"
+
+[[audits.url]]
+delta = "2.5.7 -> 2.5.8"
+criteria = "skimmed"
