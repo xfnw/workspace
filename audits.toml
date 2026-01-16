@@ -760,6 +760,14 @@ notes = "adds a small der file :("
 delta = "1.13.1 -> 1.13.2"
 criteria = "skimmed"
 
+[[audits.rustls-pki-types]]
+delta = "1.13.2 -> 1.13.3"
+criteria = "no-sus-blobs"
+
+[[audits.rustls-pki-types]]
+delta = "1.13.2 -> 1.13.3"
+criteria = "skimmed"
+
 [[audits.lazy-regex]]
 delta = "3.4.1 -> 3.4.2"
 criteria = "no-sus-blobs"
