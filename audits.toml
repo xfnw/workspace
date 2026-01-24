@@ -301,6 +301,14 @@ criteria = "no-sus-blobs"
 delta = "0.103.7 -> 0.103.8"
 criteria = "skimmed"
 
+[[audits.rustls-webpki]]
+delta = "0.103.8 -> 0.103.9"
+criteria = "no-sus-blobs"
+
+[[audits.rustls-webpki]]
+delta = "0.103.8 -> 0.103.9"
+criteria = "skimmed"
+
 [[audits.find-msvc-tools]]
 version = "0.1.3"
 criteria = "blobs-ok"
