@@ -784,6 +784,14 @@ criteria = "no-sus-blobs"
 delta = "1.13.2 -> 1.13.3"
 criteria = "skimmed"
 
+[[audits.rustls-pki-types]]
+delta = "1.13.3 -> 1.14.0"
+criteria = "no-sus-blobs"
+
+[[audits.rustls-pki-types]]
+delta = "1.13.3 -> 1.14.0"
+criteria = "skimmed"
+
 [[audits.lazy-regex]]
 delta = "3.4.1 -> 3.4.2"
 criteria = "no-sus-blobs"
