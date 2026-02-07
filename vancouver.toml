@@ -680,14 +680,6 @@ criteria = "blobs-ok"
 version = "0.17.14"
 criteria = "skimmed"
 
-[[exempt.rust-fuzzy-search]]
-version = "0.1.1"
-criteria = "blobs-ok"
-
-[[exempt.rust-fuzzy-search]]
-version = "0.1.1"
-criteria = "skimmed"
-
 [[exempt.rustc-hash]]
 version = "2.1.1"
 criteria = "blobs-ok"
