@@ -951,3 +951,27 @@ criteria = "no-sus-blobs"
 [[audits.url]]
 delta = "2.5.7 -> 2.5.8"
 criteria = "skimmed"
+
+[[audits.argh]]
+delta = "0.1.13 -> 0.1.14"
+criteria = "no-sus-blobs"
+
+[[audits.argh]]
+delta = "0.1.13 -> 0.1.14"
+criteria = "skimmed"
+
+[[audits.argh_shared]]
+delta = "0.1.13 -> 0.1.14"
+criteria = "no-sus-blobs"
+
+[[audits.argh_shared]]
+delta = "0.1.13 -> 0.1.14"
+criteria = "skimmed"
+
+[[audits.argh_derive]]
+delta = "0.1.13 -> 0.1.14"
+criteria = "no-sus-blobs"
+
+[[audits.argh_derive]]
+delta = "0.1.13 -> 0.1.14"
+criteria = "skimmed"
