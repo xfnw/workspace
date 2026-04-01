@@ -493,6 +493,14 @@ delta = "1.0.3 -> 1.0.4"
 criteria = "skimmed"
 notes = "no code changes"
 
+[[audits.serde_spanned]]
+delta = "1.0.4 -> 1.1.1"
+criteria = "no-sus-blobs"
+
+[[audits.serde_spanned]]
+delta = "1.0.4 -> 1.1.1"
+criteria = "skimmed"
+
 [[audits.toml_edit]]
 delta = "0.23.6 -> 0.23.7"
 criteria = "no-sus-blobs"
