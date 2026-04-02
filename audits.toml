@@ -1035,3 +1035,11 @@ criteria = "no-sus-blobs"
 [[audits.argh_derive]]
 delta = "0.1.13 -> 0.1.14"
 criteria = "skimmed"
+
+[[audits.hybrid-array]]
+version = "0.4.10"
+criteria = "no-sus-blobs"
+
+[[audits.hybrid-array]]
+version = "0.4.10"
+criteria = "skimmed"
