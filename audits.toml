@@ -714,6 +714,14 @@ delta = "1.0.4 -> 1.0.6+spec-1.1.0"
 criteria = "skimmed"
 notes = "no code changes"
 
+[[audits.toml_writer]]
+delta = "1.0.6+spec-1.1.0 -> 1.1.1+spec-1.1.0"
+criteria = "no-sus-blobs"
+
+[[audits.toml_writer]]
+delta = "1.0.6+spec-1.1.0 -> 1.1.1+spec-1.1.0"
+criteria = "skimmed"
+
 [[audits.tokio]]
 delta = "1.47.1 -> 1.48.0"
 criteria = "no-sus-blobs"
