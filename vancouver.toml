@@ -3,14 +3,35 @@
 # SPDX-License-Identifier: MIT
 
 [criteria.too-big-to-fail]
-implies = ["blobs-ok", "skimmed"]
+implies = ["no-sus-blobs", "skimmed"]
 
 [default-policy]
+require-all = ["no-sus-blobs", "skimmed"]
+
+[policy.cc]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.find-msvc-tools]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.regex-automata]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.rustls-pki-types]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.ryu]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.tokio-rustls]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.typenum]
 require-all = ["blobs-ok", "skimmed"]
 
 [[exempt.aho-corasick]]
 version = "1.1.3"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.aho-corasick]]
 version = "1.1.3"
@@ -18,7 +39,7 @@ criteria = "skimmed"
 
 [[exempt.argh]]
 version = "0.1.13"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.argh]]
 version = "0.1.13"
@@ -26,7 +47,7 @@ criteria = "skimmed"
 
 [[exempt.argh_derive]]
 version = "0.1.13"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.argh_derive]]
 version = "0.1.13"
@@ -34,7 +55,7 @@ criteria = "skimmed"
 
 [[exempt.argh_shared]]
 version = "0.1.13"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.argh_shared]]
 version = "0.1.13"
@@ -42,7 +63,7 @@ criteria = "skimmed"
 
 [[exempt.autocfg]]
 version = "1.5.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.autocfg]]
 version = "1.5.0"
@@ -50,7 +71,7 @@ criteria = "skimmed"
 
 [[exempt.base64_light]]
 version = "0.1.5"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.base64_light]]
 version = "0.1.5"
@@ -58,7 +79,7 @@ criteria = "skimmed"
 
 [[exempt.bindgen]]
 version = "0.72.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.bindgen]]
 version = "0.72.1"
@@ -66,7 +87,7 @@ criteria = "skimmed"
 
 [[exempt.bitflags]]
 version = "2.9.4"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.bitflags]]
 version = "2.9.4"
@@ -74,7 +95,7 @@ criteria = "skimmed"
 
 [[exempt.block-buffer]]
 version = "0.10.4"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.block-buffer]]
 version = "0.10.4"
@@ -82,7 +103,7 @@ criteria = "skimmed"
 
 [[exempt.bytes]]
 version = "1.10.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.bytes]]
 version = "1.10.1"
@@ -90,7 +111,7 @@ criteria = "skimmed"
 
 [[exempt.cc]]
 version = "1.2.38"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.cc]]
 version = "1.2.38"
@@ -98,7 +119,7 @@ criteria = "skimmed"
 
 [[exempt.cexpr]]
 version = "0.6.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.cexpr]]
 version = "0.6.0"
@@ -106,7 +127,7 @@ criteria = "skimmed"
 
 [[exempt.cfg-if]]
 version = "1.0.3"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.cfg-if]]
 version = "1.0.3"
@@ -114,7 +135,7 @@ criteria = "skimmed"
 
 [[exempt.chrono]]
 version = "0.4.42"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.chrono]]
 version = "0.4.42"
@@ -122,7 +143,7 @@ criteria = "skimmed"
 
 [[exempt.clang-sys]]
 version = "1.8.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.clang-sys]]
 version = "1.8.1"
@@ -130,7 +151,7 @@ criteria = "skimmed"
 
 [[exempt.cmake]]
 version = "0.1.54"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.cmake]]
 version = "0.1.54"
@@ -138,7 +159,7 @@ criteria = "skimmed"
 
 [[exempt.cpufeatures]]
 version = "0.2.17"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.cpufeatures]]
 version = "0.2.17"
@@ -146,7 +167,7 @@ criteria = "skimmed"
 
 [[exempt.crossbeam-deque]]
 version = "0.8.6"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.crossbeam-deque]]
 version = "0.8.6"
@@ -154,7 +175,7 @@ criteria = "skimmed"
 
 [[exempt.crossbeam-epoch]]
 version = "0.9.18"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.crossbeam-epoch]]
 version = "0.9.18"
@@ -162,7 +183,7 @@ criteria = "skimmed"
 
 [[exempt.crossbeam-utils]]
 version = "0.8.21"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.crossbeam-utils]]
 version = "0.8.21"
@@ -170,7 +191,7 @@ criteria = "skimmed"
 
 [[exempt.crunchy]]
 version = "0.2.4"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.crunchy]]
 version = "0.2.4"
@@ -178,7 +199,7 @@ criteria = "skimmed"
 
 [[exempt.crypto-common]]
 version = "0.1.6"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.crypto-common]]
 version = "0.1.6"
@@ -186,7 +207,7 @@ criteria = "skimmed"
 
 [[exempt.digest]]
 version = "0.10.7"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.digest]]
 version = "0.10.7"
@@ -194,7 +215,7 @@ criteria = "skimmed"
 
 [[exempt.displaydoc]]
 version = "0.2.5"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.displaydoc]]
 version = "0.2.5"
@@ -202,7 +223,7 @@ criteria = "skimmed"
 
 [[exempt.dunce]]
 version = "1.0.5"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.dunce]]
 version = "1.0.5"
@@ -210,7 +231,7 @@ criteria = "skimmed"
 
 [[exempt.either]]
 version = "1.15.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.either]]
 version = "1.15.0"
@@ -218,7 +239,7 @@ criteria = "skimmed"
 
 [[exempt.equivalent]]
 version = "1.0.2"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.equivalent]]
 version = "1.0.2"
@@ -226,7 +247,7 @@ criteria = "skimmed"
 
 [[exempt.form_urlencoded]]
 version = "1.2.2"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.form_urlencoded]]
 version = "1.2.2"
@@ -234,7 +255,7 @@ criteria = "skimmed"
 
 [[exempt.fs_extra]]
 version = "1.3.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.fs_extra]]
 version = "1.3.0"
@@ -242,7 +263,7 @@ criteria = "skimmed"
 
 [[exempt.futures-core]]
 version = "0.3.31"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.futures-core]]
 version = "0.3.31"
@@ -250,7 +271,7 @@ criteria = "skimmed"
 
 [[exempt.futures-task]]
 version = "0.3.31"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.futures-task]]
 version = "0.3.31"
@@ -258,7 +279,7 @@ criteria = "skimmed"
 
 [[exempt.futures-util]]
 version = "0.3.31"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.futures-util]]
 version = "0.3.31"
@@ -266,7 +287,7 @@ criteria = "skimmed"
 
 [[exempt.generic-array]]
 version = "0.14.7"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.generic-array]]
 version = "0.14.7"
@@ -274,7 +295,7 @@ criteria = "skimmed"
 
 [[exempt.getrandom]]
 version = "0.2.16"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.getrandom]]
 version = "0.2.16"
@@ -282,7 +303,7 @@ criteria = "skimmed"
 
 [[exempt.getrandom]]
 version = "0.3.3"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.getrandom]]
 version = "0.3.3"
@@ -290,7 +311,7 @@ criteria = "skimmed"
 
 [[exempt.glob]]
 version = "0.3.3"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.glob]]
 version = "0.3.3"
@@ -298,7 +319,7 @@ criteria = "skimmed"
 
 [[exempt.half]]
 version = "2.6.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.half]]
 version = "2.6.0"
@@ -306,7 +327,7 @@ criteria = "skimmed"
 
 [[exempt.hashbrown]]
 version = "0.16.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.hashbrown]]
 version = "0.16.0"
@@ -314,7 +335,7 @@ criteria = "skimmed"
 
 [[exempt.icu_collections]]
 version = "2.0.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.icu_collections]]
 version = "2.0.0"
@@ -322,7 +343,7 @@ criteria = "skimmed"
 
 [[exempt.icu_locale_core]]
 version = "2.0.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.icu_locale_core]]
 version = "2.0.0"
@@ -330,7 +351,7 @@ criteria = "skimmed"
 
 [[exempt.icu_normalizer]]
 version = "2.0.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.icu_normalizer]]
 version = "2.0.0"
@@ -338,7 +359,7 @@ criteria = "skimmed"
 
 [[exempt.icu_normalizer_data]]
 version = "2.0.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.icu_normalizer_data]]
 version = "2.0.0"
@@ -346,7 +367,7 @@ criteria = "skimmed"
 
 [[exempt.icu_properties]]
 version = "2.0.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.icu_properties]]
 version = "2.0.1"
@@ -354,7 +375,7 @@ criteria = "skimmed"
 
 [[exempt.icu_properties_data]]
 version = "2.0.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.icu_properties_data]]
 version = "2.0.1"
@@ -362,7 +383,7 @@ criteria = "skimmed"
 
 [[exempt.icu_provider]]
 version = "2.0.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.icu_provider]]
 version = "2.0.0"
@@ -370,7 +391,7 @@ criteria = "skimmed"
 
 [[exempt.idna]]
 version = "1.1.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.idna]]
 version = "1.1.0"
@@ -378,7 +399,7 @@ criteria = "skimmed"
 
 [[exempt.idna_adapter]]
 version = "1.2.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.idna_adapter]]
 version = "1.2.1"
@@ -386,7 +407,7 @@ criteria = "skimmed"
 
 [[exempt.indexmap]]
 version = "2.11.4"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.indexmap]]
 version = "2.11.4"
@@ -394,7 +415,7 @@ criteria = "skimmed"
 
 [[exempt.itertools]]
 version = "0.13.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.itertools]]
 version = "0.13.0"
@@ -402,7 +423,7 @@ criteria = "skimmed"
 
 [[exempt.jobserver]]
 version = "0.1.34"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.jobserver]]
 version = "0.1.34"
@@ -410,7 +431,7 @@ criteria = "skimmed"
 
 [[exempt.lazy-regex]]
 version = "3.4.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.lazy-regex]]
 version = "3.4.1"
@@ -418,7 +439,7 @@ criteria = "skimmed"
 
 [[exempt.lazy-regex-proc_macros]]
 version = "3.4.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.lazy-regex-proc_macros]]
 version = "3.4.1"
@@ -426,7 +447,7 @@ criteria = "skimmed"
 
 [[exempt.libc]]
 version = "0.2.176"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.libc]]
 version = "0.2.176"
@@ -434,11 +455,11 @@ criteria = "skimmed"
 
 [[exempt.libloading]]
 version = "0.8.8"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.litemap]]
 version = "0.8.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.litemap]]
 version = "0.8.0"
@@ -446,7 +467,7 @@ criteria = "skimmed"
 
 [[exempt.log]]
 version = "0.4.28"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.log]]
 version = "0.4.28"
@@ -454,7 +475,7 @@ criteria = "skimmed"
 
 [[exempt.memchr]]
 version = "2.7.5"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.memchr]]
 version = "2.7.5"
@@ -462,7 +483,7 @@ criteria = "skimmed"
 
 [[exempt.minimal-lexical]]
 version = "0.2.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.minimal-lexical]]
 version = "0.2.1"
@@ -470,7 +491,7 @@ criteria = "skimmed"
 
 [[exempt.mio]]
 version = "1.0.4"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.mio]]
 version = "1.0.4"
@@ -478,7 +499,7 @@ criteria = "skimmed"
 
 [[exempt.nom]]
 version = "7.1.3"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.nom]]
 version = "7.1.3"
@@ -486,7 +507,7 @@ criteria = "skimmed"
 
 [[exempt.nom]]
 version = "8.0.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.nom]]
 version = "8.0.0"
@@ -494,7 +515,7 @@ criteria = "skimmed"
 
 [[exempt.num-traits]]
 version = "0.2.19"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.num-traits]]
 version = "0.2.19"
@@ -502,7 +523,7 @@ criteria = "skimmed"
 
 [[exempt.once_cell]]
 version = "1.21.3"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.once_cell]]
 version = "1.21.3"
@@ -510,7 +531,7 @@ criteria = "skimmed"
 
 [[exempt.percent-encoding]]
 version = "2.3.2"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.percent-encoding]]
 version = "2.3.2"
@@ -518,7 +539,7 @@ criteria = "skimmed"
 
 [[exempt.phf]]
 version = "0.11.3"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.phf]]
 version = "0.11.3"
@@ -526,7 +547,7 @@ criteria = "skimmed"
 
 [[exempt.phf_codegen]]
 version = "0.11.3"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.phf_codegen]]
 version = "0.11.3"
@@ -534,7 +555,7 @@ criteria = "skimmed"
 
 [[exempt.phf_generator]]
 version = "0.11.3"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.phf_generator]]
 version = "0.11.3"
@@ -542,7 +563,7 @@ criteria = "skimmed"
 
 [[exempt.phf_shared]]
 version = "0.11.3"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.phf_shared]]
 version = "0.11.3"
@@ -550,7 +571,7 @@ criteria = "skimmed"
 
 [[exempt.pin-project-lite]]
 version = "0.2.16"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.pin-project-lite]]
 version = "0.2.16"
@@ -558,7 +579,7 @@ criteria = "skimmed"
 
 [[exempt.pin-utils]]
 version = "0.1.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.pin-utils]]
 version = "0.1.0"
@@ -566,7 +587,7 @@ criteria = "skimmed"
 
 [[exempt.potential_utf]]
 version = "0.1.3"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.potential_utf]]
 version = "0.1.3"
@@ -574,7 +595,7 @@ criteria = "skimmed"
 
 [[exempt.ppv-lite86]]
 version = "0.2.21"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.ppv-lite86]]
 version = "0.2.21"
@@ -582,7 +603,7 @@ criteria = "skimmed"
 
 [[exempt.prettyplease]]
 version = "0.2.37"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.prettyplease]]
 version = "0.2.37"
@@ -590,7 +611,7 @@ criteria = "skimmed"
 
 [[exempt.proc-macro2]]
 version = "1.0.101"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.proc-macro2]]
 version = "1.0.101"
@@ -598,7 +619,7 @@ criteria = "skimmed"
 
 [[exempt.quote]]
 version = "1.0.40"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.quote]]
 version = "1.0.40"
@@ -606,7 +627,7 @@ criteria = "skimmed"
 
 [[exempt.r-efi]]
 version = "5.3.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.r-efi]]
 version = "5.3.0"
@@ -614,7 +635,7 @@ criteria = "skimmed"
 
 [[exempt.rand]]
 version = "0.8.5"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.rand]]
 version = "0.8.5"
@@ -622,7 +643,7 @@ criteria = "skimmed"
 
 [[exempt.rand_chacha]]
 version = "0.3.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.rand_chacha]]
 version = "0.3.1"
@@ -630,7 +651,7 @@ criteria = "skimmed"
 
 [[exempt.rand_core]]
 version = "0.6.4"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.rand_core]]
 version = "0.6.4"
@@ -638,7 +659,7 @@ criteria = "skimmed"
 
 [[exempt.rayon]]
 version = "1.11.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.rayon]]
 version = "1.11.0"
@@ -646,7 +667,7 @@ criteria = "skimmed"
 
 [[exempt.rayon-core]]
 version = "1.13.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.rayon-core]]
 version = "1.13.0"
@@ -658,7 +679,7 @@ criteria = "skimmed"
 
 [[exempt.regex-automata]]
 version = "0.4.10"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.regex-automata]]
 version = "0.4.10"
@@ -666,7 +687,7 @@ criteria = "skimmed"
 
 [[exempt.regex-syntax]]
 version = "0.8.6"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.regex-syntax]]
 version = "0.8.6"
@@ -674,7 +695,7 @@ criteria = "skimmed"
 
 [[exempt.ring]]
 version = "0.17.14"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.ring]]
 version = "0.17.14"
@@ -682,7 +703,7 @@ criteria = "skimmed"
 
 [[exempt.rustc-hash]]
 version = "2.1.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.rustc-hash]]
 version = "2.1.1"
@@ -690,7 +711,7 @@ criteria = "skimmed"
 
 [[exempt.rustls]]
 version = "0.23.32"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.rustls]]
 version = "0.23.32"
@@ -698,7 +719,7 @@ criteria = "skimmed"
 
 [[exempt.rustls-pki-types]]
 version = "1.12.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.rustls-pki-types]]
 version = "1.12.0"
@@ -706,7 +727,7 @@ criteria = "skimmed"
 
 [[exempt.rustls-webpki]]
 version = "0.103.6"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.rustls-webpki]]
 version = "0.103.6"
@@ -714,7 +735,7 @@ criteria = "skimmed"
 
 [[exempt.serde_derive]]
 version = "1.0.226"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.serde_derive]]
 version = "1.0.226"
@@ -722,7 +743,7 @@ criteria = "skimmed"
 
 [[exempt.sha2]]
 version = "0.10.9"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.sha2]]
 version = "0.10.9"
@@ -730,7 +751,7 @@ criteria = "skimmed"
 
 [[exempt.shlex]]
 version = "1.3.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.shlex]]
 version = "1.3.0"
@@ -738,7 +759,7 @@ criteria = "skimmed"
 
 [[exempt.siphasher]]
 version = "1.0.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.siphasher]]
 version = "1.0.1"
@@ -746,7 +767,7 @@ criteria = "skimmed"
 
 [[exempt.smallvec]]
 version = "1.15.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.smallvec]]
 version = "1.15.1"
@@ -754,7 +775,7 @@ criteria = "skimmed"
 
 [[exempt.socket2]]
 version = "0.6.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.socket2]]
 version = "0.6.0"
@@ -762,7 +783,7 @@ criteria = "skimmed"
 
 [[exempt.subtle]]
 version = "2.6.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.subtle]]
 version = "2.6.1"
@@ -770,7 +791,7 @@ criteria = "skimmed"
 
 [[exempt.syn]]
 version = "2.0.106"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.syn]]
 version = "2.0.106"
@@ -778,7 +799,7 @@ criteria = "skimmed"
 
 [[exempt.synstructure]]
 version = "0.13.2"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.synstructure]]
 version = "0.13.2"
@@ -786,7 +807,7 @@ criteria = "skimmed"
 
 [[exempt.thiserror]]
 version = "1.0.69"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.thiserror]]
 version = "1.0.69"
@@ -794,7 +815,7 @@ criteria = "skimmed"
 
 [[exempt.thiserror-impl]]
 version = "1.0.69"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.thiserror-impl]]
 version = "1.0.69"
@@ -802,7 +823,7 @@ criteria = "skimmed"
 
 [[exempt.tinystr]]
 version = "0.8.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.tinystr]]
 version = "0.8.1"
@@ -810,7 +831,7 @@ criteria = "skimmed"
 
 [[exempt.tokio]]
 version = "1.47.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.tokio]]
 version = "1.47.1"
@@ -818,7 +839,7 @@ criteria = "skimmed"
 
 [[exempt.tokio-macros]]
 version = "2.5.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.tokio-macros]]
 version = "2.5.0"
@@ -830,7 +851,7 @@ criteria = "skimmed"
 
 [[exempt.tokio-socks]]
 version = "0.5.2"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.tokio-socks]]
 version = "0.5.2"
@@ -838,7 +859,7 @@ criteria = "skimmed"
 
 [[exempt.toml_datetime]]
 version = "0.7.2"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.toml_datetime]]
 version = "0.7.2"
@@ -846,7 +867,7 @@ criteria = "skimmed"
 
 [[exempt.toml_edit]]
 version = "0.23.6"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.toml_edit]]
 version = "0.23.6"
@@ -854,7 +875,7 @@ criteria = "skimmed"
 
 [[exempt.toml_parser]]
 version = "1.0.3"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.toml_parser]]
 version = "1.0.3"
@@ -862,7 +883,7 @@ criteria = "skimmed"
 
 [[exempt.toml_writer]]
 version = "1.0.3"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.toml_writer]]
 version = "1.0.3"
@@ -870,7 +891,7 @@ criteria = "skimmed"
 
 [[exempt.typenum]]
 version = "1.18.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.typenum]]
 version = "1.18.0"
@@ -878,7 +899,7 @@ criteria = "skimmed"
 
 [[exempt.unicode-ident]]
 version = "1.0.19"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.unicode-ident]]
 version = "1.0.19"
@@ -886,7 +907,7 @@ criteria = "skimmed"
 
 [[exempt.unicode_names2]]
 version = "2.0.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.unicode_names2]]
 version = "2.0.0"
@@ -894,7 +915,7 @@ criteria = "skimmed"
 
 [[exempt.unicode_names2_generator]]
 version = "2.0.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.unicode_names2_generator]]
 version = "2.0.0"
@@ -902,7 +923,7 @@ criteria = "skimmed"
 
 [[exempt.untrusted]]
 version = "0.9.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.untrusted]]
 version = "0.9.0"
@@ -910,7 +931,7 @@ criteria = "skimmed"
 
 [[exempt.url]]
 version = "2.5.7"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.url]]
 version = "2.5.7"
@@ -918,7 +939,7 @@ criteria = "skimmed"
 
 [[exempt.utf8_iter]]
 version = "1.0.4"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.utf8_iter]]
 version = "1.0.4"
@@ -926,7 +947,7 @@ criteria = "skimmed"
 
 [[exempt.version_check]]
 version = "0.9.5"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.version_check]]
 version = "0.9.5"
@@ -934,7 +955,7 @@ criteria = "skimmed"
 
 [[exempt.wasi]]
 version = "0.11.1+wasi-snapshot-preview1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.wasi]]
 version = "0.11.1+wasi-snapshot-preview1"
@@ -942,7 +963,7 @@ criteria = "skimmed"
 
 [[exempt.wasip2]]
 version = "1.0.1+wasi-0.2.4"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.wasip2]]
 version = "1.0.1+wasi-0.2.4"
@@ -950,7 +971,7 @@ criteria = "skimmed"
 
 [[exempt.windows-sys]]
 version = "0.52.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.windows-sys]]
 version = "0.52.0"
@@ -958,7 +979,7 @@ criteria = "skimmed"
 
 [[exempt.windows-targets]]
 version = "0.52.6"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.windows-targets]]
 version = "0.52.6"
@@ -966,7 +987,7 @@ criteria = "skimmed"
 
 [[exempt.windows_aarch64_gnullvm]]
 version = "0.52.6"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.windows_aarch64_gnullvm]]
 version = "0.52.6"
@@ -974,7 +995,7 @@ criteria = "skimmed"
 
 [[exempt.windows_aarch64_msvc]]
 version = "0.52.6"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.windows_aarch64_msvc]]
 version = "0.52.6"
@@ -982,7 +1003,7 @@ criteria = "skimmed"
 
 [[exempt.windows_i686_gnu]]
 version = "0.52.6"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.windows_i686_gnu]]
 version = "0.52.6"
@@ -990,7 +1011,7 @@ criteria = "skimmed"
 
 [[exempt.windows_i686_gnullvm]]
 version = "0.52.6"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.windows_i686_gnullvm]]
 version = "0.52.6"
@@ -998,7 +1019,7 @@ criteria = "skimmed"
 
 [[exempt.windows_i686_msvc]]
 version = "0.52.6"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.windows_i686_msvc]]
 version = "0.52.6"
@@ -1006,7 +1027,7 @@ criteria = "skimmed"
 
 [[exempt.windows_x86_64_gnu]]
 version = "0.52.6"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.windows_x86_64_gnu]]
 version = "0.52.6"
@@ -1014,7 +1035,7 @@ criteria = "skimmed"
 
 [[exempt.windows_x86_64_gnullvm]]
 version = "0.52.6"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.windows_x86_64_gnullvm]]
 version = "0.52.6"
@@ -1022,7 +1043,7 @@ criteria = "skimmed"
 
 [[exempt.windows_x86_64_msvc]]
 version = "0.52.6"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.windows_x86_64_msvc]]
 version = "0.52.6"
@@ -1030,7 +1051,7 @@ criteria = "skimmed"
 
 [[exempt.winnow]]
 version = "0.7.13"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.winnow]]
 version = "0.7.13"
@@ -1038,7 +1059,7 @@ criteria = "skimmed"
 
 [[exempt.wit-bindgen]]
 version = "0.46.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.wit-bindgen]]
 version = "0.46.0"
@@ -1046,7 +1067,7 @@ criteria = "skimmed"
 
 [[exempt.writeable]]
 version = "0.6.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.writeable]]
 version = "0.6.1"
@@ -1054,7 +1075,7 @@ criteria = "skimmed"
 
 [[exempt.yoke]]
 version = "0.8.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.yoke]]
 version = "0.8.0"
@@ -1062,7 +1083,7 @@ criteria = "skimmed"
 
 [[exempt.yoke-derive]]
 version = "0.8.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.yoke-derive]]
 version = "0.8.0"
@@ -1070,7 +1091,7 @@ criteria = "skimmed"
 
 [[exempt.zerocopy]]
 version = "0.8.27"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.zerocopy]]
 version = "0.8.27"
@@ -1078,7 +1099,7 @@ criteria = "skimmed"
 
 [[exempt.zerocopy-derive]]
 version = "0.8.27"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.zerocopy-derive]]
 version = "0.8.27"
@@ -1086,7 +1107,7 @@ criteria = "skimmed"
 
 [[exempt.zerofrom]]
 version = "0.1.6"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.zerofrom]]
 version = "0.1.6"
@@ -1094,7 +1115,7 @@ criteria = "skimmed"
 
 [[exempt.zerofrom-derive]]
 version = "0.1.6"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.zerofrom-derive]]
 version = "0.1.6"
@@ -1102,7 +1123,7 @@ criteria = "skimmed"
 
 [[exempt.zeroize]]
 version = "1.8.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.zeroize]]
 version = "1.8.1"
@@ -1110,7 +1131,7 @@ criteria = "skimmed"
 
 [[exempt.zerotrie]]
 version = "0.2.2"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.zerotrie]]
 version = "0.2.2"
@@ -1118,7 +1139,7 @@ criteria = "skimmed"
 
 [[exempt.zerovec]]
 version = "0.11.4"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.zerovec]]
 version = "0.11.4"
@@ -1126,7 +1147,7 @@ criteria = "skimmed"
 
 [[exempt.zerovec-derive]]
 version = "0.11.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.zerovec-derive]]
 version = "0.11.1"
@@ -1134,7 +1155,7 @@ criteria = "skimmed"
 
 [[exempt.serde_json]]
 version = "1.0.145"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.serde_json]]
 version = "1.0.145"
@@ -1142,7 +1163,7 @@ criteria = "skimmed"
 
 [[exempt.atomic-waker]]
 version = "1.1.2"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.atomic-waker]]
 version = "1.1.2"
@@ -1150,7 +1171,7 @@ criteria = "skimmed"
 
 [[exempt.axum]]
 version = "0.8.7"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.axum]]
 version = "0.8.7"
@@ -1158,7 +1179,7 @@ criteria = "skimmed"
 
 [[exempt.axum-core]]
 version = "0.5.5"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.axum-core]]
 version = "0.5.5"
@@ -1166,7 +1187,7 @@ criteria = "skimmed"
 
 [[exempt.futures-channel]]
 version = "0.3.31"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.futures-channel]]
 version = "0.3.31"
@@ -1174,7 +1195,7 @@ criteria = "skimmed"
 
 [[exempt.http]]
 version = "1.4.0"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.http]]
 version = "1.4.0"
@@ -1182,7 +1203,7 @@ criteria = "skimmed"
 
 [[exempt.http-body]]
 version = "1.0.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.http-body]]
 version = "1.0.1"
@@ -1190,7 +1211,7 @@ criteria = "skimmed"
 
 [[exempt.http-body-util]]
 version = "0.1.3"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.http-body-util]]
 version = "0.1.3"
@@ -1198,7 +1219,7 @@ criteria = "skimmed"
 
 [[exempt.httparse]]
 version = "1.10.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.httparse]]
 version = "1.10.1"
@@ -1206,7 +1227,7 @@ criteria = "skimmed"
 
 [[exempt.httpdate]]
 version = "1.0.3"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.httpdate]]
 version = "1.0.3"
@@ -1214,7 +1235,7 @@ criteria = "skimmed"
 
 [[exempt.hyper]]
 version = "1.8.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.hyper]]
 version = "1.8.1"
@@ -1222,7 +1243,7 @@ criteria = "skimmed"
 
 [[exempt.hyper-util]]
 version = "0.1.18"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.hyper-util]]
 version = "0.1.18"
@@ -1230,7 +1251,7 @@ criteria = "skimmed"
 
 [[exempt.matchit]]
 version = "0.8.4"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.matchit]]
 version = "0.8.4"
@@ -1238,7 +1259,7 @@ criteria = "skimmed"
 
 [[exempt.mime]]
 version = "0.3.17"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.mime]]
 version = "0.3.17"
@@ -1246,7 +1267,7 @@ criteria = "skimmed"
 
 [[exempt.serde_path_to_error]]
 version = "0.1.20"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.serde_path_to_error]]
 version = "0.1.20"
@@ -1254,7 +1275,7 @@ criteria = "skimmed"
 
 [[exempt.serde_urlencoded]]
 version = "0.7.1"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.serde_urlencoded]]
 version = "0.7.1"
@@ -1262,7 +1283,7 @@ criteria = "skimmed"
 
 [[exempt.sync_wrapper]]
 version = "1.0.2"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.sync_wrapper]]
 version = "1.0.2"
@@ -1270,7 +1291,7 @@ criteria = "skimmed"
 
 [[exempt.tower]]
 version = "0.5.2"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.tower]]
 version = "0.5.2"
@@ -1278,7 +1299,7 @@ criteria = "skimmed"
 
 [[exempt.tower-layer]]
 version = "0.3.3"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.tower-layer]]
 version = "0.3.3"
@@ -1286,7 +1307,7 @@ criteria = "skimmed"
 
 [[exempt.tower-service]]
 version = "0.3.3"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.tower-service]]
 version = "0.3.3"
@@ -1294,7 +1315,7 @@ criteria = "skimmed"
 
 [[exempt.tracing]]
 version = "0.1.43"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.tracing]]
 version = "0.1.43"
@@ -1302,7 +1323,7 @@ criteria = "skimmed"
 
 [[exempt.tracing-core]]
 version = "0.1.35"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.tracing-core]]
 version = "0.1.35"
@@ -1310,7 +1331,7 @@ criteria = "skimmed"
 
 [[exempt.tokio-stream]]
 version = "0.1.17"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.tokio-stream]]
 version = "0.1.17"
@@ -1318,7 +1339,7 @@ criteria = "skimmed"
 
 [[exempt.futures-sink]]
 version = "0.3.31"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.futures-sink]]
 version = "0.3.31"
@@ -1326,7 +1347,7 @@ criteria = "skimmed"
 
 [[exempt.tokio-util]]
 version = "0.7.17"
-criteria = "blobs-ok"
+criteria = "no-sus-blobs"
 
 [[exempt.tokio-util]]
 version = "0.7.17"
