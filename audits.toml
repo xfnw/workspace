@@ -1085,3 +1085,13 @@ notes = "literally has a target directory with pre-built docs in the crate???"
 violation = "0.1.1"
 criteria = "no-sus-blobs"
 notes = "literally has a target directory with pre-built docs in the crate???"
+
+[[audits.vcpkg]]
+version = "0.2.15"
+criteria = "blobs-ok"
+notes = "the test data looks scary at first glance, but they're actually mostly empty files"
+
+[[audits.vcpkg]]
+version = "0.2.15"
+criteria = "skimmed"
+notes = "*looks at line 944* what?"
