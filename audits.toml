@@ -1075,3 +1075,13 @@ criteria = "no-sus-blobs"
 [[audits.atoi]]
 version = "2.0.0"
 criteria = "skimmed"
+
+[[audits.rust-fuzzy-search]]
+violation = "0.1.0"
+criteria = "no-sus-blobs"
+notes = "literally has a target directory with pre-built docs in the crate???"
+
+[[audits.rust-fuzzy-search]]
+violation = "0.1.1"
+criteria = "no-sus-blobs"
+notes = "literally has a target directory with pre-built docs in the crate???"
