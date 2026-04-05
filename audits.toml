@@ -1095,3 +1095,11 @@ notes = "the test data looks scary at first glance, but they're actually mostly 
 version = "0.2.15"
 criteria = "skimmed"
 notes = "*looks at line 944* what?"
+
+[[audits.tracing-attributes]]
+version = "0.1.31"
+criteria = "no-sus-blobs"
+
+[[audits.tracing-attributes]]
+version = "0.1.31"
+criteria = "skimmed"
