@@ -8,6 +8,7 @@ mod floater;
 mod fmt;
 mod human;
 mod now;
+mod rank;
 mod sort;
 mod uni;
 mod uwu;
@@ -30,6 +31,7 @@ enum Cmds {
     Now(now::Args),
     Sort(sort::Args),
     Uni(uni::Args),
+    Rank(rank::Args),
     Uwu(uwu::Args),
     Yap(yap::Args),
 }
@@ -46,5 +48,6 @@ fn main() {
         Cmds::Uni(args) => uni::run(args),
         Cmds::Uwu(args) => uwu::run(args),
         Cmds::Yap(args) => yap::run(args),
+        Cmds::Rank(args) => rank::run(args),
     }
 }
