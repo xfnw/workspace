@@ -1111,3 +1111,11 @@ criteria = "no-sus-blobs"
 [[audits.spin]]
 version = "0.9.8"
 criteria = "skimmed"
+
+[[audits.slab]]
+version = "0.4.12"
+criteria = "no-sus-blobs"
+
+[[audits.slab]]
+version = "0.4.12"
+criteria = "skimmed"
