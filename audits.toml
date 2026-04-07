@@ -1103,3 +1103,11 @@ criteria = "no-sus-blobs"
 [[audits.tracing-attributes]]
 version = "0.1.31"
 criteria = "skimmed"
+
+[[audits.spin]]
+version = "0.9.8"
+criteria = "no-sus-blobs"
+
+[[audits.spin]]
+version = "0.9.8"
+criteria = "skimmed"
