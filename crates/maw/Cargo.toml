@@ -11,7 +11,7 @@ repository.workspace = true
 
 [dependencies]
 argh = { version = "0.1.13", default-features = false, features = ["help"] }
-base64_light = "0.1.5"
+base64 = "0.22.1"
 chrono = { version = "0.4.40", default-features = false, features = ["std"] }
 half = "2.4.1"
 lazy-regex = { version = "3.4.1", default-features = false, features = ["std"] }

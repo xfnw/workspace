@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
+use base64::prelude::{BASE64_STANDARD, Engine as _};
 use chrono::{DateTime, offset::Utc};
 use rayon::prelude::*;
 use sha2::{Digest, Sha256};
@@ -102,12 +103,15 @@ fn generate(ip: &IpAddr, difficulty: u8, time: Option<u64>) {
 
     let mut combined = result.to_be_bytes().to_vec();
     combined.extend(challenge);
-    let encoded = base64_light::base64_encode_bytes(&combined);
+    let encoded = BASE64_STANDARD.encode(&combined);
     println!("{encoded}");
 }
 
 fn show(token: &str) {
-    let decoded = base64_light::base64_decode(token);
+    let Ok(decoded) = BASE64_STANDARD.decode(token) else {
+        eprintln!("could not decode base64");
+        return;
+    };
     if decoded.len() != 32 {
         eprintln!("wrong length");
         return;
