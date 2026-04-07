@@ -1119,3 +1119,11 @@ criteria = "no-sus-blobs"
 [[audits.slab]]
 version = "0.4.12"
 criteria = "skimmed"
+
+[[audits.scopeguard]]
+version = "1.2.0"
+criteria = "no-sus-blobs"
+
+[[audits.scopeguard]]
+version = "1.2.0"
+criteria = "skimmed"
