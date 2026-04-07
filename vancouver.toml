@@ -75,14 +75,6 @@ criteria = "no-sus-blobs"
 version = "1.5.0"
 criteria = "skimmed"
 
-[[exempt.base64_light]]
-version = "0.1.5"
-criteria = "no-sus-blobs"
-
-[[exempt.base64_light]]
-version = "0.1.5"
-criteria = "skimmed"
-
 [[exempt.bindgen]]
 version = "0.72.1"
 criteria = "no-sus-blobs"
