@@ -1127,3 +1127,12 @@ criteria = "no-sus-blobs"
 [[audits.scopeguard]]
 version = "1.2.0"
 criteria = "skimmed"
+
+[[audits.base64]]
+version = "0.22.1"
+criteria = "blobs-ok"
+notes = "includes an svg of the CLion logo... is this some kind of weird jetbrains sponsorship? so strange"
+
+[[audits.base64]]
+version = "0.22.1"
+criteria = "skimmed"

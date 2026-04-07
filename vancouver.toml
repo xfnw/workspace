@@ -32,6 +32,9 @@ require-all = ["blobs-ok", "skimmed"]
 [policy.vcpkg]
 require-all = ["blobs-ok", "skimmed"]
 
+[policy.base64]
+require-all = ["blobs-ok", "skimmed"]
+
 [[exempt.aho-corasick]]
 version = "1.1.3"
 criteria = "no-sus-blobs"
