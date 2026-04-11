@@ -1136,3 +1136,11 @@ notes = "includes an svg of the CLion logo... is this some kind of weird jetbrai
 [[audits.base64]]
 version = "0.22.1"
 criteria = "skimmed"
+
+[[audits.rand]]
+version = "0.10.1"
+criteria = "no-sus-blobs"
+
+[[audits.rand]]
+version = "0.10.1"
+criteria = "skimmed"
