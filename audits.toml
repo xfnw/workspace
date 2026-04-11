@@ -1160,3 +1160,11 @@ criteria = "no-sus-blobs"
 [[audits.thiserror]]
 version = "2.0.18"
 criteria = "skimmed"
+
+[[audits.sqlx-sqlite]]
+version = "0.8.6"
+criteria = "no-sus-blobs"
+
+[[audits.sqlx-sqlite]]
+version = "0.8.6"
+criteria = "skimmed"
