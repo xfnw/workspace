@@ -1176,3 +1176,11 @@ criteria = "no-sus-blobs"
 [[audits.sqlx-macros-core]]
 version = "0.8.6"
 criteria = "skimmed"
+
+[[audits.sqlx-macros]]
+version = "0.8.6"
+criteria = "no-sus-blobs"
+
+[[audits.sqlx-macros]]
+version = "0.8.6"
+criteria = "skimmed"
