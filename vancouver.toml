@@ -20,6 +20,9 @@ require-all = ["blobs-ok", "skimmed"]
 [policy.rustls-pki-types]
 require-all = ["blobs-ok", "skimmed"]
 
+[policy.rustls-webpki]
+require-all = ["blobs-ok", "skimmed"]
+
 [policy.ryu]
 require-all = ["blobs-ok", "skimmed"]
 
