@@ -1218,3 +1218,11 @@ criteria = "no-sus-blobs"
 [[audits.parking]]
 version = "2.2.1"
 criteria = "skimmed"
+
+[[audits.pkg-config]]
+version = "0.3.32"
+criteria = "no-sus-blobs"
+
+[[audits.pkg-config]]
+version = "0.3.32"
+criteria = "skimmed"
