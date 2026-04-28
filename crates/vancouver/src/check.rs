@@ -706,7 +706,9 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
                                     );
                                 } else {
                                     println!("  help: could not find previous audits :(");
-                                    println!("  review https://diff.rs/browse/{name}/{version}");
+                                    println!(
+                                        "  review https://docs.rs/crate/{name}/{version}/source/"
+                                    );
                                     println!("  then vancouver audit {name} {version} {needed}");
                                 }
                             }
