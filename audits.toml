@@ -1243,3 +1243,12 @@ criteria = "no-sus-blobs"
 [[audits.hashlink]]
 version = "0.10.0"
 criteria = "skimmed"
+
+[[audits.crc-catalog]]
+version = "2.4.0"
+criteria = "skimmed"
+
+[[audits.crc-catalog]]
+version = "2.4.0"
+criteria = "blobs-ok"
+notes = "small amount of generated code"
