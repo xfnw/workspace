@@ -1226,3 +1226,12 @@ criteria = "no-sus-blobs"
 [[audits.pkg-config]]
 version = "0.3.32"
 criteria = "skimmed"
+
+[[audits.redox_syscall]]
+version = "0.5.18"
+criteria = "blobs-ok"
+notes = "small amount of generated code"
+
+[[audits.redox_syscall]]
+version = "0.5.18"
+criteria = "skimmed"
