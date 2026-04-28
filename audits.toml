@@ -1252,3 +1252,11 @@ criteria = "skimmed"
 version = "2.4.0"
 criteria = "blobs-ok"
 notes = "small amount of generated code"
+
+[[audits.allocator-api2]]
+version = "0.2.21"
+criteria = "no-sus-blobs"
+
+[[audits.allocator-api2]]
+version = "0.2.21"
+criteria = "skimmed"
