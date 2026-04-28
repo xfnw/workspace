@@ -1201,3 +1201,12 @@ criteria = "skimmed"
 [[audits.lru]]
 version = "0.18.0"
 criteria = "no-sus-blobs"
+
+[[audits.heck]]
+version = "0.5.0"
+criteria = "skimmed"
+notes = "snek :3"
+
+[[audits.heck]]
+version = "0.5.0"
+criteria = "no-sus-blobs"
