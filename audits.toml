@@ -1210,3 +1210,11 @@ notes = "snek :3"
 [[audits.heck]]
 version = "0.5.0"
 criteria = "no-sus-blobs"
+
+[[audits.parking]]
+version = "2.2.1"
+criteria = "no-sus-blobs"
+
+[[audits.parking]]
+version = "2.2.1"
+criteria = "skimmed"
