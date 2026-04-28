@@ -105,6 +105,7 @@
           test = crane'.cargoTest (common // {
             inherit cargoArtifacts;
           });
+          fmt = crane'.cargoFmt common;
           reuse = pkgs.runCommand "workspace-reuse" { } ''
             cd ${src}
             ${pkgs.reuse}/bin/reuse lint
