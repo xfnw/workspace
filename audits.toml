@@ -1235,3 +1235,11 @@ notes = "small amount of generated code"
 [[audits.redox_syscall]]
 version = "0.5.18"
 criteria = "skimmed"
+
+[[audits.hashlink]]
+version = "0.10.0"
+criteria = "no-sus-blobs"
+
+[[audits.hashlink]]
+version = "0.10.0"
+criteria = "skimmed"
