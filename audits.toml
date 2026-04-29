@@ -1268,3 +1268,11 @@ criteria = "no-sus-blobs"
 [[audits.allocator-api2]]
 version = "0.2.21"
 criteria = "skimmed"
+
+[[audits.lock_api]]
+version = "0.4.14"
+criteria = "no-sus-blobs"
+
+[[audits.lock_api]]
+version = "0.4.14"
+criteria = "skimmed"
