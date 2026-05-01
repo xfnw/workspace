@@ -4,7 +4,13 @@
 
 use argh::{FromArgs, from_env};
 use hashlink::LruCache;
-use irc_connect::Stream;
+use irc_connect::{
+    Stream,
+    tokio_rustls::rustls::{
+        RootCertStore,
+        pki_types::{CertificateDer, pem::PemObject},
+    },
+};
 use irctokens::Line;
 use rand::{seq::SliceRandom, thread_rng};
 use std::{path::PathBuf, sync::Mutex};
@@ -225,6 +231,13 @@ async fn main() {
     let opt: Opt = from_env();
 
     let stream = Stream::new_tcp(opt.addr);
+    let stream = if opt.tls {
+        let mut root = RootCertStore::empty();
+        root.add_parsable_certificates(CertificateDer::pem_file_iter(opt.trust).unwrap().flatten());
+        stream.tls_with_root(None, root)
+    } else {
+        stream
+    };
     let mut stream = stream.connect().await.unwrap();
 
     stream
