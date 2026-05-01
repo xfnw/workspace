@@ -48,16 +48,16 @@ struct Bot {
 }
 
 impl Bot {
-    fn new(stream: Stream, join: String, capacity: usize) -> io::Result<Self> {
+    fn new(stream: Stream, join: String, capacity: usize) -> Self {
         let (read, write) = io::split(stream);
 
-        Ok(Self {
+        Self {
             read: AMutex::new(BufReader::new(read)),
             write: AMutex::new(write),
             nick: Mutex::new(None),
-            join: join,
+            join,
             cache: Mutex::new(LruCache::new(capacity)),
-        })
+        }
     }
 
     async fn write_line(&self, line: &Line) -> io::Result<()> {
@@ -84,7 +84,7 @@ impl Bot {
 
             match line.command.as_ref() {
                 "001" => self.handle_001(line).await?,
-                "NICK" => self.handle_nick(line).await?,
+                "NICK" => self.handle_nick(&line),
                 "PING" => self.handle_ping(line).await?,
                 "PRIVMSG" => self.handle_privmsg(line).await?,
                 _ => (),
@@ -104,7 +104,7 @@ impl Bot {
         Ok(())
     }
 
-    async fn handle_nick(&self, line: Line) -> io::Result<()> {
+    fn handle_nick(&self, line: &Line) {
         if let Some(source_nick) = line
             .source
             .as_ref()
@@ -114,8 +114,6 @@ impl Bot {
         {
             *mynick = line.arguments.first().cloned();
         }
-
-        Ok(())
     }
 
     async fn handle_ping(&self, line: Line) -> io::Result<()> {
@@ -147,7 +145,7 @@ impl Bot {
         };
 
         if let Some(digest) = unhex_digest(&message)
-            && let Some(contents) = self.cache.lock().unwrap().get(&digest).cloned()
+            && let Some(contents) = { self.cache.lock().unwrap().get(&digest).cloned() }
         {
             let res = Line {
                 tags: None,
@@ -184,7 +182,7 @@ fn unhex_digest(inp: &[u8]) -> Option<[u8; 16]> {
     let mut out = [0; 16];
 
     for (i, &[h, l]) in chunks.iter().enumerate() {
-        out[i] = (unhex_nibble(h)? << 4) | unhex_nibble(l)?
+        out[i] = (unhex_nibble(h)? << 4) | unhex_nibble(l)?;
     }
 
     Some(out)
@@ -220,7 +218,7 @@ async fn main() {
         .await
         .unwrap();
 
-    let bot = Bot::new(stream, opt.join, opt.capacity).unwrap();
+    let bot = Bot::new(stream, opt.join, opt.capacity);
 
     bot.run().await.unwrap();
 }
