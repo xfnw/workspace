@@ -10,6 +10,7 @@ license = "AGPL-3.0-or-later"
 repository.workspace = true
 
 [dependencies]
+sqlx = { version = "0.8.6", default-features = false, features = ["runtime-tokio", "sqlite", "derive", "macros"] }
 
 [lints]
 workspace = true
