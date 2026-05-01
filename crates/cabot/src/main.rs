@@ -13,7 +13,7 @@ use irc_connect::{
 };
 use irctokens::Line;
 use rand::{seq::SliceRandom, thread_rng};
-use std::{path::PathBuf, sync::Mutex};
+use std::{path::PathBuf, sync::Mutex, time::Instant};
 use tokio::{
     io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader, ReadHalf, WriteHalf},
     sync::Mutex as AMutex,
@@ -25,6 +25,9 @@ struct Opt {
     /// number of lines to cache, defaults to 1000
     #[argh(option, short = 'c', default = "1000")]
     capacity: usize,
+    /// number of milliseconds to wait between sending messages
+    #[argh(option, short = 'd', default = "0")]
+    delay: usize,
     /// nickname to use
     #[argh(option, short = 'n', default = "\"ca\".to_string()")]
     nick: String,
@@ -51,11 +54,13 @@ struct Bot {
     write: AMutex<WriteHalf<Stream>>,
     nick: Mutex<Option<Vec<u8>>>,
     join: String,
+    delay: usize,
+    last_sent: Mutex<Instant>,
     cache: Mutex<LruCache<[u8; 16], Vec<u8>>>,
 }
 
 impl Bot {
-    fn new(stream: Stream, join: String, capacity: usize) -> Self {
+    fn new(stream: Stream, join: String, delay: usize, capacity: usize) -> Self {
         let (read, write) = io::split(stream);
 
         Self {
@@ -63,6 +68,8 @@ impl Bot {
             write: AMutex::new(write),
             nick: Mutex::new(None),
             join,
+            delay,
+            last_sent: Mutex::new(Instant::now()),
             cache: Mutex::new(LruCache::new(capacity)),
         }
     }
@@ -171,8 +178,15 @@ impl Bot {
         };
 
         if let Some(digest) = unhex_digest(&message)
+            && {
+                Instant::now()
+                    .duration_since(*self.last_sent.lock().unwrap())
+                    .as_millis() as usize
+            } >= self.delay
             && let Some(contents) = { self.cache.lock().unwrap().get(&digest).cloned() }
         {
+            *self.last_sent.lock().unwrap() = Instant::now();
+
             let res = Line {
                 tags: None,
                 source: None,
@@ -251,7 +265,7 @@ async fn main() {
         .await
         .unwrap();
 
-    let bot = Bot::new(stream, opt.join, opt.capacity);
+    let bot = Bot::new(stream, opt.join, opt.delay, opt.capacity);
 
     bot.run().await.unwrap();
 }
