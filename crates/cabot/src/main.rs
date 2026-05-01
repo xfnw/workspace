@@ -6,6 +6,7 @@ use argh::{FromArgs, from_env};
 use hashlink::LruCache;
 use irc_connect::Stream;
 use irctokens::Line;
+use rand::{seq::SliceRandom, thread_rng};
 use std::{path::PathBuf, sync::Mutex};
 use tokio::{
     io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader, ReadHalf, WriteHalf},
@@ -84,6 +85,7 @@ impl Bot {
 
             match line.command.as_ref() {
                 "001" => self.handle_001(line).await?,
+                "433" => self.handle_433(line).await?,
                 "NICK" => self.handle_nick(&line),
                 "PING" => self.handle_ping(line).await?,
                 "PRIVMSG" => self.handle_privmsg(line).await?,
@@ -101,6 +103,24 @@ impl Bot {
             arguments: vec![self.join.as_bytes().to_vec()],
         };
         self.write_line(&join).await?;
+        Ok(())
+    }
+
+    async fn handle_433(&self, line: Line) -> io::Result<()> {
+        const NICK_CHARS: &[u8] = b"[\\]_|0123456789abcdefghijklmnopqrstuvwxyz";
+        if let Some(mut badnick) = line.arguments.into_iter().nth(1) {
+            let mut rng = thread_rng();
+            badnick.push(*NICK_CHARS.choose(&mut rng).unwrap());
+
+            let res = Line {
+                tags: None,
+                source: None,
+                command: "NICK".to_string(),
+                arguments: vec![badnick],
+            };
+            self.write_line(&res).await?;
+        }
+
         Ok(())
     }
 
