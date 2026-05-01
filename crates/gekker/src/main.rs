@@ -255,7 +255,7 @@ async fn client_loop(state: Arc<AppState>, conn: irc_connect::Stream, slot_info:
                     }
                     "NICK" => {
                         if let Some(oldnick) = source_nick.and_then(|n| str::from_utf8(n).ok())
-                            && oldnick == *state.clients.read().await[slot].as_ref().unwrap().nick.read().await
+                            && { oldnick == *state.clients.read().await[slot].as_ref().unwrap().nick.read().await }
                             && let Some(newnick) = line.arguments.first().and_then(|n| str::from_utf8(n).ok())
                         {
                             let clients = state.clients.read().await;
