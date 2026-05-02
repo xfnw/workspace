@@ -11,6 +11,7 @@ repository.workspace = true
 
 [dependencies]
 argh = { version = "0.1.14", default-features = false, features = ["help"] }
+base64 = "0.22.1"
 foxerror = { version = "0.1.2", path = "../foxerror" }
 hashlink = { version = "0.10.0", default-features = false }
 irc-connect = { version = "0.2.0", path = "../irc-connect", features = ["ring", "tls12"] }

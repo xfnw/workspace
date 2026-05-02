@@ -210,6 +210,7 @@ name = "cabot"
 version = "0.1.0"
 dependencies = [
  "argh",
+ "base64",
  "foxerror",
  "hashlink",
  "irc-connect",

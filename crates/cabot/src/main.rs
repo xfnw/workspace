@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use argh::{FromArgs, from_env};
+use base64::{Engine, engine::general_purpose::STANDARD_NO_PAD as BASE64};
 use hashlink::LruCache;
 use irc_connect::{
     Stream,
@@ -343,6 +344,52 @@ fn digest_round_trip() {
         tohex_digest(unhex_digest(b"33c6c2397a1b079e903c474df792d0e2").unwrap()),
         *b"33c6c2397a1b079e903c474df792d0e2"
     );
+}
+
+struct FileStore {
+    bot: Arc<Bot>,
+}
+
+impl FileStore {
+    fn new(bot: Arc<Bot>) -> Self {
+        Self { bot }
+    }
+
+    async fn store(&self, file: Vec<u8>) -> Result<[u8; 16], Error> {
+        let mut contents = BASE64.encode(file).into_bytes();
+        if contents.is_empty() {
+            // we cannot send an empty irc message.
+            // "empty" is not valid base64 so it should be unambiguous
+            contents.extend_from_slice(b"empty");
+        }
+        let chunks: Vec<_> = contents.chunks(360).collect();
+        let hashes: Vec<_> = chunks.iter().map(md5::compute).map(|d| d.0).collect();
+        let mut lines = vec![];
+
+        for hash_chunk in hashes.chunks(10).rev() {
+            let mut line = vec![];
+
+            for hash in hash_chunk {
+                line.extend_from_slice(&tohex_digest(*hash));
+            }
+
+            if let Some(prev) = lines.last() {
+                line.extend_from_slice(&tohex_digest(md5::compute(prev).0));
+            }
+
+            lines.push(line);
+        }
+
+        let last_hash = md5::compute(lines.last().unwrap()).0;
+
+        for chunk in chunks {
+            lines.push(chunk.to_vec());
+        }
+
+        self.bot.send_many(lines).await?;
+
+        Ok(last_hash)
+    }
 }
 
 #[tokio::main]
