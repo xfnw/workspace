@@ -243,7 +243,10 @@ impl Bot {
             tags: None,
             source: None,
             command: "PRIVMSG".to_string(),
-            arguments: vec![self.channel.as_bytes().to_vec(), tohex(&digest)],
+            arguments: vec![
+                self.channel.as_bytes().to_vec(),
+                tohex_digest(digest).to_vec(),
+            ],
         };
 
         loop {
@@ -282,12 +285,12 @@ fn tohex_nibble(n: u8) -> u8 {
     }
 }
 
-fn tohex(inp: &[u8]) -> Vec<u8> {
-    let mut out = vec![];
+fn tohex_digest(inp: [u8; 16]) -> [u8; 32] {
+    let mut out = [0; 32];
 
-    for b in inp {
-        out.push(tohex_nibble(b >> 4));
-        out.push(tohex_nibble(b & 0b1111));
+    for (i, b) in inp.iter().enumerate() {
+        out[i * 2] = tohex_nibble(b >> 4);
+        out[i * 2 + 1] = tohex_nibble(b & 0b1111);
     }
 
     out
@@ -334,8 +337,8 @@ fn check_unhex_digest() {
 #[test]
 fn digest_round_trip() {
     assert_eq!(
-        tohex(&unhex_digest(b"33c6c2397a1b079e903c474df792d0e2").unwrap()),
-        b"33c6c2397a1b079e903c474df792d0e2"
+        tohex_digest(unhex_digest(b"33c6c2397a1b079e903c474df792d0e2").unwrap()),
+        *b"33c6c2397a1b079e903c474df792d0e2"
     );
 }
 
