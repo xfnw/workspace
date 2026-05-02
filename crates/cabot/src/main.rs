@@ -204,6 +204,22 @@ impl Bot {
         self.cache.lock().unwrap().insert(digest, message);
         Ok(())
     }
+
+    async fn send_many(&self, messages: Vec<Vec<u8>>) -> io::Result<()> {
+        let mut line = Line {
+            tags: None,
+            source: None,
+            command: "PRIVMSG".to_string(),
+            arguments: vec![self.channel.as_bytes().to_vec(), vec![]],
+        };
+
+        for message in messages {
+            line.arguments[1] = message;
+            self.write_line(&line).await?;
+        }
+
+        Ok(())
+    }
 }
 
 fn unhex_nibble(b: u8) -> Option<u8> {
