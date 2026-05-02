@@ -13,7 +13,11 @@ use irc_connect::{
 };
 use irctokens::Line;
 use rand::{seq::SliceRandom, thread_rng};
-use std::{path::PathBuf, sync::Mutex, time::Instant};
+use std::{
+    path::PathBuf,
+    sync::{Arc, Mutex},
+    time::Instant,
+};
 use tokio::{
     io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader, ReadHalf, WriteHalf},
     sync::Mutex as AMutex,
@@ -60,10 +64,10 @@ struct Bot {
 }
 
 impl Bot {
-    fn new(stream: Stream, join: String, delay: usize, capacity: usize) -> Self {
+    fn new(stream: Stream, join: String, delay: usize, capacity: usize) -> Arc<Self> {
         let (read, write) = io::split(stream);
 
-        Self {
+        Arc::new(Self {
             read: AMutex::new(BufReader::new(read)),
             write: AMutex::new(write),
             nick: Mutex::new(None),
@@ -71,7 +75,7 @@ impl Bot {
             delay,
             last_sent: Mutex::new(Instant::now()),
             cache: Mutex::new(LruCache::new(capacity)),
-        }
+        })
     }
 
     async fn write_line(&self, line: &Line) -> io::Result<()> {
