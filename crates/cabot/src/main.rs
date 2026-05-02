@@ -131,8 +131,7 @@ impl Bot {
     async fn handle_433(&self, line: Line) -> io::Result<()> {
         const NICK_CHARS: &[u8] = b"[\\]_|0123456789abcdefghijklmnopqrstuvwxyz";
         if let Some(mut badnick) = line.arguments.into_iter().nth(1) {
-            let mut rng = thread_rng();
-            badnick.push(*NICK_CHARS.choose(&mut rng).unwrap());
+            badnick.push(*NICK_CHARS.choose(&mut thread_rng()).unwrap());
 
             let res = Line {
                 tags: None,
