@@ -12,15 +12,15 @@ use irc_connect::{
     },
 };
 use irctokens::Line;
-use rand::{seq::SliceRandom, thread_rng};
+use rand::{Rng, seq::SliceRandom, thread_rng};
 use std::{
     path::PathBuf,
     sync::{Arc, Mutex},
-    time::Instant,
+    time::{Duration, Instant},
 };
 use tokio::{
     io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader, ReadHalf, WriteHalf},
-    sync::Mutex as AMutex,
+    sync::{Mutex as AMutex, broadcast},
 };
 
 /// content addressed irc bot
@@ -61,6 +61,7 @@ struct Bot {
     delay: usize,
     last_sent: Mutex<Instant>,
     cache: Mutex<LruCache<[u8; 16], Vec<u8>>>,
+    digest_firehose: broadcast::Sender<[u8; 16]>,
 }
 
 impl Bot {
@@ -75,6 +76,7 @@ impl Bot {
             delay,
             last_sent: Mutex::new(Instant::now()),
             cache: Mutex::new(LruCache::new(capacity)),
+            digest_firehose: broadcast::Sender::new(256),
         })
     }
 
@@ -202,6 +204,7 @@ impl Bot {
 
         let digest = md5::compute(&message).0;
         self.cache.lock().unwrap().insert(digest, message);
+        _ = self.digest_firehose.send(digest);
         Ok(())
     }
 
@@ -220,6 +223,62 @@ impl Bot {
 
         Ok(())
     }
+
+    async fn retrieve(&self, digest: [u8; 16]) -> Result<Vec<u8>, RetrieveError> {
+        let mut receiver = self.digest_firehose.subscribe();
+        let mut timeout = 1;
+        let req = Line {
+            tags: None,
+            source: None,
+            command: "PRIVMSG".to_string(),
+            arguments: vec![self.channel.as_bytes().to_vec(), tohex(&digest)],
+        };
+
+        loop {
+            self.write_line(&req).await.map_err(RetrieveError::Io)?;
+
+            if let Ok(r) = tokio::time::timeout(Duration::from_secs(timeout), async {
+                while receiver.recv().await? != digest {}
+                Ok(())
+            })
+            .await
+            {
+                r.map_err(RetrieveError::Broadcast)?;
+            }
+
+            if let Some(content) = self.cache.lock().unwrap().get(&digest) {
+                return Ok(content.clone());
+            }
+
+            timeout *= 2;
+            timeout += thread_rng().gen_range(0..10);
+        }
+    }
+}
+
+#[derive(Debug, foxerror::FoxError)]
+enum RetrieveError {
+    Io(io::Error),
+    Broadcast(broadcast::error::RecvError),
+}
+
+fn tohex_nibble(n: u8) -> u8 {
+    match n {
+        0..=9 => n + b'0',
+        0xa..=0xf => n + b'a' - 0xa,
+        _ => panic!("that is not a nibble"),
+    }
+}
+
+fn tohex(inp: &[u8]) -> Vec<u8> {
+    let mut out = vec![];
+
+    for b in inp {
+        out.push(tohex_nibble(b >> 4));
+        out.push(tohex_nibble(b & 0b1111));
+    }
+
+    out
 }
 
 fn unhex_nibble(b: u8) -> Option<u8> {
@@ -257,6 +316,14 @@ fn check_unhex_digest() {
     assert_eq!(
         unhex_digest(b"1234567890abcdef1234567890abcdef"),
         Some(expect)
+    );
+}
+
+#[test]
+fn digest_round_trip() {
+    assert_eq!(
+        tohex(&unhex_digest(b"33c6c2397a1b079e903c474df792d0e2").unwrap()),
+        b"33c6c2397a1b079e903c474df792d0e2"
     );
 }
 
