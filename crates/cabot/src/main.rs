@@ -53,7 +53,7 @@ struct Bot {
     read: AMutex<BufReader<ReadHalf<Stream>>>,
     write: AMutex<WriteHalf<Stream>>,
     nick: Mutex<Option<Vec<u8>>>,
-    join: String,
+    channel: String,
     delay: usize,
     last_sent: Mutex<Instant>,
     cache: Mutex<LruCache<[u8; 16], Vec<u8>>>,
@@ -67,7 +67,7 @@ impl Bot {
             read: AMutex::new(BufReader::new(read)),
             write: AMutex::new(write),
             nick: Mutex::new(None),
-            join,
+            channel: join,
             delay,
             last_sent: Mutex::new(Instant::now()),
             cache: Mutex::new(LruCache::new(capacity)),
@@ -113,7 +113,7 @@ impl Bot {
             tags: None,
             source: None,
             command: "JOIN".to_string(),
-            arguments: vec![self.join.as_bytes().to_vec()],
+            arguments: vec![self.channel.as_bytes().to_vec()],
         };
         self.write_line(&join).await?;
         Ok(())
