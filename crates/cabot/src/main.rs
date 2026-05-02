@@ -21,6 +21,7 @@ use std::{
 use tokio::{
     io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader, ReadHalf, WriteHalf},
     sync::{Mutex as AMutex, broadcast},
+    time::sleep,
 };
 
 /// content addressed irc bot
@@ -29,7 +30,7 @@ struct Opt {
     /// number of lines to cache, defaults to 1000
     #[argh(option, short = 'c', default = "1000")]
     capacity: usize,
-    /// number of milliseconds to wait between sending messages
+    /// number of milliseconds to mostly wait between sending messages
     #[argh(option, short = 'd', default = "0")]
     delay: u64,
     /// nickname to use
@@ -220,7 +221,7 @@ impl Bot {
         for message in messages {
             line.arguments[1] = message;
             self.write_line(&line).await?;
-            tokio::time::sleep(Duration::from_millis(self.delay)).await;
+            sleep(Duration::from_millis(self.delay)).await;
         }
 
         Ok(())
@@ -228,6 +229,16 @@ impl Bot {
 
     async fn retrieve(&self, digest: [u8; 16]) -> Result<Vec<u8>, RetrieveError> {
         let mut receiver = self.digest_firehose.subscribe();
+
+        if let Some(content) = self.cache.lock().unwrap().get(&digest) {
+            return Ok(content.clone());
+        }
+
+        sleep(Duration::from_millis({
+            thread_rng().gen_range(0..=self.delay * self.digest_firehose.receiver_count() as u64)
+        }))
+        .await;
+
         let mut timeout = 1;
         let req = Line {
             tags: None,
@@ -237,6 +248,10 @@ impl Bot {
         };
 
         loop {
+            if let Some(content) = self.cache.lock().unwrap().get(&digest) {
+                return Ok(content.clone());
+            }
+
             self.write_line(&req).await.map_err(RetrieveError::Io)?;
 
             if let Ok(r) = tokio::time::timeout(Duration::from_secs(timeout), async {
@@ -246,10 +261,6 @@ impl Bot {
             .await
             {
                 r.map_err(RetrieveError::Broadcast)?;
-            }
-
-            if let Some(content) = self.cache.lock().unwrap().get(&digest) {
-                return Ok(content.clone());
             }
 
             timeout *= 2;
