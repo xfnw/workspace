@@ -31,7 +31,7 @@ struct Opt {
     capacity: usize,
     /// number of milliseconds to wait between sending messages
     #[argh(option, short = 'd', default = "0")]
-    delay: usize,
+    delay: u64,
     /// nickname to use
     #[argh(option, short = 'n', default = "\"ca\".to_string()")]
     nick: String,
@@ -58,14 +58,14 @@ struct Bot {
     write: AMutex<WriteHalf<Stream>>,
     nick: Mutex<Option<Vec<u8>>>,
     channel: String,
-    delay: usize,
+    delay: u64,
     last_sent: Mutex<Instant>,
     cache: Mutex<LruCache<[u8; 16], Vec<u8>>>,
     digest_firehose: broadcast::Sender<[u8; 16]>,
 }
 
 impl Bot {
-    fn new(stream: Stream, join: String, delay: usize, capacity: usize) -> Arc<Self> {
+    fn new(stream: Stream, join: String, delay: u64, capacity: usize) -> Arc<Self> {
         let (read, write) = io::split(stream);
 
         Arc::new(Self {
@@ -183,11 +183,12 @@ impl Bot {
             source_nick.to_vec()
         };
 
+        #[expect(clippy::cast_possible_truncation)]
         if let Some(digest) = unhex_digest(&message)
             && {
                 Instant::now()
                     .duration_since(*self.last_sent.lock().unwrap())
-                    .as_millis() as usize
+                    .as_millis() as u64
             } >= self.delay
             && let Some(contents) = { self.cache.lock().unwrap().get(&digest).cloned() }
         {
