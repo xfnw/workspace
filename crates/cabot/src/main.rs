@@ -81,6 +81,8 @@ impl Bot {
     }
 
     async fn write_line(&self, line: &Line) -> io::Result<()> {
+        *self.last_sent.lock().unwrap() = Instant::now();
+
         let mut output = line.format();
         output.extend_from_slice(b"\r\n");
         let mut writer = self.write.lock().await;
@@ -192,8 +194,6 @@ impl Bot {
             } >= self.delay
             && let Some(contents) = { self.cache.lock().unwrap().get(&digest).cloned() }
         {
-            *self.last_sent.lock().unwrap() = Instant::now();
-
             let res = Line {
                 tags: None,
                 source: None,
