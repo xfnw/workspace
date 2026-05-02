@@ -220,6 +220,7 @@ impl Bot {
         for message in messages {
             line.arguments[1] = message;
             self.write_line(&line).await?;
+            tokio::time::sleep(Duration::from_millis(self.delay)).await;
         }
 
         Ok(())
