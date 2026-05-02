@@ -54,6 +54,13 @@ struct Opt {
     addr: String,
 }
 
+#[derive(Debug, foxerror::FoxError)]
+enum Error {
+    #[err(from)]
+    Io(io::Error),
+    Broadcast(broadcast::error::RecvError),
+}
+
 struct Bot {
     read: AMutex<BufReader<ReadHalf<Stream>>>,
     write: AMutex<WriteHalf<Stream>>,
@@ -81,16 +88,18 @@ impl Bot {
         })
     }
 
-    async fn write_line(&self, line: &Line) -> io::Result<()> {
+    async fn write_line(&self, line: &Line) -> Result<(), Error> {
         *self.last_sent.lock().unwrap() = Instant::now();
 
         let mut output = line.format();
         output.extend_from_slice(b"\r\n");
         let mut writer = self.write.lock().await;
-        writer.write_all(&output).await
+        writer.write_all(&output).await?;
+
+        Ok(())
     }
 
-    async fn run(&self) -> io::Result<()> {
+    async fn run(&self) -> Result<(), Error> {
         let mut buf = Vec::with_capacity(512);
 
         loop {
@@ -116,7 +125,7 @@ impl Bot {
         }
     }
 
-    async fn handle_001(&self, line: Line) -> io::Result<()> {
+    async fn handle_001(&self, line: Line) -> Result<(), Error> {
         *self.nick.lock().unwrap() = line.arguments.first().cloned();
         let join = Line {
             tags: None,
@@ -128,7 +137,7 @@ impl Bot {
         Ok(())
     }
 
-    async fn handle_433(&self, line: Line) -> io::Result<()> {
+    async fn handle_433(&self, line: Line) -> Result<(), Error> {
         const NICK_CHARS: &[u8] = b"[\\]_|0123456789abcdefghijklmnopqrstuvwxyz";
         if let Some(mut badnick) = line.arguments.into_iter().nth(1) {
             badnick.push(*NICK_CHARS.choose(&mut thread_rng()).unwrap());
@@ -157,7 +166,7 @@ impl Bot {
         }
     }
 
-    async fn handle_ping(&self, line: Line) -> io::Result<()> {
+    async fn handle_ping(&self, line: Line) -> Result<(), Error> {
         let pong = Line {
             tags: None,
             source: None,
@@ -168,7 +177,7 @@ impl Bot {
         Ok(())
     }
 
-    async fn handle_privmsg(&self, mut line: Line) -> io::Result<()> {
+    async fn handle_privmsg(&self, mut line: Line) -> Result<(), Error> {
         let (Some(message), Some(target)) = (line.arguments.pop(), line.arguments.pop()) else {
             return Ok(());
         };
@@ -209,7 +218,7 @@ impl Bot {
         Ok(())
     }
 
-    async fn send_many(&self, messages: Vec<Vec<u8>>) -> io::Result<()> {
+    async fn send_many(&self, messages: Vec<Vec<u8>>) -> Result<(), Error> {
         let mut line = Line {
             tags: None,
             source: None,
@@ -226,7 +235,7 @@ impl Bot {
         Ok(())
     }
 
-    async fn retrieve(&self, digest: [u8; 16]) -> Result<Vec<u8>, RetrieveError> {
+    async fn retrieve(&self, digest: [u8; 16]) -> Result<Vec<u8>, Error> {
         let mut receiver = self.digest_firehose.subscribe();
 
         if let Some(content) = self.cache.lock().unwrap().get(&digest) {
@@ -254,7 +263,7 @@ impl Bot {
                 return Ok(content.clone());
             }
 
-            self.write_line(&req).await.map_err(RetrieveError::Io)?;
+            self.write_line(&req).await?;
 
             if let Ok(r) = tokio::time::timeout(Duration::from_secs(timeout), async {
                 while receiver.recv().await? != digest {}
@@ -262,19 +271,13 @@ impl Bot {
             })
             .await
             {
-                r.map_err(RetrieveError::Broadcast)?;
+                r.map_err(Error::Broadcast)?;
             }
 
             timeout *= 2;
             timeout += thread_rng().gen_range(0..10);
         }
     }
-}
-
-#[derive(Debug, foxerror::FoxError)]
-enum RetrieveError {
-    Io(io::Error),
-    Broadcast(broadcast::error::RecvError),
 }
 
 fn tohex_nibble(n: u8) -> u8 {
