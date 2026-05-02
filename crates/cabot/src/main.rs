@@ -60,6 +60,10 @@ enum Error {
     #[err(from)]
     Io(io::Error),
     Broadcast(broadcast::error::RecvError),
+    FileInvalidHashes,
+    FileTooManyHashes,
+    #[err(from)]
+    Base64Decode(base64::DecodeError),
 }
 
 struct Bot {
@@ -389,6 +393,46 @@ impl FileStore {
         self.bot.send_many(lines).await?;
 
         Ok(last_hash)
+    }
+
+    async fn retrieve(&self, digest: [u8; 16]) -> Result<Vec<u8>, Error> {
+        let mut futures = vec![];
+        let mut next_hash = digest;
+
+        loop {
+            let hashes = self.bot.retrieve(next_hash).await?;
+            let Some(hashes): Option<Vec<_>> = hashes.chunks(32).map(unhex_digest).collect() else {
+                return Err(Error::FileInvalidHashes);
+            };
+
+            for &hash in &hashes[0..std::cmp::min(hashes.len(), 10)] {
+                let bot = self.bot.clone();
+                futures.push(tokio::spawn(async move { bot.retrieve(hash).await }));
+            }
+
+            match hashes.len() {
+                11 => {
+                    next_hash = hashes[10];
+                }
+                ..=10 => {
+                    break;
+                }
+                _ => {
+                    return Err(Error::FileTooManyHashes);
+                }
+            }
+        }
+
+        let mut result = vec![];
+
+        for future in futures {
+            let data = future.await.unwrap()?;
+            if data != b"empty" {
+                result.extend_from_slice(&BASE64.decode(data)?);
+            }
+        }
+
+        Ok(result)
     }
 }
 
