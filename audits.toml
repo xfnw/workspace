@@ -1420,3 +1420,11 @@ criteria = "no-sus-blobs"
 [[audits.tracing-core]]
 delta = "0.1.35 -> 0.1.36"
 criteria = "skimmed"
+
+[[audits.errno]]
+version = "0.3.14"
+criteria = "no-sus-blobs"
+
+[[audits.errno]]
+version = "0.3.14"
+criteria = "skimmed"
