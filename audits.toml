@@ -1296,3 +1296,11 @@ criteria = "too-big-to-fail"
 [[audits.winapi-x86_64-pc-windows-gnu]]
 version = "0.4.0"
 criteria = "too-big-to-fail"
+
+[[audits.rustversion]]
+version = "1.0.22"
+criteria = "no-sus-blobs"
+
+[[audits.rustversion]]
+version = "1.0.22"
+criteria = "skimmed"
