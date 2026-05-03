@@ -1484,3 +1484,11 @@ criteria = "no-sus-blobs"
 [[audits.async-notify]]
 version = "0.3.4"
 criteria = "skimmed"
+
+[[audits.fuse3]]
+version = "0.9.0"
+criteria = "no-sus-blobs"
+
+[[audits.fuse3]]
+version = "0.9.0"
+criteria = "skimmed"
