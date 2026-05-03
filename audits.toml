@@ -1460,3 +1460,11 @@ criteria = "no-sus-blobs"
 [[audits.futures-core]]
 delta = "0.3.31 -> 0.3.32"
 criteria = "skimmed"
+
+[[audits.futures-macro]]
+version = "0.3.32"
+criteria = "no-sus-blobs"
+
+[[audits.futures-macro]]
+version = "0.3.32"
+criteria = "skimmed"
