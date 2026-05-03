@@ -1412,3 +1412,11 @@ criteria = "no-sus-blobs"
 [[audits.trait-make]]
 version = "0.1.0"
 criteria = "skimmed"
+
+[[audits.tracing-core]]
+delta = "0.1.35 -> 0.1.36"
+criteria = "no-sus-blobs"
+
+[[audits.tracing-core]]
+delta = "0.1.35 -> 0.1.36"
+criteria = "skimmed"
