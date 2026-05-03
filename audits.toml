@@ -1320,3 +1320,11 @@ criteria = "no-sus-blobs"
 [[audits.ref-cast]]
 version = "1.0.25"
 criteria = "skimmed"
+
+[[audits.proc-macro-crate]]
+version = "3.4.0"
+criteria = "no-sus-blobs"
+
+[[audits.proc-macro-crate]]
+version = "3.4.0"
+criteria = "skimmed"
