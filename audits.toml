@@ -1356,3 +1356,11 @@ criteria = "skimmed"
 [[audits.nix]]
 version = "0.30.1"
 criteria = "too-big-to-fail"
+
+[[audits.memoffset]]
+version = "0.9.1"
+criteria = "no-sus-blobs"
+
+[[audits.memoffset]]
+version = "0.9.1"
+criteria = "skimmed"
