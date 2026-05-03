@@ -1364,3 +1364,11 @@ criteria = "no-sus-blobs"
 [[audits.memoffset]]
 version = "0.9.1"
 criteria = "skimmed"
+
+[[audits.trait-make]]
+version = "0.1.0"
+criteria = "no-sus-blobs"
+
+[[audits.trait-make]]
+version = "0.1.0"
+criteria = "skimmed"
