@@ -1500,3 +1500,11 @@ criteria = "no-sus-blobs"
 [[audits.which]]
 version = "8.0.2"
 criteria = "skimmed"
+
+[[audits.append-only-vec]]
+version = "0.1.8"
+criteria = "no-sus-blobs"
+
+[[audits.append-only-vec]]
+version = "0.1.8"
+criteria = "skimmed"
