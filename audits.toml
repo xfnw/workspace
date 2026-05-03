@@ -1284,3 +1284,15 @@ criteria = "no-sus-blobs"
 [[audits.md5]]
 version = "0.8.0"
 criteria = "skimmed"
+
+[[audits.winapi]]
+version = "0.3.9"
+criteria = "too-big-to-fail"
+
+[[audits.winapi-i686-pc-windows-gnu]]
+version = "0.4.0"
+criteria = "too-big-to-fail"
+
+[[audits.winapi-x86_64-pc-windows-gnu]]
+version = "0.4.0"
+criteria = "too-big-to-fail"
