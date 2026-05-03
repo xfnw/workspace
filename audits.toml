@@ -1304,3 +1304,19 @@ criteria = "no-sus-blobs"
 [[audits.rustversion]]
 version = "1.0.22"
 criteria = "skimmed"
+
+[[audits.ref-cast-impl]]
+version = "1.0.25"
+criteria = "no-sus-blobs"
+
+[[audits.ref-cast-impl]]
+version = "1.0.25"
+criteria = "skimmed"
+
+[[audits.ref-cast]]
+version = "1.0.25"
+criteria = "no-sus-blobs"
+
+[[audits.ref-cast]]
+version = "1.0.25"
+criteria = "skimmed"
