@@ -848,6 +848,14 @@ criteria = "no-sus-blobs"
 version = "1.4.6"
 criteria = "skimmed"
 
+[[audits.signal-hook-registry]]
+delta = "1.4.6 -> 1.4.8"
+criteria = "no-sus-blobs"
+
+[[audits.signal-hook-registry]]
+delta = "1.4.6 -> 1.4.8"
+criteria = "skimmed"
+
 [[audits.rustls-pki-types]]
 delta = "1.12.0 -> 1.13.0"
 criteria = "skimmed"
