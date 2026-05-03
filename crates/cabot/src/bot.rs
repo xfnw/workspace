@@ -234,4 +234,14 @@ impl Bot {
             timeout += thread_rng().gen_range(0..10);
         }
     }
+
+    pub async fn quit(&self) -> Result<(), Error> {
+        let quit = Line {
+            tags: None,
+            source: None,
+            command: "QUIT".to_string(),
+            arguments: vec![b"meow".to_vec()],
+        };
+        self.write_line(&quit).await
+    }
 }

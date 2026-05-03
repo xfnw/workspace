@@ -90,4 +90,8 @@ impl FileStore {
 
         Ok(result)
     }
+
+    pub async fn shutdown(&self) -> Result<(), Error> {
+        self.bot.quit().await
+    }
 }

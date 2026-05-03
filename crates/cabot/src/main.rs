@@ -10,7 +10,7 @@ use irc_connect::{
         pki_types::{CertificateDer, pem::PemObject},
     },
 };
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
 use tokio::{
     io::{self, AsyncWriteExt},
     sync::broadcast,
@@ -18,6 +18,7 @@ use tokio::{
 
 mod bot;
 mod file_store;
+mod fuse;
 
 /// content addressed irc bot
 #[derive(Debug, FromArgs)]
@@ -28,6 +29,12 @@ struct Opt {
     /// number of milliseconds to mostly wait between sending messages
     #[argh(option, short = 'd', default = "0")]
     delay: u64,
+    /// mountpoint to mount fuse filesystem
+    #[argh(option)]
+    fuse: Option<PathBuf>,
+    /// hash to resume fuse filesystem state from
+    #[argh(option, from_str_fn(parse_hex_digest))]
+    fuse_resume: Option<[u8; 16]>,
     /// nickname to use
     #[argh(option, short = 'n', default = "\"ca\".to_string()")]
     nick: String,
@@ -125,6 +132,10 @@ fn digest_round_trip() {
     );
 }
 
+fn parse_hex_digest(inp: &str) -> Result<[u8; 16], String> {
+    unhex_digest(inp.as_bytes()).ok_or_else(|| "invalid digest".to_string())
+}
+
 #[tokio::main]
 async fn main() {
     let opt: Opt = from_env();
@@ -150,7 +161,23 @@ async fn main() {
         .await
         .unwrap();
 
-    let bot = bot::Bot::new(stream, opt.join, opt.delay, opt.capacity);
+    let bot = Arc::new(bot::Bot::new(stream, opt.join, opt.delay, opt.capacity));
+
+    if let Some(mountpoint) = opt.fuse {
+        let file_store = file_store::FileStore::new(bot.clone());
+        let filesystem = fuse::CaFilesystem::new(Arc::new(file_store));
+        let mut mount_handle = fuse::mount(filesystem, &mountpoint).await;
+
+        tokio::select! {
+            h = &mut mount_handle => h.unwrap(),
+            b = bot.run() => {
+                _ = mount_handle.unmount().await;
+                b.unwrap();
+            }
+        };
+
+        return;
+    }
 
     bot.run().await.unwrap();
 }
