@@ -165,7 +165,7 @@ async fn main() {
 
     if let Some(mountpoint) = opt.fuse {
         let file_store = file_store::FileStore::new(bot.clone());
-        let filesystem = fuse::CaFilesystem::new(Arc::new(file_store));
+        let filesystem = fuse::CaFilesystem::new(Arc::new(file_store), opt.fuse_resume);
         let mut mount_handle = fuse::mount(filesystem, &mountpoint).await;
 
         tokio::select! {
