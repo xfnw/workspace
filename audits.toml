@@ -1492,3 +1492,11 @@ criteria = "no-sus-blobs"
 [[audits.fuse3]]
 version = "0.9.0"
 criteria = "skimmed"
+
+[[audits.which]]
+version = "8.0.2"
+criteria = "no-sus-blobs"
+
+[[audits.which]]
+version = "8.0.2"
+criteria = "skimmed"
