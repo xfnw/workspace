@@ -568,6 +568,14 @@ criteria = "no-sus-blobs"
 delta = "2.5.0 -> 2.6.0"
 criteria = "skimmed"
 
+[[audits.tokio-macros]]
+delta = "2.6.0 -> 2.7.0"
+criteria = "no-sus-blobs"
+
+[[audits.tokio-macros]]
+delta = "2.6.0 -> 2.7.0"
+criteria = "skimmed"
+
 [[audits.windows-sys]]
 version = "0.60.2"
 criteria = "too-big-to-fail"
