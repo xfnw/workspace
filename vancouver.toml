@@ -461,11 +461,11 @@ version = "3.4.1"
 criteria = "skimmed"
 
 [[exempt.libc]]
-version = "0.2.176"
+version = "0.2.186"
 criteria = "no-sus-blobs"
 
 [[exempt.libc]]
-version = "0.2.176"
+version = "0.2.186"
 criteria = "skimmed"
 
 [[exempt.libloading]]
@@ -845,11 +845,11 @@ version = "0.8.1"
 criteria = "skimmed"
 
 [[exempt.tokio]]
-version = "1.47.1"
+version = "1.52.1"
 criteria = "no-sus-blobs"
 
 [[exempt.tokio]]
-version = "1.47.1"
+version = "1.52.1"
 criteria = "skimmed"
 
 [[exempt.tokio-macros]]
@@ -1105,19 +1105,19 @@ version = "0.8.0"
 criteria = "skimmed"
 
 [[exempt.zerocopy]]
-version = "0.8.27"
+version = "0.8.48"
 criteria = "no-sus-blobs"
 
 [[exempt.zerocopy]]
-version = "0.8.27"
+version = "0.8.48"
 criteria = "skimmed"
 
 [[exempt.zerocopy-derive]]
-version = "0.8.27"
+version = "0.8.48"
 criteria = "no-sus-blobs"
 
 [[exempt.zerocopy-derive]]
-version = "0.8.27"
+version = "0.8.48"
 criteria = "skimmed"
 
 [[exempt.zerofrom]]
@@ -1329,11 +1329,11 @@ version = "0.3.3"
 criteria = "skimmed"
 
 [[exempt.tracing]]
-version = "0.1.43"
+version = "0.1.44"
 criteria = "no-sus-blobs"
 
 [[exempt.tracing]]
-version = "0.1.43"
+version = "0.1.44"
 criteria = "skimmed"
 
 [[exempt.tracing-core]]
