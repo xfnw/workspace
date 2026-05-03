@@ -1352,3 +1352,7 @@ criteria = "no-sus-blobs"
 [[audits.num_enum]]
 version = "0.7.6"
 criteria = "skimmed"
+
+[[audits.nix]]
+version = "0.30.1"
+criteria = "too-big-to-fail"
