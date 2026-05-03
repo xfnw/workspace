@@ -1476,3 +1476,11 @@ criteria = "no-sus-blobs"
 [[audits.cfg_aliases]]
 version = "0.2.1"
 criteria = "skimmed"
+
+[[audits.async-notify]]
+version = "0.3.4"
+criteria = "no-sus-blobs"
+
+[[audits.async-notify]]
+version = "0.3.4"
+criteria = "skimmed"
