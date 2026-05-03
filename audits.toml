@@ -1328,3 +1328,11 @@ criteria = "no-sus-blobs"
 [[audits.proc-macro-crate]]
 version = "3.4.0"
 criteria = "skimmed"
+
+[[audits.page_size]]
+version = "0.6.0"
+criteria = "no-sus-blobs"
+
+[[audits.page_size]]
+version = "0.6.0"
+criteria = "skimmed"
