@@ -10,11 +10,10 @@ use irc_connect::{
         pki_types::{CertificateDer, pem::PemObject},
     },
 };
-use std::{path::PathBuf, time::Duration};
+use std::path::PathBuf;
 use tokio::{
     io::{self, AsyncWriteExt},
     sync::broadcast,
-    time::sleep,
 };
 
 mod bot;

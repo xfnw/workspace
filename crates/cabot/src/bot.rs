@@ -8,7 +8,7 @@ use irc_connect::Stream;
 use irctokens::Line;
 use rand::{Rng, seq::SliceRandom, thread_rng};
 use std::{
-    sync::{Arc, Mutex},
+    sync::Mutex,
     time::{Duration, Instant},
 };
 use tokio::{
@@ -29,10 +29,10 @@ pub struct Bot {
 }
 
 impl Bot {
-    pub fn new(stream: Stream, join: String, delay: u64, capacity: usize) -> Arc<Self> {
+    pub fn new(stream: Stream, join: String, delay: u64, capacity: usize) -> Self {
         let (read, write) = io::split(stream);
 
-        Arc::new(Self {
+        Self {
             read: AMutex::new(BufReader::new(read)),
             write: AMutex::new(write),
             nick: Mutex::new(None),
@@ -41,7 +41,7 @@ impl Bot {
             last_sent: Mutex::new(Instant::now()),
             cache: Mutex::new(LruCache::new(capacity)),
             digest_firehose: broadcast::Sender::new(256),
-        })
+        }
     }
 
     pub async fn write_line(&self, line: &Line) -> Result<(), Error> {
