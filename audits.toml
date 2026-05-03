@@ -1336,3 +1336,19 @@ criteria = "no-sus-blobs"
 [[audits.page_size]]
 version = "0.6.0"
 criteria = "skimmed"
+
+[[audits.num_enum_derive]]
+version = "0.7.6"
+criteria = "no-sus-blobs"
+
+[[audits.num_enum_derive]]
+version = "0.7.6"
+criteria = "skimmed"
+
+[[audits.num_enum]]
+version = "0.7.6"
+criteria = "no-sus-blobs"
+
+[[audits.num_enum]]
+version = "0.7.6"
+criteria = "skimmed"
