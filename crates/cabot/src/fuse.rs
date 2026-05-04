@@ -574,7 +574,8 @@ pub async fn mount(fs: CaFilesystem, mount_path: &Path) -> MountHandle {
     mount_options
         .fs_name("cabotfs".to_string())
         .no_open_support(true)
-        .no_open_dir_support(true);
+        .no_open_dir_support(true)
+        .force_readdir_plus(true);
 
     Session::new(mount_options)
         .mount_with_unprivileged(fs, mount_path)
