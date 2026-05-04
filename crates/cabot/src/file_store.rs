@@ -15,7 +15,7 @@ impl FileStore {
         Self { bot }
     }
 
-    pub async fn store(&self, file: Vec<u8>) -> Result<[u8; 16], Error> {
+    pub async fn store(&self, file: &[u8]) -> Result<[u8; 16], Error> {
         let mut contents = BASE64.encode(file).into_bytes();
         if contents.is_empty() {
             // we cannot send an empty irc message.
