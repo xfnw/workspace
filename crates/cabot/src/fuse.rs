@@ -254,6 +254,38 @@ impl Filesystem for CaFilesystem {
         })
     }
 
+    async fn unlink(&self, _req: Request, parent: Inode, name: &OsStr) -> fuse3::Result<()> {
+        let DataKind::Directory(parent_data) = &self.get(parent).data else {
+            return Err(libc::ENOTDIR.into());
+        };
+        self.realize(parent).await.map_err(|_| libc::EIO)?;
+        let mut parent_data = parent_data.write().await;
+        let parent_entries = parent_data.get_mut().unwrap();
+        let mut anything_deleted = false;
+
+        // naughtily skip checking if the thing we're unlinking is a directory,
+        // since linux (or maybe the rm implementation im using? idk?) already
+        // checks that for us, and we can just reuse this function for rmdir too
+        parent_entries.retain(|e| {
+            if e.name == name {
+                false
+            } else {
+                anything_deleted = true;
+                true
+            }
+        });
+
+        if anything_deleted {
+            Ok(())
+        } else {
+            Err(libc::ENOENT.into())
+        }
+    }
+
+    async fn rmdir(&self, req: Request, parent: Inode, name: &OsStr) -> fuse3::Result<()> {
+        self.unlink(req, parent, name).await
+    }
+
     #[expect(clippy::cast_possible_truncation)]
     #[expect(clippy::cast_possible_wrap)]
     async fn readdirplus(
