@@ -15,25 +15,25 @@ use tokio::sync::RwLock;
 
 pub struct CaFilesystem {
     store: Arc<FileStore>,
-    inodes: AppendOnlyVec<RwLock<Entry>>,
+    inodes: AppendOnlyVec<Entry>,
 }
 
 impl CaFilesystem {
     pub fn new(store: Arc<FileStore>, resume: Option<[u8; 16]>) -> Self {
         let inodes = AppendOnlyVec::new();
-        inodes.push(RwLock::new(Entry {
+        inodes.push(Entry {
             parent: 0,
-            data: DataKind::Directory(if let Some(hash) = resume {
+            data: DataKind::Directory(RwLock::new(if let Some(hash) = resume {
                 DataStatus::Placeholder { hash }
             } else {
                 DataStatus::Dirty { body: vec![] }
-            }),
-        }));
+            })),
+        });
         Self { store, inodes }
     }
 
     async fn sync(&self, inode: usize) -> Result<[u8; 16], Error> {
-        self.inodes[inode].write().await.sync(self).await
+        self.inodes[inode].sync(self).await
     }
 }
 
@@ -88,17 +88,17 @@ struct Entry {
 }
 
 impl Entry {
-    async fn sync(&mut self, fs: &CaFilesystem) -> Result<[u8; 16], Error> {
-        match &mut self.data {
-            DataKind::File(status) => status.sync(fs).await,
-            DataKind::Directory(status) => status.sync(fs).await,
+    async fn sync(&self, fs: &CaFilesystem) -> Result<[u8; 16], Error> {
+        match &self.data {
+            DataKind::File(status) => status.write().await.sync(fs).await,
+            DataKind::Directory(status) => status.write().await.sync(fs).await,
         }
     }
 }
 
 enum DataKind {
-    File(DataStatus<u8>),
-    Directory(DataStatus<DirEntry>),
+    File(RwLock<DataStatus<u8>>),
+    Directory(RwLock<DataStatus<DirEntry>>),
 }
 
 enum DataStatus<T> {
@@ -148,7 +148,7 @@ impl DataStatus<DirEntry> {
 
                 for DirEntry { name, inode } in body.iter() {
                     let hash = Box::pin(fs.sync(*inode)).await?;
-                    let kind = match fs.inodes[*inode].read().await.data {
+                    let kind = match fs.inodes[*inode].data {
                         DataKind::File(_) => directory::DirectoryEntryKind::File,
                         DataKind::Directory(_) => directory::DirectoryEntryKind::Subdirectory,
                     };
