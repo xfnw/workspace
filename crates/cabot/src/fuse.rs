@@ -191,6 +191,38 @@ impl Filesystem for CaFilesystem {
             generation: 0,
         })
     }
+
+    async fn getattr(
+        &self,
+        _req: Request,
+        inode: u64,
+        _fh: Option<u64>,
+        _flags: u32,
+    ) -> fuse3::Result<ReplyAttr> {
+        Ok(ReplyAttr {
+            ttl: TTL,
+            attr: self.attr(inode as usize).await.map_err(|_| libc::EIO)?,
+        })
+    }
+
+    async fn setattr(
+        &self,
+        req: Request,
+        inode: u64,
+        fh: Option<u64>,
+        set_attr: SetAttr,
+    ) -> fuse3::Result<ReplyAttr> {
+        if let Some(new_len) = set_attr.size {
+            let DataKind::File(lock) = &self.get(inode as usize).data else {
+                return Err(libc::EISDIR.into());
+            };
+            self.realize(inode as usize).await.map_err(|_| libc::EIO)?;
+            let mut data = lock.write().await;
+            data.get_mut().unwrap().truncate(new_len as usize);
+        }
+
+        self.getattr(req, inode, fh, 0).await
+    }
 }
 
 struct Entry {
