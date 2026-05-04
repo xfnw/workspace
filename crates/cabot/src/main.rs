@@ -17,6 +17,7 @@ use tokio::{
 };
 
 mod bot;
+mod directory;
 mod file_store;
 mod fuse;
 
