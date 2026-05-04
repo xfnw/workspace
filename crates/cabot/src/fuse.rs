@@ -484,7 +484,7 @@ impl<T> DataStatus<T> {
         }
 
         // leave stuff in a somewhat reasonable state just in case our panic gets caught
-        _ = std::mem::replace(self, old);
+        *self = old;
         panic!("tried to add a hash to non-dirty data");
     }
 
@@ -510,7 +510,7 @@ impl<T> DataStatus<T> {
                 let Self::Clean { body, .. } = old else {
                     unreachable!();
                 };
-                _ = std::mem::replace(self, Self::Dirty { body });
+                *self = Self::Dirty { body };
                 let Self::Dirty { body, .. } = self else {
                     unreachable!();
                 };
