@@ -35,6 +35,10 @@ impl CaFilesystem {
     async fn sync(&self, inode: usize) -> Result<[u8; 16], Error> {
         self.inodes[inode].sync(self).await
     }
+
+    async fn realize(&self, inode: usize) -> Result<(), Error> {
+        self.inodes[inode].realize(self, inode).await
+    }
 }
 
 impl Filesystem for CaFilesystem {
@@ -94,6 +98,48 @@ impl Entry {
             DataKind::Directory(status) => status.write().await.sync(fs).await,
         }
     }
+
+    async fn realize(&self, fs: &CaFilesystem, my_inode: usize) -> Result<(), Error> {
+        let placeholder_hash = match &self.data {
+            DataKind::File(lock) => match *lock.read().await {
+                DataStatus::Placeholder { hash } => hash,
+                DataStatus::Clean { .. } | DataStatus::Dirty { .. } => return Ok(()),
+            },
+            DataKind::Directory(lock) => match *lock.read().await {
+                DataStatus::Placeholder { hash } => hash,
+                DataStatus::Clean { .. } | DataStatus::Dirty { .. } => return Ok(()),
+            },
+        };
+
+        let serialized = fs.store.retrieve(placeholder_hash).await?;
+
+        match &self.data {
+            DataKind::File(lock) => lock.write().await.overwrite_placeholder(serialized),
+            DataKind::Directory(lock) => {
+                let dir = directory::Directory::parse(&serialized).ok_or(Error::ParseDirectory)?;
+                let mut entries = vec![];
+
+                for directory::DirectoryEntry { hash, kind, name } in dir.entries {
+                    let inode = fs.inodes.push(Self {
+                        parent: my_inode,
+                        data: match kind {
+                            directory::DirectoryEntryKind::File => {
+                                DataKind::File(RwLock::new(DataStatus::Placeholder { hash }))
+                            }
+                            directory::DirectoryEntryKind::Subdirectory => {
+                                DataKind::Directory(RwLock::new(DataStatus::Placeholder { hash }))
+                            }
+                        },
+                    });
+                    entries.push(DirEntry { name, inode });
+                }
+
+                lock.write().await.overwrite_placeholder(entries);
+            }
+        }
+
+        Ok(())
+    }
 }
 
 enum DataKind {
@@ -123,6 +169,13 @@ impl<T> DataStatus<T> {
         // leave stuff in a somewhat reasonable state just in case our panic gets caught
         _ = std::mem::replace(self, old);
         panic!("tried to add a hash to non-dirty data");
+    }
+
+    fn overwrite_placeholder(&mut self, body: Vec<T>) {
+        if let Self::Placeholder { hash } = self {
+            let hash = *hash;
+            *self = Self::Clean { hash, body };
+        }
     }
 }
 

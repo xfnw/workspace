@@ -66,6 +66,7 @@ enum Error {
     FileTooManyHashes,
     #[err(from)]
     Base64Decode(base64::DecodeError),
+    ParseDirectory,
 }
 
 fn tohex_nibble(n: u8) -> u8 {
