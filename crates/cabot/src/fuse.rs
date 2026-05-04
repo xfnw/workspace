@@ -30,7 +30,7 @@ impl CaFilesystem {
     pub fn new(store: Arc<FileStore>, resume: Option<[u8; 16]>) -> Self {
         let inodes = AppendOnlyVec::new();
         inodes.push(Entry {
-            parent: 0,
+            parent: 1,
             data: DataKind::Directory(RwLock::new(if let Some(hash) = resume {
                 DataStatus::Placeholder { hash }
             } else {
@@ -40,17 +40,25 @@ impl CaFilesystem {
         Self { store, inodes }
     }
 
+    fn get(&self, inode: usize) -> &Entry {
+        &self.inodes[inode - 1]
+    }
+
+    fn push(&self, entry: Entry) -> usize {
+        self.inodes.push(entry) + 1
+    }
+
     async fn sync(&self, inode: usize) -> Result<[u8; 16], Error> {
-        self.inodes[inode].sync(self).await
+        self.get(inode).sync(self).await
     }
 
     async fn realize(&self, inode: usize) -> Result<(), Error> {
-        self.inodes[inode].realize(self, inode).await
+        self.get(inode).realize(self, inode).await
     }
 
     async fn attr(&self, inode: usize) -> Result<FileAttr, Error> {
         self.realize(inode).await?;
-        let data = &self.inodes[inode].data;
+        let data = &self.get(inode).data;
         let len = match data {
             DataKind::File(lock) => lock.read().await.get().unwrap().len(),
             DataKind::Directory(lock) => lock.read().await.get().unwrap().len(),
@@ -90,7 +98,7 @@ impl Filesystem for CaFilesystem {
     }
 
     async fn destroy(&self, _req: Request) {
-        if let Ok(hash) = self.sync(0).await {
+        if let Ok(hash) = self.sync(1).await {
             use std::io::{Write, stdout};
             let mut p = stdout();
             p.write_all(&tohex_digest(hash)).unwrap();
@@ -135,7 +143,7 @@ impl Filesystem for CaFilesystem {
         flags: u32,
     ) -> fuse3::Result<ReplyCreated> {
         let parent = parent as usize;
-        let DataKind::Directory(parent_data) = &self.inodes[parent].data else {
+        let DataKind::Directory(parent_data) = &self.get(parent).data else {
             return Err(libc::ENOTDIR.into());
         };
         self.realize(parent).await.map_err(|_| libc::EIO)?;
@@ -144,7 +152,7 @@ impl Filesystem for CaFilesystem {
         if parent_entries.iter().any(|e| e.name == name) {
             return Err(libc::EEXIST.into());
         }
-        let inode = self.inodes.push(Entry {
+        let inode = self.push(Entry {
             parent,
             data: DataKind::File(RwLock::new(DataStatus::Dirty { body: vec![] })),
         });
@@ -163,7 +171,7 @@ impl Filesystem for CaFilesystem {
 
     async fn lookup(&self, _req: Request, parent: u64, name: &OsStr) -> fuse3::Result<ReplyEntry> {
         let parent = parent as usize;
-        let DataKind::Directory(parent_data) = &self.inodes[parent].data else {
+        let DataKind::Directory(parent_data) = &self.get(parent).data else {
             return Err(libc::ENOTDIR.into());
         };
         self.realize(parent).await.map_err(|_| libc::EIO)?;
@@ -219,7 +227,7 @@ impl Entry {
                 let mut entries = vec![];
 
                 for directory::DirectoryEntry { hash, kind, name } in dir.entries {
-                    let inode = fs.inodes.push(Self {
+                    let inode = fs.push(Self {
                         parent: my_inode,
                         data: match kind {
                             directory::DirectoryEntryKind::File => {
@@ -325,7 +333,7 @@ impl DataStatus<DirEntry> {
 
                 for DirEntry { name, inode } in body.iter() {
                     let hash = Box::pin(fs.sync(*inode)).await?;
-                    let kind = match fs.inodes[*inode].data {
+                    let kind = match fs.get(*inode).data {
                         DataKind::File(_) => directory::DirectoryEntryKind::File,
                         DataKind::Directory(_) => directory::DirectoryEntryKind::Subdirectory,
                     };
