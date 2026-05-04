@@ -221,6 +221,38 @@ impl Filesystem for CaFilesystem {
 
         self.getattr(req, inode, fh, 0).await
     }
+
+    async fn mkdir(
+        &self,
+        _req: Request,
+        parent: Inode,
+        name: &OsStr,
+        _mode: u32,
+        _umask: u32,
+    ) -> fuse3::Result<ReplyEntry> {
+        let DataKind::Directory(parent_data) = &self.get(parent).data else {
+            return Err(libc::ENOTDIR.into());
+        };
+        self.realize(parent).await.map_err(|_| libc::EIO)?;
+        let mut parent_data = parent_data.write().await;
+        let parent_entries = parent_data.get_mut().unwrap();
+        if parent_entries.iter().any(|e| e.name == name) {
+            return Err(libc::EEXIST.into());
+        }
+        let inode = self.push(Entry {
+            parent,
+            data: DataKind::Directory(RwLock::new(DataStatus::Dirty { body: vec![] })),
+        });
+        parent_entries.push(DirEntry {
+            name: name.to_os_string(),
+            inode,
+        });
+        Ok(ReplyEntry {
+            ttl: TTL,
+            attr: self.attr(inode).await.map_err(|_| libc::EIO)?,
+            generation: 0,
+        })
+    }
 }
 
 struct Entry {
