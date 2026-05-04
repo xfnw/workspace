@@ -253,6 +253,70 @@ impl Filesystem for CaFilesystem {
             generation: 0,
         })
     }
+
+    #[expect(clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_possible_wrap)]
+    async fn readdirplus(
+        &self,
+        _req: Request,
+        // why is this called parent in the trait?
+        inode: Inode,
+        _fh: u64,
+        offset: u64,
+        _lock_owner: u64,
+    ) -> fuse3::Result<
+        ReplyDirectoryPlus<
+            impl futures_util::Stream<Item = fuse3::Result<DirectoryEntryPlus>> + Send,
+        >,
+    > {
+        let entry = self.get(inode);
+        let DataKind::Directory(data) = &entry.data else {
+            return Err(libc::ENOTDIR.into());
+        };
+
+        let mut entries = vec![
+            DirectoryEntryPlus {
+                inode,
+                generation: 0,
+                kind: FileType::Directory,
+                name: OsString::from("."),
+                offset: 1,
+                attr: self.attr(inode).await.map_err(|_| libc::EIO)?,
+                entry_ttl: TTL,
+                attr_ttl: TTL,
+            },
+            DirectoryEntryPlus {
+                inode: entry.parent,
+                generation: 0,
+                kind: FileType::Directory,
+                name: OsString::from(".."),
+                offset: 2,
+                attr: self.attr(entry.parent).await.map_err(|_| libc::EIO)?,
+                entry_ttl: TTL,
+                attr_ttl: TTL,
+            },
+        ];
+
+        for (i, DirEntry { name, inode }) in data.read().await.get().unwrap().iter().enumerate() {
+            entries.push(DirectoryEntryPlus {
+                inode: *inode,
+                generation: 0,
+                kind: match self.get(*inode).data {
+                    DataKind::File(_) => FileType::RegularFile,
+                    DataKind::Directory(_) => FileType::Directory,
+                },
+                name: name.clone(),
+                offset: i as i64 + 3,
+                attr: self.attr(*inode).await.map_err(|_| libc::EIO)?,
+                entry_ttl: TTL,
+                attr_ttl: TTL,
+            });
+        }
+
+        Ok(ReplyDirectoryPlus {
+            entries: futures_util::stream::iter(entries.into_iter().skip(offset as usize).map(Ok)),
+        })
+    }
 }
 
 struct Entry {
