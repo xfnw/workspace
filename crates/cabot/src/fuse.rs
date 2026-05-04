@@ -10,8 +10,16 @@ use fuse3::{
     MountOptions,
     raw::{MountHandle, prelude::*},
 };
-use std::{ffi::OsString, num::NonZeroU32, path::Path, sync::Arc};
+use std::{
+    ffi::{OsStr, OsString},
+    num::NonZeroU32,
+    path::Path,
+    sync::Arc,
+    time::UNIX_EPOCH,
+};
 use tokio::sync::RwLock;
+
+const TTL: std::time::Duration = std::time::Duration::from_secs(1);
 
 pub struct CaFilesystem {
     store: Arc<FileStore>,
@@ -38,6 +46,39 @@ impl CaFilesystem {
 
     async fn realize(&self, inode: usize) -> Result<(), Error> {
         self.inodes[inode].realize(self, inode).await
+    }
+
+    async fn attr(&self, inode: usize) -> Result<FileAttr, Error> {
+        self.realize(inode).await?;
+        let data = &self.inodes[inode].data;
+        let len = match data {
+            DataKind::File(lock) => lock.read().await.get().unwrap().len(),
+            DataKind::Directory(lock) => lock.read().await.get().unwrap().len(),
+        } as u64;
+        Ok(FileAttr {
+            ino: inode as u64,
+            size: len,
+            blocks: len.div_ceil(4096),
+            atime: UNIX_EPOCH.into(),
+            mtime: UNIX_EPOCH.into(),
+            ctime: UNIX_EPOCH.into(),
+            kind: match data {
+                DataKind::File(_) => FileType::RegularFile,
+                DataKind::Directory(_) => FileType::Directory,
+            },
+            perm: match data {
+                DataKind::File(_) => 0o666,
+                DataKind::Directory(_) => 0o777,
+            },
+            nlink: match data {
+                DataKind::File(_) => 1,
+                DataKind::Directory(_) => 3,
+            },
+            uid: 0,
+            gid: 0,
+            rdev: 0,
+            blksize: 4096,
+        })
     }
 }
 
@@ -83,6 +124,64 @@ impl Filesystem for CaFilesystem {
             return Err(libc::EIO.into());
         }
         Ok(())
+    }
+
+    async fn create(
+        &self,
+        _req: Request,
+        parent: u64,
+        name: &OsStr,
+        _mode: u32,
+        flags: u32,
+    ) -> fuse3::Result<ReplyCreated> {
+        let parent = parent as usize;
+        let DataKind::Directory(parent_data) = &self.inodes[parent].data else {
+            return Err(libc::ENOTDIR.into());
+        };
+        self.realize(parent).await.map_err(|_| libc::EIO)?;
+        let mut parent_data = parent_data.write().await;
+        let parent_entries = parent_data.get_mut().unwrap();
+        if parent_entries.iter().any(|e| e.name == name) {
+            return Err(libc::EEXIST.into());
+        }
+        let inode = self.inodes.push(Entry {
+            parent,
+            data: DataKind::File(RwLock::new(DataStatus::Dirty { body: vec![] })),
+        });
+        parent_entries.push(DirEntry {
+            name: name.to_os_string(),
+            inode,
+        });
+        Ok(ReplyCreated {
+            ttl: TTL,
+            attr: self.attr(inode).await.map_err(|_| libc::EIO)?,
+            generation: 0,
+            fh: 0,
+            flags,
+        })
+    }
+
+    async fn lookup(&self, _req: Request, parent: u64, name: &OsStr) -> fuse3::Result<ReplyEntry> {
+        let parent = parent as usize;
+        let DataKind::Directory(parent_data) = &self.inodes[parent].data else {
+            return Err(libc::ENOTDIR.into());
+        };
+        self.realize(parent).await.map_err(|_| libc::EIO)?;
+        let parent_data = parent_data.read().await;
+        let parent_entries = parent_data.get().unwrap();
+        let Some(inode) = parent_entries
+            .iter()
+            .find(|e| e.name == name)
+            .map(|e| e.inode)
+        else {
+            return Err(libc::ENOENT.into());
+        };
+
+        Ok(ReplyEntry {
+            ttl: TTL,
+            attr: self.attr(inode).await.map_err(|_| libc::EIO)?,
+            generation: 0,
+        })
     }
 }
 
@@ -177,6 +276,31 @@ impl<T> DataStatus<T> {
             *self = Self::Clean { hash, body };
         }
     }
+
+    fn get(&self) -> Option<&[T]> {
+        match self {
+            Self::Placeholder { .. } => None,
+            Self::Clean { body, .. } | Self::Dirty { body } => Some(body),
+        }
+    }
+
+    fn get_mut(&mut self) -> Option<&mut Vec<T>> {
+        match self {
+            Self::Placeholder { .. } => None,
+            Self::Clean { .. } => {
+                let old = std::mem::replace(self, Self::Placeholder { hash: [0; 16] });
+                let Self::Clean { body, .. } = old else {
+                    unreachable!();
+                };
+                _ = std::mem::replace(self, Self::Dirty { body });
+                let Self::Dirty { body, .. } = self else {
+                    unreachable!();
+                };
+                Some(body)
+            }
+            Self::Dirty { body } => Some(body),
+        }
+    }
 }
 
 impl DataStatus<u8> {
@@ -227,7 +351,10 @@ struct DirEntry {
 
 pub async fn mount(fs: CaFilesystem, mount_path: &Path) -> MountHandle {
     let mut mount_options = MountOptions::default();
-    mount_options.fs_name("cabotfs".to_string());
+    mount_options
+        .fs_name("cabotfs".to_string())
+        .no_open_support(true)
+        .no_open_dir_support(true);
 
     Session::new(mount_options)
         .mount_with_unprivileged(fs, mount_path)
