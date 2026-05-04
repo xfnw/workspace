@@ -141,12 +141,14 @@ impl Filesystem for CaFilesystem {
         _mode: u32,
         flags: u32,
     ) -> fuse3::Result<ReplyCreated> {
-        let DataKind::Directory(parent_data) = &self.get(parent).data else {
+        let entry = self.get(parent);
+        let DataKind::Directory(parent_data) = &entry.data else {
             return Err(libc::ENOTDIR.into());
         };
         self.realize(parent).await.map_err(|_| libc::EIO)?;
+        entry.mark_dirty(self).await;
         let mut parent_data = parent_data.write().await;
-        let parent_entries = parent_data.get_mut().unwrap();
+        let parent_entries = parent_data.get_mut_dirty().unwrap();
         if parent_entries.iter().any(|e| e.name == name) {
             return Err(libc::EEXIST.into());
         }
@@ -210,13 +212,15 @@ impl Filesystem for CaFilesystem {
         set_attr: SetAttr,
     ) -> fuse3::Result<ReplyAttr> {
         if let Some(new_len) = set_attr.size {
-            let DataKind::File(lock) = &self.get(inode).data else {
+            let entry = self.get(inode);
+            let DataKind::File(lock) = &entry.data else {
                 return Err(libc::EISDIR.into());
             };
             self.realize(inode).await.map_err(|_| libc::EIO)?;
+            entry.mark_dirty(self).await;
             let mut data = lock.write().await;
             #[expect(clippy::cast_possible_truncation)]
-            data.get_mut().unwrap().truncate(new_len as usize);
+            data.get_mut_dirty().unwrap().truncate(new_len as usize);
         }
 
         self.getattr(req, inode, fh, 0).await
@@ -230,12 +234,14 @@ impl Filesystem for CaFilesystem {
         _mode: u32,
         _umask: u32,
     ) -> fuse3::Result<ReplyEntry> {
-        let DataKind::Directory(parent_data) = &self.get(parent).data else {
+        let parent_entry = self.get(parent);
+        let DataKind::Directory(parent_data) = &parent_entry.data else {
             return Err(libc::ENOTDIR.into());
         };
         self.realize(parent).await.map_err(|_| libc::EIO)?;
+        parent_entry.mark_dirty(self).await;
         let mut parent_data = parent_data.write().await;
-        let parent_entries = parent_data.get_mut().unwrap();
+        let parent_entries = parent_data.get_mut_dirty().unwrap();
         if parent_entries.iter().any(|e| e.name == name) {
             return Err(libc::EEXIST.into());
         }
@@ -255,12 +261,14 @@ impl Filesystem for CaFilesystem {
     }
 
     async fn unlink(&self, _req: Request, parent: Inode, name: &OsStr) -> fuse3::Result<()> {
-        let DataKind::Directory(parent_data) = &self.get(parent).data else {
+        let parent_entry = self.get(parent);
+        let DataKind::Directory(parent_data) = &parent_entry.data else {
             return Err(libc::ENOTDIR.into());
         };
         self.realize(parent).await.map_err(|_| libc::EIO)?;
+        parent_entry.mark_dirty(self).await;
         let mut parent_data = parent_data.write().await;
-        let parent_entries = parent_data.get_mut().unwrap();
+        let parent_entries = parent_data.get_mut_dirty().unwrap();
         let mut anything_deleted = false;
 
         // naughtily skip checking if the thing we're unlinking is a directory,
@@ -320,12 +328,14 @@ impl Filesystem for CaFilesystem {
         _write_flags: u32,
         _flags: u32,
     ) -> fuse3::Result<ReplyWrite> {
-        let DataKind::File(file) = &self.get(inode).data else {
+        let entry = self.get(inode);
+        let DataKind::File(file) = &entry.data else {
             return Err(libc::EISDIR.into());
         };
         self.realize(inode).await.map_err(|_| libc::EIO)?;
+        entry.mark_dirty(self).await;
         let mut file = file.write().await;
-        let file = file.get_mut().unwrap();
+        let file = file.get_mut_dirty().unwrap();
 
         if file.len() < data.len() + offset as usize {
             file.resize(data.len() + offset as usize, 0);
@@ -457,6 +467,15 @@ impl Entry {
 
         Ok(())
     }
+
+    async fn mark_dirty(&self, fs: &CaFilesystem) {
+        if match &self.data {
+            DataKind::File(lock) => lock.write().await.unpropagated_mark_dirty(),
+            DataKind::Directory(lock) => lock.write().await.unpropagated_mark_dirty(),
+        } {
+            Box::pin(fs.get(self.parent).mark_dirty(fs)).await;
+        }
+    }
 }
 
 enum DataKind {
@@ -502,21 +521,25 @@ impl<T> DataStatus<T> {
         }
     }
 
-    fn get_mut(&mut self) -> Option<&mut Vec<T>> {
+    fn unpropagated_mark_dirty(&mut self) -> bool {
         match self {
-            Self::Placeholder { .. } => None,
+            Self::Placeholder { .. } => panic!("tried to mark placeholder dirty"),
             Self::Clean { .. } => {
                 let old = std::mem::replace(self, Self::Placeholder { hash: [0; 16] });
                 let Self::Clean { body, .. } = old else {
                     unreachable!();
                 };
                 *self = Self::Dirty { body };
-                let Self::Dirty { body, .. } = self else {
-                    unreachable!();
-                };
-                Some(body)
+                true
             }
+            Self::Dirty { .. } => false,
+        }
+    }
+
+    fn get_mut_dirty(&mut self) -> Option<&mut Vec<T>> {
+        match self {
             Self::Dirty { body } => Some(body),
+            _ => None,
         }
     }
 }
