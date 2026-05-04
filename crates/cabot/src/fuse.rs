@@ -287,6 +287,58 @@ impl Filesystem for CaFilesystem {
     }
 
     #[expect(clippy::cast_possible_truncation)]
+    async fn read(
+        &self,
+        _req: Request,
+        inode: Inode,
+        _fh: u64,
+        offset: u64,
+        size: u32,
+    ) -> fuse3::Result<ReplyData> {
+        let DataKind::File(data) = &self.get(inode).data else {
+            return Err(libc::EISDIR.into());
+        };
+        self.realize(inode).await.map_err(|_| libc::EIO)?;
+        let data = data.read().await;
+        let data = data.get().unwrap();
+
+        Ok(ReplyData {
+            data: data[offset as usize..std::cmp::min(offset as usize + size as usize, data.len())]
+                .to_vec()
+                .into(),
+        })
+    }
+
+    #[expect(clippy::cast_possible_truncation)]
+    async fn write(
+        &self,
+        _req: Request,
+        inode: Inode,
+        _fh: u64,
+        offset: u64,
+        data: &[u8],
+        _write_flags: u32,
+        _flags: u32,
+    ) -> fuse3::Result<ReplyWrite> {
+        let DataKind::File(file) = &self.get(inode).data else {
+            return Err(libc::EISDIR.into());
+        };
+        self.realize(inode).await.map_err(|_| libc::EIO)?;
+        let mut file = file.write().await;
+        let file = file.get_mut().unwrap();
+
+        if file.len() < data.len() + offset as usize {
+            file.resize(data.len() + offset as usize, 0);
+        }
+
+        file[offset as usize..data.len() + offset as usize].copy_from_slice(data);
+
+        Ok(ReplyWrite {
+            written: data.len() as u32,
+        })
+    }
+
+    #[expect(clippy::cast_possible_truncation)]
     #[expect(clippy::cast_possible_wrap)]
     async fn readdirplus(
         &self,
