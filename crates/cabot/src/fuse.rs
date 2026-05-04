@@ -2,12 +2,10 @@
 //
 // SPDX-License-Identifier: MIT
 
-#![allow(clippy::cast_possible_truncation)]
-
 use crate::{Error, directory, file_store::FileStore, tohex_digest};
 use append_only_vec::AppendOnlyVec;
 use fuse3::{
-    MountOptions,
+    Inode, MountOptions,
     raw::{MountHandle, prelude::*},
 };
 use std::{
@@ -40,23 +38,24 @@ impl CaFilesystem {
         Self { store, inodes }
     }
 
-    fn get(&self, inode: usize) -> &Entry {
-        &self.inodes[inode - 1]
+    fn get(&self, inode: Inode) -> &Entry {
+        #[expect(clippy::cast_possible_truncation)]
+        &self.inodes[inode as usize - 1]
     }
 
-    fn push(&self, entry: Entry) -> usize {
-        self.inodes.push(entry) + 1
+    fn push(&self, entry: Entry) -> Inode {
+        self.inodes.push(entry) as Inode + 1
     }
 
-    async fn sync(&self, inode: usize) -> Result<[u8; 16], Error> {
+    async fn sync(&self, inode: Inode) -> Result<[u8; 16], Error> {
         self.get(inode).sync(self).await
     }
 
-    async fn realize(&self, inode: usize) -> Result<(), Error> {
+    async fn realize(&self, inode: Inode) -> Result<(), Error> {
         self.get(inode).realize(self, inode).await
     }
 
-    async fn attr(&self, inode: usize) -> Result<FileAttr, Error> {
+    async fn attr(&self, inode: Inode) -> Result<FileAttr, Error> {
         self.realize(inode).await?;
         let data = &self.get(inode).data;
         let len = match data {
@@ -64,7 +63,7 @@ impl CaFilesystem {
             DataKind::Directory(lock) => lock.read().await.get().unwrap().len(),
         } as u64;
         Ok(FileAttr {
-            ino: inode as u64,
+            ino: inode,
             size: len,
             blocks: len.div_ceil(4096),
             atime: UNIX_EPOCH.into(),
@@ -111,11 +110,11 @@ impl Filesystem for CaFilesystem {
     async fn fsync(
         &self,
         _req: Request,
-        inode: u64,
+        inode: Inode,
         _fh: u64,
         _datasync: bool,
     ) -> fuse3::Result<()> {
-        if self.sync(inode as usize).await.is_err() {
+        if self.sync(inode).await.is_err() {
             return Err(libc::EIO.into());
         }
         Ok(())
@@ -124,11 +123,11 @@ impl Filesystem for CaFilesystem {
     async fn fsyncdir(
         &self,
         _req: Request,
-        inode: u64,
+        inode: Inode,
         _fh: u64,
         _datasync: bool,
     ) -> fuse3::Result<()> {
-        if self.sync(inode as usize).await.is_err() {
+        if self.sync(inode).await.is_err() {
             return Err(libc::EIO.into());
         }
         Ok(())
@@ -142,7 +141,6 @@ impl Filesystem for CaFilesystem {
         _mode: u32,
         flags: u32,
     ) -> fuse3::Result<ReplyCreated> {
-        let parent = parent as usize;
         let DataKind::Directory(parent_data) = &self.get(parent).data else {
             return Err(libc::ENOTDIR.into());
         };
@@ -170,7 +168,6 @@ impl Filesystem for CaFilesystem {
     }
 
     async fn lookup(&self, _req: Request, parent: u64, name: &OsStr) -> fuse3::Result<ReplyEntry> {
-        let parent = parent as usize;
         let DataKind::Directory(parent_data) = &self.get(parent).data else {
             return Err(libc::ENOTDIR.into());
         };
@@ -195,29 +192,30 @@ impl Filesystem for CaFilesystem {
     async fn getattr(
         &self,
         _req: Request,
-        inode: u64,
+        inode: Inode,
         _fh: Option<u64>,
         _flags: u32,
     ) -> fuse3::Result<ReplyAttr> {
         Ok(ReplyAttr {
             ttl: TTL,
-            attr: self.attr(inode as usize).await.map_err(|_| libc::EIO)?,
+            attr: self.attr(inode).await.map_err(|_| libc::EIO)?,
         })
     }
 
     async fn setattr(
         &self,
         req: Request,
-        inode: u64,
+        inode: Inode,
         fh: Option<u64>,
         set_attr: SetAttr,
     ) -> fuse3::Result<ReplyAttr> {
         if let Some(new_len) = set_attr.size {
-            let DataKind::File(lock) = &self.get(inode as usize).data else {
+            let DataKind::File(lock) = &self.get(inode).data else {
                 return Err(libc::EISDIR.into());
             };
-            self.realize(inode as usize).await.map_err(|_| libc::EIO)?;
+            self.realize(inode).await.map_err(|_| libc::EIO)?;
             let mut data = lock.write().await;
+            #[expect(clippy::cast_possible_truncation)]
             data.get_mut().unwrap().truncate(new_len as usize);
         }
 
@@ -226,7 +224,7 @@ impl Filesystem for CaFilesystem {
 }
 
 struct Entry {
-    parent: usize,
+    parent: Inode,
     data: DataKind,
 }
 
@@ -238,7 +236,7 @@ impl Entry {
         }
     }
 
-    async fn realize(&self, fs: &CaFilesystem, my_inode: usize) -> Result<(), Error> {
+    async fn realize(&self, fs: &CaFilesystem, my_inode: Inode) -> Result<(), Error> {
         let placeholder_hash = match &self.data {
             DataKind::File(lock) => match *lock.read().await {
                 DataStatus::Placeholder { hash } => hash,
@@ -386,7 +384,7 @@ impl DataStatus<DirEntry> {
 
 struct DirEntry {
     name: OsString,
-    inode: usize,
+    inode: Inode,
 }
 
 pub async fn mount(fs: CaFilesystem, mount_path: &Path) -> MountHandle {
