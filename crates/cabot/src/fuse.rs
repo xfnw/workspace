@@ -107,32 +107,6 @@ impl Filesystem for CaFilesystem {
         _ = self.store.shutdown().await;
     }
 
-    async fn fsync(
-        &self,
-        _req: Request,
-        inode: Inode,
-        _fh: u64,
-        _datasync: bool,
-    ) -> fuse3::Result<()> {
-        if self.sync(inode).await.is_err() {
-            return Err(libc::EIO.into());
-        }
-        Ok(())
-    }
-
-    async fn fsyncdir(
-        &self,
-        _req: Request,
-        inode: Inode,
-        _fh: u64,
-        _datasync: bool,
-    ) -> fuse3::Result<()> {
-        if self.sync(inode).await.is_err() {
-            return Err(libc::EIO.into());
-        }
-        Ok(())
-    }
-
     async fn create(
         &self,
         _req: Request,
