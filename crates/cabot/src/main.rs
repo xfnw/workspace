@@ -36,6 +36,9 @@ struct Opt {
     /// hash to resume fuse filesystem state from
     #[argh(option, from_str_fn(parse_hex_digest))]
     fuse_resume: Option<[u8; 16]>,
+    /// seconds between automatically syncing fuse filesystem
+    #[argh(option, default = "9")]
+    fuse_interval: u64,
     /// nickname to use
     #[argh(option, short = 'n', default = "\"ca\".to_string()")]
     nick: String,
@@ -168,7 +171,17 @@ async fn main() {
     if let Some(mountpoint) = opt.fuse {
         let file_store = file_store::FileStore::new(bot.clone());
         let filesystem = fuse::CaFilesystem::new(Arc::new(file_store), opt.fuse_resume);
-        let mut mount_handle = fuse::mount(filesystem, &mountpoint).await;
+        let mut mount_handle = fuse::mount(filesystem.clone(), &mountpoint).await;
+
+        tokio::spawn(async move {
+            let duration = std::time::Duration::from_secs(opt.fuse_interval);
+            loop {
+                tokio::time::sleep(duration).await;
+                if filesystem.sync().await.is_err() {
+                    break;
+                }
+            }
+        });
 
         tokio::select! {
             h = &mut mount_handle => h.unwrap(),

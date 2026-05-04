@@ -19,14 +19,15 @@ use tokio::sync::RwLock;
 
 const TTL: std::time::Duration = std::time::Duration::from_secs(1);
 
+#[derive(Clone)]
 pub struct CaFilesystem {
     store: Arc<FileStore>,
-    inodes: AppendOnlyVec<Entry>,
+    inodes: Arc<AppendOnlyVec<Entry>>,
 }
 
 impl CaFilesystem {
     pub fn new(store: Arc<FileStore>, resume: Option<[u8; 16]>) -> Self {
-        let inodes = AppendOnlyVec::new();
+        let inodes = Arc::new(AppendOnlyVec::new());
         inodes.push(Entry {
             parent: 1,
             data: DataKind::Directory(RwLock::new(if let Some(hash) = resume {
@@ -47,8 +48,12 @@ impl CaFilesystem {
         self.inodes.push(entry) as Inode + 1
     }
 
-    async fn sync(&self, inode: Inode) -> Result<[u8; 16], Error> {
+    async fn sync_inode(&self, inode: Inode) -> Result<[u8; 16], Error> {
         self.get(inode).sync(self).await
+    }
+
+    pub async fn sync(&self) -> Result<[u8; 16], Error> {
+        self.sync_inode(1).await
     }
 
     async fn realize(&self, inode: Inode) -> Result<(), Error> {
@@ -97,7 +102,7 @@ impl Filesystem for CaFilesystem {
     }
 
     async fn destroy(&self, _req: Request) {
-        if let Ok(hash) = self.sync(1).await {
+        if let Ok(hash) = self.sync().await {
             use std::io::{Write, stdout};
             let mut p = stdout();
             p.write_all(&tohex_digest(hash)).unwrap();
@@ -539,7 +544,7 @@ impl DataStatus<DirEntry> {
                 let mut dir = directory::Directory { entries: vec![] };
 
                 for DirEntry { name, inode } in body.iter() {
-                    let hash = Box::pin(fs.sync(*inode)).await?;
+                    let hash = Box::pin(fs.sync_inode(*inode)).await?;
                     let kind = match fs.get(*inode).data {
                         DataKind::File(_) => directory::DirectoryEntryKind::File,
                         DataKind::Directory(_) => directory::DirectoryEntryKind::Subdirectory,
