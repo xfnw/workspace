@@ -24,8 +24,8 @@ mod fuse;
 /// content addressed irc bot
 #[derive(Debug, FromArgs)]
 struct Opt {
-    /// number of lines to cache, defaults to 1000
-    #[argh(option, short = 'c', default = "1000")]
+    /// number of lines to cache, defaults to 10000
+    #[argh(option, short = 'c', default = "10000")]
     capacity: usize,
     /// number of milliseconds to mostly wait between sending messages
     #[argh(option, short = 'd', default = "0")]
