@@ -88,8 +88,8 @@ impl CaFilesystem {
                 DataKind::Directory(_) => FileType::Directory,
             },
             perm: match data {
-                DataKind::File(_) => 0o666,
-                DataKind::Directory(_) => 0o777,
+                DataKind::File(_) => 0o644,
+                DataKind::Directory(_) => 0o755,
             },
             nlink: match data {
                 DataKind::File(_) => 1,
