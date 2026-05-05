@@ -69,7 +69,7 @@ impl CaFilesystem {
             .unwrap()
     }
 
-    async fn attr(&self, inode: Inode) -> Result<FileAttr, Error> {
+    async fn attr(&self, req: Request, inode: Inode) -> Result<FileAttr, Error> {
         self.realize(inode).await?;
         let data = &self.get(inode).data;
         let len = match data {
@@ -95,8 +95,8 @@ impl CaFilesystem {
                 DataKind::File(_) => 1,
                 DataKind::Directory(_) => 3,
             },
-            uid: 0,
-            gid: 0,
+            uid: req.uid,
+            gid: req.gid,
             rdev: 0,
             blksize: 4096,
         })
@@ -123,7 +123,7 @@ impl Filesystem for CaFilesystem {
 
     async fn create(
         &self,
-        _req: Request,
+        req: Request,
         parent: u64,
         name: &OsStr,
         _mode: u32,
@@ -150,7 +150,7 @@ impl Filesystem for CaFilesystem {
         });
         Ok(ReplyCreated {
             ttl: TTL,
-            attr: self.attr(inode).await.map_err(|_| libc::EIO)?,
+            attr: self.attr(req, inode).await.map_err(|_| libc::EIO)?,
             generation: 0,
             fh: 0,
             // no idea what is supposed to go on here.
@@ -160,7 +160,7 @@ impl Filesystem for CaFilesystem {
         })
     }
 
-    async fn lookup(&self, _req: Request, parent: u64, name: &OsStr) -> fuse3::Result<ReplyEntry> {
+    async fn lookup(&self, req: Request, parent: u64, name: &OsStr) -> fuse3::Result<ReplyEntry> {
         let DataKind::Directory(parent_data) = &self.get(parent).data else {
             return Err(libc::ENOTDIR.into());
         };
@@ -177,21 +177,21 @@ impl Filesystem for CaFilesystem {
 
         Ok(ReplyEntry {
             ttl: TTL,
-            attr: self.attr(inode).await.map_err(|_| libc::EIO)?,
+            attr: self.attr(req, inode).await.map_err(|_| libc::EIO)?,
             generation: 0,
         })
     }
 
     async fn getattr(
         &self,
-        _req: Request,
+        req: Request,
         inode: Inode,
         _fh: Option<u64>,
         _flags: u32,
     ) -> fuse3::Result<ReplyAttr> {
         Ok(ReplyAttr {
             ttl: TTL,
-            attr: self.attr(inode).await.map_err(|_| libc::EIO)?,
+            attr: self.attr(req, inode).await.map_err(|_| libc::EIO)?,
         })
     }
 
@@ -219,7 +219,7 @@ impl Filesystem for CaFilesystem {
 
     async fn mkdir(
         &self,
-        _req: Request,
+        req: Request,
         parent: Inode,
         name: &OsStr,
         _mode: u32,
@@ -246,7 +246,7 @@ impl Filesystem for CaFilesystem {
         });
         Ok(ReplyEntry {
             ttl: TTL,
-            attr: self.attr(inode).await.map_err(|_| libc::EIO)?,
+            attr: self.attr(req, inode).await.map_err(|_| libc::EIO)?,
             generation: 0,
         })
     }
@@ -379,7 +379,7 @@ impl Filesystem for CaFilesystem {
     #[expect(clippy::cast_possible_wrap)]
     async fn readdirplus(
         &self,
-        _req: Request,
+        req: Request,
         // why is this called parent in the trait?
         inode: Inode,
         _fh: u64,
@@ -402,7 +402,7 @@ impl Filesystem for CaFilesystem {
                 kind: FileType::Directory,
                 name: OsString::from("."),
                 offset: 1,
-                attr: self.attr(inode).await.map_err(|_| libc::EIO)?,
+                attr: self.attr(req, inode).await.map_err(|_| libc::EIO)?,
                 entry_ttl: TTL,
                 attr_ttl: TTL,
             },
@@ -412,7 +412,7 @@ impl Filesystem for CaFilesystem {
                 kind: FileType::Directory,
                 name: OsString::from(".."),
                 offset: 2,
-                attr: self.attr(entry.parent).await.map_err(|_| libc::EIO)?,
+                attr: self.attr(req, entry.parent).await.map_err(|_| libc::EIO)?,
                 entry_ttl: TTL,
                 attr_ttl: TTL,
             },
@@ -428,7 +428,7 @@ impl Filesystem for CaFilesystem {
                 },
                 name: name.clone(),
                 offset: i as i64 + 3,
-                attr: self.attr(*inode).await.map_err(|_| libc::EIO)?,
+                attr: self.attr(req, *inode).await.map_err(|_| libc::EIO)?,
                 entry_ttl: TTL,
                 attr_ttl: TTL,
             });
