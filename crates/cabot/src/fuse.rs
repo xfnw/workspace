@@ -285,6 +285,42 @@ impl Filesystem for CaFilesystem {
         self.unlink(req, parent, name).await
     }
 
+    async fn rename(
+        &self,
+        _req: Request,
+        parent: Inode,
+        name: &OsStr,
+        new_parent: Inode,
+        new_name: &OsStr,
+    ) -> fuse3::Result<()> {
+        if parent != new_parent {
+            return Err(libc::ENOSYS.into());
+        }
+
+        let parent_entry = self.get(parent);
+        let DataKind::Directory(parent_data) = &parent_entry.data else {
+            return Err(libc::ENOTDIR.into());
+        };
+        self.realize(parent).await.map_err(|_| libc::EIO)?;
+        parent_entry.mark_dirty(self).await;
+        let mut parent_data = parent_data.write().await;
+        let parent_entries = parent_data.get_mut_dirty().unwrap();
+
+        if !parent_entries.iter().any(|e| e.name == name) {
+            return Err(libc::ENOENT.into());
+        }
+
+        parent_entries.retain(|e| e.name != new_name);
+
+        for entry in parent_entries {
+            if entry.name == name {
+                entry.name = new_name.to_os_string();
+            }
+        }
+
+        Ok(())
+    }
+
     #[expect(clippy::cast_possible_truncation)]
     async fn read(
         &self,
