@@ -127,7 +127,7 @@ impl Filesystem for CaFilesystem {
         parent: u64,
         name: &OsStr,
         _mode: u32,
-        flags: u32,
+        _flags: u32,
     ) -> fuse3::Result<ReplyCreated> {
         let entry = self.get(parent);
         let DataKind::Directory(parent_data) = &entry.data else {
@@ -153,7 +153,10 @@ impl Filesystem for CaFilesystem {
             attr: self.attr(inode).await.map_err(|_| libc::EIO)?,
             generation: 0,
             fh: 0,
-            flags,
+            // no idea what is supposed to go on here.
+            // returning the same flags we were passed causes EIO
+            // upon opening files with O_EXCL
+            flags: 0,
         })
     }
 
