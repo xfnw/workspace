@@ -179,12 +179,20 @@ impl Bot {
             tags: None,
             source: None,
             command: "PRIVMSG".to_string(),
-            arguments: vec![self.channel.as_bytes().to_vec(), vec![]],
+            arguments: vec![self.channel.as_bytes().to_vec()],
         };
 
         for message in messages {
-            line.arguments[1] = message;
+            line.arguments.push(message);
             self.write_line(&line).await?;
+
+            let digest = md5::compute(&line.arguments[1]).0;
+            self.cache
+                .lock()
+                .unwrap()
+                .insert(digest, line.arguments.pop().unwrap());
+            _ = self.digest_firehose.send(digest);
+
             sleep(Duration::from_millis(self.delay)).await;
         }
 
