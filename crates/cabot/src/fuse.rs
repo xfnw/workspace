@@ -13,20 +13,21 @@ use std::{
     num::NonZeroU32,
     path::Path,
     sync::Arc,
-    time::UNIX_EPOCH,
+    time::{Duration, UNIX_EPOCH},
 };
 use tokio::sync::RwLock;
 
-const TTL: std::time::Duration = std::time::Duration::from_secs(1);
+const TTL: Duration = Duration::from_secs(1);
 
 #[derive(Clone)]
 pub struct CaFilesystem {
     store: Arc<FileStore>,
     inodes: Arc<AppendOnlyVec<Entry>>,
+    realize_timeout: Duration,
 }
 
 impl CaFilesystem {
-    pub fn new(store: Arc<FileStore>, resume: Option<[u8; 16]>) -> Self {
+    pub fn new(store: Arc<FileStore>, resume: Option<[u8; 16]>, timeout: u64) -> Self {
         let inodes = Arc::new(AppendOnlyVec::new());
         inodes.push(Entry {
             parent: 1,
@@ -36,7 +37,11 @@ impl CaFilesystem {
                 DataStatus::Dirty { body: vec![] }
             })),
         });
-        Self { store, inodes }
+        Self {
+            store,
+            inodes,
+            realize_timeout: Duration::from_secs(timeout),
+        }
     }
 
     fn get(&self, inode: Inode) -> &Entry {
@@ -57,7 +62,11 @@ impl CaFilesystem {
     }
 
     async fn realize(&self, inode: Inode) -> Result<(), Error> {
-        self.get(inode).realize(self, inode).await
+        let fs = self.clone();
+        let task = tokio::spawn(async move { fs.get(inode).realize(&fs, inode).await });
+        tokio::time::timeout(self.realize_timeout, task)
+            .await?
+            .unwrap()
     }
 
     async fn attr(&self, inode: Inode) -> Result<FileAttr, Error> {

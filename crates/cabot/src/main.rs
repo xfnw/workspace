@@ -39,6 +39,9 @@ struct Opt {
     /// seconds between automatically syncing fuse filesystem
     #[argh(option, default = "9")]
     fuse_interval: u64,
+    /// seconds before giving up on realizing
+    #[argh(option, default = "10")]
+    fuse_timeout: u64,
     /// nickname to use
     #[argh(option, short = 'n', default = "\"ca\".to_string()")]
     nick: String,
@@ -70,6 +73,8 @@ enum Error {
     #[err(from)]
     Base64Decode(base64::DecodeError),
     ParseDirectory,
+    #[err(from)]
+    Timeout(tokio::time::error::Elapsed),
 }
 
 fn tohex_nibble(n: u8) -> u8 {
@@ -170,7 +175,8 @@ async fn main() {
 
     if let Some(mountpoint) = opt.fuse {
         let file_store = file_store::FileStore::new(bot.clone());
-        let filesystem = fuse::CaFilesystem::new(Arc::new(file_store), opt.fuse_resume);
+        let filesystem =
+            fuse::CaFilesystem::new(Arc::new(file_store), opt.fuse_resume, opt.fuse_timeout);
         let mut mount_handle = fuse::mount(filesystem.clone(), &mountpoint).await;
 
         tokio::spawn(async move {
