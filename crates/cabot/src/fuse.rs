@@ -556,6 +556,13 @@ impl DataStatus<DirEntry> {
                     });
                 }
 
+                dir.entries.sort_by(|a, b| {
+                    a.name
+                        .cmp(&b.name)
+                        .then_with(|| a.hash.cmp(&b.hash))
+                        .then_with(|| a.kind.cmp(&b.kind))
+                });
+
                 let newhash = fs.store.store(&dir.serialize()).await?;
                 self.dirty_add_hash(newhash);
                 Ok(newhash)
