@@ -202,13 +202,14 @@ impl Filesystem for CaFilesystem {
         fh: Option<u64>,
         set_attr: SetAttr,
     ) -> fuse3::Result<ReplyAttr> {
+        let entry = self.get(inode);
+        self.realize(inode).await.map_err(|_| libc::EIO)?;
+        entry.mark_dirty(self).await;
+
         if let Some(new_len) = set_attr.size {
-            let entry = self.get(inode);
             let DataKind::File(lock) = &entry.data else {
                 return Err(libc::EISDIR.into());
             };
-            self.realize(inode).await.map_err(|_| libc::EIO)?;
-            entry.mark_dirty(self).await;
             let mut data = lock.write().await;
             #[expect(clippy::cast_possible_truncation)]
             data.get_mut_dirty().unwrap().truncate(new_len as usize);
