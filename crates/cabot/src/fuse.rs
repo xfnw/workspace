@@ -129,6 +129,9 @@ impl Filesystem for CaFilesystem {
         _mode: u32,
         _flags: u32,
     ) -> fuse3::Result<ReplyCreated> {
+        if name.len() >= 4096 {
+            return Err(libc::ENAMETOOLONG.into());
+        }
         let entry = self.get(parent);
         let DataKind::Directory(parent_data) = &entry.data else {
             return Err(libc::ENOTDIR.into());
@@ -226,6 +229,9 @@ impl Filesystem for CaFilesystem {
         _mode: u32,
         _umask: u32,
     ) -> fuse3::Result<ReplyEntry> {
+        if name.len() >= 4096 {
+            return Err(libc::ENAMETOOLONG.into());
+        }
         let parent_entry = self.get(parent);
         let DataKind::Directory(parent_data) = &parent_entry.data else {
             return Err(libc::ENOTDIR.into());
@@ -296,6 +302,9 @@ impl Filesystem for CaFilesystem {
     ) -> fuse3::Result<()> {
         if parent != new_parent {
             return Err(libc::ENOSYS.into());
+        }
+        if new_name.len() >= 4096 {
+            return Err(libc::ENAMETOOLONG.into());
         }
 
         let parent_entry = self.get(parent);
