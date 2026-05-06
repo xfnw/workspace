@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-use crate::{Error, directory, file_store::FileStore, tohex_digest};
+use crate::{Error, directory, file_store::FileStore, tohex_digest, unhex_digest};
 use append_only_vec::AppendOnlyVec;
 use fuse3::{
     Inode, MountOptions,
@@ -450,6 +450,26 @@ impl Filesystem for CaFilesystem {
         Ok(ReplyDirectoryPlus {
             entries: futures_util::stream::iter(entries.into_iter().skip(offset as usize).map(Ok)),
         })
+    }
+
+    async fn setxattr(
+        &self,
+        _req: Request,
+        inode: Inode,
+        name: &OsStr,
+        value: &[u8],
+        _flags: u32,
+        _position: u32,
+    ) -> fuse3::Result<()> {
+        if name.as_encoded_bytes() != b"user.hash" {
+            return Err(libc::ENODATA.into());
+        }
+        let hash = unhex_digest(value).ok_or(libc::EINVAL)?;
+        match &self.get(inode).data {
+            DataKind::File(lock) => *lock.write().await = DataStatus::Placeholder { hash },
+            DataKind::Directory(lock) => *lock.write().await = DataStatus::Placeholder { hash },
+        }
+        Ok(())
     }
 
     async fn getxattr(
