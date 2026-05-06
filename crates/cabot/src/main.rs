@@ -76,6 +76,7 @@ enum Error {
     #[err(from)]
     Timeout(tokio::time::error::Elapsed),
     Poisoned,
+    Replaced,
 }
 
 fn tohex_nibble(n: u8) -> u8 {

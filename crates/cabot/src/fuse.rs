@@ -586,7 +586,10 @@ impl Entry {
                 })?;
 
         match &self.data {
-            DataKind::File(lock) => lock.write().await.overwrite_placeholder(serialized),
+            DataKind::File(lock) => lock
+                .write()
+                .await
+                .overwrite_placeholder(placeholder_hash, serialized)?,
             DataKind::Directory(lock) => {
                 let dir = directory::Directory::parse(&serialized).ok_or(Error::ParseDirectory)?;
                 let mut entries = vec![];
@@ -606,7 +609,9 @@ impl Entry {
                     entries.push(DirEntry { name, inode });
                 }
 
-                lock.write().await.overwrite_placeholder(entries);
+                lock.write()
+                    .await
+                    .overwrite_placeholder(placeholder_hash, entries)?;
             }
         }
 
@@ -660,11 +665,17 @@ impl<T> DataStatus<T> {
         panic!("tried to add a hash to non-dirty data");
     }
 
-    fn overwrite_placeholder(&mut self, body: Vec<T>) {
+    fn overwrite_placeholder(&mut self, expected: [u8; 16], body: Vec<T>) -> Result<(), Error> {
         if let Self::Placeholder { hash } = self {
-            let hash = *hash;
-            *self = Self::Clean { hash, body };
+            if *hash != expected {
+                return Err(Error::Replaced);
+            }
+            *self = Self::Clean {
+                hash: expected,
+                body,
+            };
         }
+        Ok(())
     }
 
     fn get(&self) -> Option<&[T]> {
