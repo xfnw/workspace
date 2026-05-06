@@ -465,7 +465,10 @@ impl Filesystem for CaFilesystem {
             return Err(libc::ENODATA.into());
         }
         let hash = unhex_digest(value).ok_or(libc::EINVAL)?;
-        match &self.get(inode).data {
+        let entry = self.get(inode);
+        let parent = self.get(entry.parent);
+        parent.mark_dirty(self).await.ok_or(libc::EBUSY)?;
+        match &entry.data {
             DataKind::File(lock) => *lock.write().await = DataStatus::Placeholder { hash },
             DataKind::Directory(lock) => *lock.write().await = DataStatus::Placeholder { hash },
         }
