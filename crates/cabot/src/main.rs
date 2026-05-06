@@ -173,11 +173,16 @@ async fn main() {
 
     let bot = Arc::new(bot::Bot::new(stream, opt.join, opt.delay, opt.capacity));
 
+    let bot_handle = {
+        let bot = bot.clone();
+        tokio::spawn(async move { bot.run().await })
+    };
+
     if let Some(mountpoint) = opt.fuse {
         let file_store = file_store::FileStore::new(bot.clone());
         let filesystem =
             fuse::CaFilesystem::new(Arc::new(file_store), opt.fuse_resume, opt.fuse_timeout);
-        let mut mount_handle = fuse::mount(filesystem.clone(), &mountpoint).await;
+        let mount_handle = fuse::mount(filesystem.clone(), &mountpoint).await;
 
         tokio::spawn(async move {
             let duration = std::time::Duration::from_secs(opt.fuse_interval);
@@ -189,16 +194,10 @@ async fn main() {
             }
         });
 
-        tokio::select! {
-            h = &mut mount_handle => h.unwrap(),
-            b = bot.run() => {
-                _ = mount_handle.unmount().await;
-                b.unwrap();
-            }
-        };
+        mount_handle.await.unwrap();
 
         return;
     }
 
-    bot.run().await.unwrap();
+    bot_handle.await.unwrap().unwrap();
 }
