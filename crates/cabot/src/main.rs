@@ -75,6 +75,7 @@ enum Error {
     ParseDirectory,
     #[err(from)]
     Timeout(tokio::time::error::Elapsed),
+    Poisoned,
 }
 
 fn tohex_nibble(n: u8) -> u8 {
@@ -180,9 +181,15 @@ async fn main() {
 
     if let Some(mountpoint) = opt.fuse {
         let file_store = file_store::FileStore::new(bot.clone());
-        let filesystem =
-            fuse::CaFilesystem::new(Arc::new(file_store), opt.fuse_resume, opt.fuse_timeout);
+        let filesystem = fuse::CaFilesystem::new(file_store, opt.fuse_resume, opt.fuse_timeout);
         let mount_handle = fuse::mount(filesystem.clone(), &mountpoint).await;
+
+        let filesystem_ = filesystem.clone();
+        tokio::spawn(async move {
+            let res = bot_handle.await;
+            filesystem_.poison();
+            res.unwrap().unwrap();
+        });
 
         tokio::spawn(async move {
             let duration = std::time::Duration::from_secs(opt.fuse_interval);

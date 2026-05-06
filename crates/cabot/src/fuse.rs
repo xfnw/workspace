@@ -12,7 +12,10 @@ use std::{
     ffi::{OsStr, OsString},
     num::NonZeroU32,
     path::Path,
-    sync::Arc,
+    sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    },
     time::{Duration, UNIX_EPOCH},
 };
 use tokio::sync::RwLock;
@@ -20,16 +23,19 @@ use zerocopy::{Immutable, IntoBytes};
 
 const TTL: Duration = Duration::from_secs(1);
 
-#[derive(Clone)]
-pub struct CaFilesystem {
-    store: Arc<FileStore>,
-    inodes: Arc<AppendOnlyVec<Entry>>,
+struct CaInner {
+    store: FileStore,
+    inodes: AppendOnlyVec<Entry>,
     realize_timeout: Duration,
+    poisoned: AtomicBool,
 }
 
+#[derive(Clone)]
+pub struct CaFilesystem(Arc<CaInner>);
+
 impl CaFilesystem {
-    pub fn new(store: Arc<FileStore>, resume: Option<[u8; 16]>, timeout: u64) -> Self {
-        let inodes = Arc::new(AppendOnlyVec::new());
+    pub fn new(store: FileStore, resume: Option<[u8; 16]>, timeout: u64) -> Self {
+        let inodes = AppendOnlyVec::new();
         inodes.push(Entry {
             parent: 1,
             data: DataKind::Directory(RwLock::new(if let Some(hash) = resume {
@@ -38,24 +44,31 @@ impl CaFilesystem {
                 DataStatus::Dirty { body: vec![] }
             })),
         });
-        Self {
+        Self(Arc::new(CaInner {
             store,
             inodes,
             realize_timeout: Duration::from_secs(timeout),
-        }
+            poisoned: AtomicBool::new(false),
+        }))
     }
 
     fn get(&self, inode: Inode) -> &Entry {
         #[expect(clippy::cast_possible_truncation)]
-        &self.inodes[inode as usize - 1]
+        &self.0.inodes[inode as usize - 1]
     }
 
-    fn push(&self, entry: Entry) -> Inode {
-        self.inodes.push(entry) as Inode + 1
+    fn push(&self, entry: Entry) -> Result<Inode, Error> {
+        if self.0.poisoned.load(Ordering::Relaxed) {
+            return Err(Error::Poisoned);
+        }
+        Ok(self.0.inodes.push(entry) as Inode + 1)
     }
 
     async fn sync_inode(&self, inode: Inode) -> Result<[u8; 16], Error> {
-        self.get(inode).sync(self).await
+        self.get(inode)
+            .sync(self)
+            .await
+            .inspect_err(|_| self.poison())
     }
 
     pub async fn sync(&self) -> Result<[u8; 16], Error> {
@@ -65,7 +78,7 @@ impl CaFilesystem {
     async fn realize(&self, inode: Inode) -> Result<(), Error> {
         let fs = self.clone();
         let task = tokio::spawn(async move { fs.get(inode).realize(&fs, inode).await });
-        tokio::time::timeout(self.realize_timeout, task)
+        tokio::time::timeout(self.0.realize_timeout, task)
             .await?
             .unwrap()
     }
@@ -102,6 +115,10 @@ impl CaFilesystem {
             blksize: 4096,
         })
     }
+
+    pub fn poison(&self) {
+        self.0.poisoned.store(true, Ordering::Relaxed);
+    }
 }
 
 impl Filesystem for CaFilesystem {
@@ -119,7 +136,7 @@ impl Filesystem for CaFilesystem {
             p.write_all(b"\n").unwrap();
         }
 
-        _ = self.store.shutdown().await;
+        _ = self.0.store.shutdown().await;
     }
 
     async fn create(
@@ -138,16 +155,18 @@ impl Filesystem for CaFilesystem {
             return Err(libc::ENOTDIR.into());
         };
         self.realize(parent).await.map_err(|_| libc::EIO)?;
-        entry.mark_dirty(self).await.ok_or(libc::EBUSY)?;
+        entry.mark_dirty(self).await?;
         let mut parent_data = parent_data.write().await;
         let parent_entries = parent_data.get_mut_dirty().ok_or(libc::EBUSY)?;
         if parent_entries.iter().any(|e| e.name == name) {
             return Err(libc::EEXIST.into());
         }
-        let inode = self.push(Entry {
-            parent,
-            data: DataKind::File(RwLock::new(DataStatus::Dirty { body: vec![] })),
-        });
+        let inode = self
+            .push(Entry {
+                parent,
+                data: DataKind::File(RwLock::new(DataStatus::Dirty { body: vec![] })),
+            })
+            .map_err(|_| libc::EROFS)?;
         parent_entries.push(DirEntry {
             name: name.to_os_string(),
             inode,
@@ -208,7 +227,7 @@ impl Filesystem for CaFilesystem {
     ) -> fuse3::Result<ReplyAttr> {
         let entry = self.get(inode);
         self.realize(inode).await.map_err(|_| libc::EIO)?;
-        entry.mark_dirty(self).await.ok_or(libc::EBUSY)?;
+        entry.mark_dirty(self).await?;
 
         if let Some(new_len) = set_attr.size {
             let DataKind::File(lock) = &entry.data else {
@@ -240,16 +259,18 @@ impl Filesystem for CaFilesystem {
             return Err(libc::ENOTDIR.into());
         };
         self.realize(parent).await.map_err(|_| libc::EIO)?;
-        parent_entry.mark_dirty(self).await.ok_or(libc::EBUSY)?;
+        parent_entry.mark_dirty(self).await?;
         let mut parent_data = parent_data.write().await;
         let parent_entries = parent_data.get_mut_dirty().ok_or(libc::EBUSY)?;
         if parent_entries.iter().any(|e| e.name == name) {
             return Err(libc::EEXIST.into());
         }
-        let inode = self.push(Entry {
-            parent,
-            data: DataKind::Directory(RwLock::new(DataStatus::Dirty { body: vec![] })),
-        });
+        let inode = self
+            .push(Entry {
+                parent,
+                data: DataKind::Directory(RwLock::new(DataStatus::Dirty { body: vec![] })),
+            })
+            .map_err(|_| libc::EROFS)?;
         parent_entries.push(DirEntry {
             name: name.to_os_string(),
             inode,
@@ -267,7 +288,7 @@ impl Filesystem for CaFilesystem {
             return Err(libc::ENOTDIR.into());
         };
         self.realize(parent).await.map_err(|_| libc::EIO)?;
-        parent_entry.mark_dirty(self).await.ok_or(libc::EBUSY)?;
+        parent_entry.mark_dirty(self).await?;
         let mut parent_data = parent_data.write().await;
         let parent_entries = parent_data.get_mut_dirty().ok_or(libc::EBUSY)?;
         let mut anything_deleted = false;
@@ -315,7 +336,7 @@ impl Filesystem for CaFilesystem {
             return Err(libc::ENOTDIR.into());
         };
         self.realize(parent).await.map_err(|_| libc::EIO)?;
-        parent_entry.mark_dirty(self).await.ok_or(libc::EBUSY)?;
+        parent_entry.mark_dirty(self).await?;
         let mut parent_data = parent_data.write().await;
         let parent_entries = parent_data.get_mut_dirty().ok_or(libc::EBUSY)?;
 
@@ -373,7 +394,7 @@ impl Filesystem for CaFilesystem {
             return Err(libc::EISDIR.into());
         };
         self.realize(inode).await.map_err(|_| libc::EIO)?;
-        entry.mark_dirty(self).await.ok_or(libc::EBUSY)?;
+        entry.mark_dirty(self).await?;
         let mut file = file.write().await;
         let file = file.get_mut_dirty().ok_or(libc::EBUSY)?;
 
@@ -467,7 +488,7 @@ impl Filesystem for CaFilesystem {
         let hash = unhex_digest(value).ok_or(libc::EINVAL)?;
         let entry = self.get(inode);
         let parent = self.get(entry.parent);
-        parent.mark_dirty(self).await.ok_or(libc::EBUSY)?;
+        parent.mark_dirty(self).await?;
         match &entry.data {
             DataKind::File(lock) => *lock.write().await = DataStatus::Placeholder { hash },
             DataKind::Directory(lock) => *lock.write().await = DataStatus::Placeholder { hash },
@@ -554,7 +575,15 @@ impl Entry {
             },
         };
 
-        let serialized = fs.store.retrieve(placeholder_hash).await?;
+        let serialized =
+            fs.0.store
+                .retrieve(placeholder_hash)
+                .await
+                .inspect_err(|e| {
+                    if matches!(e, Error::Io(_)) {
+                        fs.poison();
+                    }
+                })?;
 
         match &self.data {
             DataKind::File(lock) => lock.write().await.overwrite_placeholder(serialized),
@@ -573,7 +602,7 @@ impl Entry {
                                 DataKind::Directory(RwLock::new(DataStatus::Placeholder { hash }))
                             }
                         },
-                    });
+                    })?;
                     entries.push(DirEntry { name, inode });
                 }
 
@@ -584,16 +613,21 @@ impl Entry {
         Ok(())
     }
 
-    #[must_use]
-    async fn mark_dirty(&self, fs: &CaFilesystem) -> Option<()> {
+    async fn mark_dirty(&self, fs: &CaFilesystem) -> fuse3::Result<()> {
+        if fs.0.poisoned.load(Ordering::Relaxed) {
+            return Err(libc::EROFS.into());
+        }
+
         if match &self.data {
-            DataKind::File(lock) => lock.write().await.unpropagated_mark_dirty()?,
-            DataKind::Directory(lock) => lock.write().await.unpropagated_mark_dirty()?,
-        } {
+            DataKind::File(lock) => lock.write().await.unpropagated_mark_dirty(),
+            DataKind::Directory(lock) => lock.write().await.unpropagated_mark_dirty(),
+        }
+        .ok_or(libc::EBUSY)?
+        {
             Box::pin(fs.get(self.parent).mark_dirty(fs)).await?;
         }
 
-        Some(())
+        Ok(())
     }
 }
 
@@ -668,7 +702,7 @@ impl DataStatus<u8> {
         match self {
             Self::Placeholder { hash } | Self::Clean { hash, .. } => Ok(*hash),
             Self::Dirty { body } => {
-                let newhash = fs.store.store(body).await?;
+                let newhash = fs.0.store.store(body).await?;
                 self.dirty_add_hash(newhash);
                 Ok(newhash)
             }
@@ -703,7 +737,7 @@ impl DataStatus<DirEntry> {
                         .then_with(|| a.kind.cmp(&b.kind))
                 });
 
-                let newhash = fs.store.store(&dir.serialize()).await?;
+                let newhash = fs.0.store.store(&dir.serialize()).await?;
                 self.dirty_add_hash(newhash);
                 Ok(newhash)
             }
