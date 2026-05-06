@@ -224,6 +224,7 @@ dependencies = [
  "md5",
  "rand",
  "tokio",
+ "zerocopy",
 ]
 
 [[package]]

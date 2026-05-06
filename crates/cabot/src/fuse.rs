@@ -16,6 +16,7 @@ use std::{
     time::{Duration, UNIX_EPOCH},
 };
 use tokio::sync::RwLock;
+use zerocopy::{Immutable, IntoBytes};
 
 const TTL: Duration = Duration::from_secs(1);
 
@@ -449,6 +450,59 @@ impl Filesystem for CaFilesystem {
         Ok(ReplyDirectoryPlus {
             entries: futures_util::stream::iter(entries.into_iter().skip(offset as usize).map(Ok)),
         })
+    }
+
+    async fn getxattr(
+        &self,
+        _req: Request,
+        inode: Inode,
+        name: &OsStr,
+        size: u32,
+    ) -> fuse3::Result<ReplyXAttr> {
+        if name.as_encoded_bytes() != b"user.hash" {
+            return Err(libc::ENODATA.into());
+        }
+        if size == 0 {
+            // FIXME: remove after fuse3 > 0.9.0
+            // workaround for https://github.com/Sherlock-Holo/fuse3/issues/130
+            #[derive(IntoBytes, Immutable)]
+            #[repr(C)]
+            struct fuse_getxattr_out {
+                size: u32,
+                _padding: u32,
+            }
+            return Ok(ReplyXAttr::Data(
+                fuse_getxattr_out {
+                    size: 32,
+                    _padding: 0,
+                }
+                .as_bytes()
+                .into(),
+            ));
+            //return Ok(ReplyXAttr::Size(32));
+        }
+        if size < 32 {
+            return Err(libc::ERANGE.into());
+        }
+        let hash = self.sync_inode(inode).await.map_err(|_| libc::EIO)?;
+        Ok(ReplyXAttr::Data(tohex_digest(hash).to_vec().into()))
+    }
+
+    #[expect(clippy::cast_possible_truncation)]
+    async fn listxattr(
+        &self,
+        _req: Request,
+        _inode: Inode,
+        size: u32,
+    ) -> fuse3::Result<ReplyXAttr> {
+        const XATTR_LIST: &[u8] = b"user.hash\0";
+        if size == 0 {
+            return Ok(ReplyXAttr::Size(XATTR_LIST.len() as u32));
+        }
+        if size < XATTR_LIST.len() as u32 {
+            return Err(libc::ERANGE.into());
+        }
+        Ok(ReplyXAttr::Data(XATTR_LIST.to_vec().into()))
     }
 }
 
