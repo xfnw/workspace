@@ -26,6 +26,7 @@ pub struct Bot {
     stealthy: bool,
     last_sent: Mutex<Instant>,
     cache: Mutex<LruCache<[u8; 16], Vec<u8>>>,
+    pin_cache: Mutex<LruCache<[u8; 16], Vec<u8>>>,
     digest_firehose: broadcast::Sender<[u8; 16]>,
 }
 
@@ -42,6 +43,7 @@ impl Bot {
             stealthy,
             last_sent: Mutex::new(Instant::now()),
             cache: Mutex::new(LruCache::new(capacity)),
+            pin_cache: Mutex::new(LruCache::new_unbounded()),
             digest_firehose: broadcast::Sender::new(256),
         }
     }
@@ -160,6 +162,7 @@ impl Bot {
                     .as_millis() as u64
             } >= self.delay
             && let Some(contents) = { self.cache.lock().unwrap().get(&digest).cloned() }
+                .or_else(|| self.pin_cache.lock().unwrap().get(&digest).cloned())
         {
             let res = Line {
                 tags: None,
@@ -192,7 +195,7 @@ impl Bot {
             }
 
             let digest = md5::compute(&line.arguments[1]).0;
-            self.cache
+            self.pin_cache
                 .lock()
                 .unwrap()
                 .insert(digest, line.arguments.pop().unwrap());
@@ -207,8 +210,15 @@ impl Bot {
     pub async fn retrieve(&self, digest: [u8; 16]) -> Result<Vec<u8>, Error> {
         let mut receiver = self.digest_firehose.subscribe();
 
-        if let Some(content) = self.cache.lock().unwrap().get(&digest) {
-            return Ok(content.clone());
+        if let Some(content) = { self.cache.lock().unwrap().get(&digest).cloned() }
+            .or_else(|| self.pin_cache.lock().unwrap().get(&digest).cloned())
+        {
+            self.pin_cache
+                .lock()
+                .unwrap()
+                .insert(digest, content.clone());
+
+            return Ok(content);
         }
 
         sleep(Duration::from_millis({
@@ -228,8 +238,13 @@ impl Bot {
         };
 
         loop {
-            if let Some(content) = self.cache.lock().unwrap().get(&digest) {
-                return Ok(content.clone());
+            if let Some(content) = { self.cache.lock().unwrap().get(&digest).cloned() } {
+                self.pin_cache
+                    .lock()
+                    .unwrap()
+                    .insert(digest, content.clone());
+
+                return Ok(content);
             }
 
             self.write_line(&req).await?;
