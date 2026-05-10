@@ -23,13 +23,14 @@ pub struct Bot {
     nick: Mutex<Option<Vec<u8>>>,
     channel: String,
     delay: u64,
+    stealthy: bool,
     last_sent: Mutex<Instant>,
     cache: Mutex<LruCache<[u8; 16], Vec<u8>>>,
     digest_firehose: broadcast::Sender<[u8; 16]>,
 }
 
 impl Bot {
-    pub fn new(stream: Stream, join: String, delay: u64, capacity: usize) -> Self {
+    pub fn new(stream: Stream, join: String, delay: u64, capacity: usize, stealthy: bool) -> Self {
         let (read, write) = io::split(stream);
 
         Self {
@@ -38,6 +39,7 @@ impl Bot {
             nick: Mutex::new(None),
             channel: join,
             delay,
+            stealthy,
             last_sent: Mutex::new(Instant::now()),
             cache: Mutex::new(LruCache::new(capacity)),
             digest_firehose: broadcast::Sender::new(256),
@@ -184,7 +186,10 @@ impl Bot {
 
         for message in messages {
             line.arguments.push(message);
-            self.write_line(&line).await?;
+
+            if !self.stealthy {
+                self.write_line(&line).await?;
+            }
 
             let digest = md5::compute(&line.arguments[1]).0;
             self.cache

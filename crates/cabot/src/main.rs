@@ -30,6 +30,9 @@ struct Opt {
     /// number of milliseconds to mostly wait between sending messages
     #[argh(option, short = 'd', default = "0")]
     delay: u64,
+    /// do not announce added content until actually requested
+    #[argh(switch)]
+    stealthy: bool,
     /// mountpoint to mount fuse filesystem
     #[argh(option)]
     fuse: Option<PathBuf>,
@@ -173,7 +176,13 @@ async fn main() {
         .await
         .unwrap();
 
-    let bot = Arc::new(bot::Bot::new(stream, opt.join, opt.delay, opt.capacity));
+    let bot = Arc::new(bot::Bot::new(
+        stream,
+        opt.join,
+        opt.delay,
+        opt.capacity,
+        opt.stealthy,
+    ));
 
     let bot_handle = {
         let bot = bot.clone();
