@@ -201,7 +201,9 @@ impl Bot {
                 .insert(digest, line.arguments.pop().unwrap());
             _ = self.digest_firehose.send(digest);
 
-            sleep(Duration::from_millis(self.delay)).await;
+            if !self.stealthy {
+                sleep(Duration::from_millis(self.delay)).await;
+            }
         }
 
         Ok(())
