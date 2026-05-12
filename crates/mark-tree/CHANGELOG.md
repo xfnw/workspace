@@ -6,6 +6,11 @@ SPDX-License-Identifier: MIT
 
 # changelog
 
+## unreleased
+
+### added
+- `no_std` (using alloc) is now supported
+
 ## 0.1.1 - 2025-12-15
 
 ### fixed

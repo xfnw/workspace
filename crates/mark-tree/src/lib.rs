@@ -9,8 +9,12 @@
 //! in `examples/ipropt.rs`. however, it can be used with any
 //! [`Iterator<Item = bool>`]
 #![allow(clippy::precedence)]
+#![no_std]
 
-use std::{
+extern crate alloc;
+
+use alloc::{boxed::Box, vec, vec::Vec};
+use core::{
     iter::empty,
     net::{IpAddr, Ipv4Addr, Ipv6Addr},
 };
@@ -157,14 +161,14 @@ impl IntoIterator for &IpRange {
     }
 }
 
-impl std::fmt::Display for IpRange {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for IpRange {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         let (ip, mask_len) = self.into_parts();
         write!(f, "{ip}/{mask_len}")
     }
 }
 
-impl std::str::FromStr for IpRange {
+impl core::str::FromStr for IpRange {
     type Err = ParseIpRangeError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -188,13 +192,13 @@ impl std::str::FromStr for IpRange {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParseIpRangeError {
-    AddrParse(std::net::AddrParseError),
-    ParseInt(std::num::ParseIntError),
+    AddrParse(core::net::AddrParseError),
+    ParseInt(core::num::ParseIntError),
     MaskTooBig,
 }
 
-impl std::fmt::Display for ParseIpRangeError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl core::fmt::Display for ParseIpRangeError {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::AddrParse(a) => a.fmt(f),
             Self::ParseInt(p) => p.fmt(f),
@@ -203,7 +207,7 @@ impl std::fmt::Display for ParseIpRangeError {
     }
 }
 
-impl std::error::Error for ParseIpRangeError {}
+impl core::error::Error for ParseIpRangeError {}
 
 /// a trie where branches get marked based on where an iterator of bools ends
 ///
@@ -234,7 +238,7 @@ impl MarkTree {
                     let mut other = Self::new();
 
                     if bit {
-                        std::mem::swap(&mut deeper, &mut other);
+                        core::mem::swap(&mut deeper, &mut other);
                     }
                     Self::Branch(Box::new(deeper), Box::new(other))
                 }
@@ -247,7 +251,7 @@ impl MarkTree {
         } else {
             Self::AllMarked
         };
-        _ = std::mem::replace(self, new);
+        _ = core::mem::replace(self, new);
     }
 
     /// unmark the position in the tree dictated by an iterator
@@ -261,7 +265,7 @@ impl MarkTree {
                     let mut other = Self::AllMarked;
 
                     if bit {
-                        std::mem::swap(&mut deeper, &mut other);
+                        core::mem::swap(&mut deeper, &mut other);
                     }
                     Self::Branch(Box::new(deeper), Box::new(other))
                 }
@@ -274,7 +278,7 @@ impl MarkTree {
         } else {
             Self::AllUnmarked
         };
-        _ = std::mem::replace(self, new);
+        _ = core::mem::replace(self, new);
     }
 
     /// check if a position in the tree dictated by an iterator is marked
@@ -301,7 +305,7 @@ impl MarkTree {
             if matches!(&**a, Self::AllUnmarked | Self::AllMarked) && a == b {
                 // this is only reachable when cheap to clone since this is a leaf
                 let new = (**a).clone();
-                _ = std::mem::replace(self, new);
+                _ = core::mem::replace(self, new);
             }
         }
     }
@@ -339,7 +343,7 @@ impl MarkTree {
         MarkTreeIter::<T> {
             stack: vec![(self, TreePos::Root)],
             path: vec![],
-            phantom: std::marker::PhantomData,
+            phantom: core::marker::PhantomData,
         }
     }
 }
@@ -359,7 +363,7 @@ enum TreePos {
 pub struct MarkTreeIter<'a, T> {
     stack: Vec<(&'a MarkTree, TreePos)>,
     path: Vec<bool>,
-    phantom: std::marker::PhantomData<T>,
+    phantom: core::marker::PhantomData<T>,
 }
 
 impl<'a, T> Iterator for MarkTreeIter<'a, T>
@@ -405,7 +409,8 @@ where
 #[allow(clippy::unreadable_literal)]
 mod tests {
     use crate::{BitRangeIter, ConvertBits, IpRange, MarkTree, ParseIpRangeError};
-    use std::{net::IpAddr, str::FromStr};
+    use alloc::{string::ToString, vec::Vec};
+    use core::{net::IpAddr, str::FromStr};
 
     #[test]
     fn range_known() {
