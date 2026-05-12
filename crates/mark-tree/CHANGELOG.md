@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 
 ## 0.1.1 - 2025-12-15
 
-### fixes
+### fixed
 - the output of `MarkTree::is_marked` will no longer erroneously be
   affected by running `MarkTree::optimize`
 
