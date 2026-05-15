@@ -1,0 +1,17 @@
+# SPDX-FileCopyrightText: 2026 xfnw
+#
+# SPDX-License-Identifier: MIT
+
+[package]
+name = "metrics-relay"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+repository.workspace = true
+
+[dependencies]
+axum = { version = "0.8.8", features = ["query"] }
+tokio = { version = "1.52.1", features = ["macros", "rt-multi-thread", "net", "sync"] }
+
+[lints]
+workspace = true
