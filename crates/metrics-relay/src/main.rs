@@ -4,7 +4,7 @@
 
 use axum::{
     Router,
-    extract::State,
+    extract::{Query, State},
     http::StatusCode,
     routing::{get, post},
 };
@@ -31,18 +31,24 @@ async fn get_metrics(State(state): State<Arc<AppState>>) -> String {
     out
 }
 
-async fn write_metrics(State(state): State<Arc<AppState>>, body: String) -> StatusCode {
+async fn write_metrics(
+    State(state): State<Arc<AppState>>,
+    Query(query): Query<BTreeMap<String, String>>,
+    body: String,
+) -> StatusCode {
     let mut metrics = BTreeMap::new();
     for line in body.lines() {
         let Some(parsed) = influx::InfluxLine::parse(line) else {
             continue;
         };
+        let mut labels = parsed.labels;
+        labels.append(&mut query.clone());
         for (field, value) in parsed.fields {
             metrics.insert(
                 prom::NameAndLabels {
                     name: &parsed.name,
                     extra_name: Some(&field),
-                    labels: &parsed.labels,
+                    labels: &labels,
                 }
                 .to_string(),
                 value,
