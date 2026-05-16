@@ -2,9 +2,10 @@
 //
 // SPDX-License-Identifier: MIT
 
-use axum::Router;
+use axum::{Router, extract::State, routing::get};
 use std::{
     collections::BTreeMap,
+    fmt::Write,
     net::SocketAddr,
     sync::{Arc, Mutex},
 };
@@ -13,8 +14,16 @@ use tokio::net::TcpListener;
 mod influx;
 mod prom;
 
-struct State {
+struct AppState {
     metrics: Mutex<BTreeMap<String, f64>>,
+}
+
+async fn get_metrics(State(state): State<Arc<AppState>>) -> String {
+    let mut out = String::new();
+    for (k, v) in state.metrics.lock().unwrap().iter() {
+        writeln!(out, "{k} {v}").unwrap();
+    }
+    out
 }
 
 #[tokio::main]
@@ -27,10 +36,12 @@ async fn main() {
             8429,
         ));
 
-    let state = Arc::new(State {
+    let state = Arc::new(AppState {
         metrics: Mutex::new(BTreeMap::new()),
     });
-    let app = Router::new().with_state(state);
+    let app = Router::new()
+        .route("/metrics", get(get_metrics))
+        .with_state(state);
 
     let listen = TcpListener::bind(addr).await.unwrap();
     println!("listening on {}", listen.local_addr().unwrap());
