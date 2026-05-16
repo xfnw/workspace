@@ -86,6 +86,10 @@ fn parse_escaped_until(inp: &str, end_predicate: impl Fn(char) -> bool) -> Optio
         }
     }
 
+    if backslashed {
+        out.push('\\');
+    }
+
     Some((out, chars.as_str()))
 }
 
