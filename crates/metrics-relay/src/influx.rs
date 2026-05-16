@@ -50,7 +50,7 @@ fn parse_escaped_until(inp: &str, end_predicate: impl Fn(char) -> bool) -> Optio
         }
     }
 
-    None
+    Some((out, chars.as_str()))
 }
 
 fn chomp(inp: &str) -> Option<(char, &str)> {
@@ -63,12 +63,17 @@ fn parse_quoted(inp: &str) -> Option<(String, &str)> {
         return None;
     };
     let (s, rest) = parse_escaped_until(rest, |c| c == '"')?;
-    assert_eq!(&rest[..1], "\"");
-    Some((s, &rest[1..]))
+    let Some(('"', rest)) = chomp(rest) else {
+        return None;
+    };
+    Some((s, rest))
 }
 
 fn parse_maybe_quoted(inp: &str, end_predicate: impl Fn(char) -> bool) -> Option<(String, &str)> {
-    parse_quoted(inp).or_else(|| parse_escaped_until(inp, end_predicate))
+    if inp.starts_with("\"") {
+        return parse_quoted(inp);
+    }
+    parse_escaped_until(inp, end_predicate)
 }
 
 fn parse_kv<V: FromStr>(
@@ -120,5 +125,18 @@ mod tests {
         assert_eq!(iter.next(), Some((&"i have spaces".to_string(), &2f64)));
         assert_eq!(iter.next(), Some((&"im quoted".to_string(), &3f64)));
         assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn end() {
+        assert_eq!(
+            parse_maybe_quoted("meow", |_| false),
+            Some(("meow".to_string(), ""))
+        );
+        assert_eq!(parse_maybe_quoted("\"meow", |_| false), None);
+        assert_eq!(
+            parse_maybe_quoted("\"meow\"", |_| false),
+            Some(("meow".to_string(), ""))
+        );
     }
 }
