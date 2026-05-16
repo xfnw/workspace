@@ -24,6 +24,38 @@ impl Display for EscapeString<'_> {
     }
 }
 
+struct EscapeMetric<'a>(&'a str, Option<&'a str>);
+
+impl Display for EscapeMetric<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let mut chars = self.0.chars();
+        f.write_char(
+            chars
+                .next()
+                .filter(|c| matches!(c, 'a'..='z' | 'A'..='Z' | '_' | ':'))
+                .unwrap_or('_'),
+        )?;
+        for c in chars {
+            f.write_char(match c {
+                'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | ':' => c,
+                _ => '_',
+            })?;
+        }
+
+        if let Some(extra) = self.1 {
+            f.write_char('_')?;
+            for c in extra.chars() {
+                f.write_char(match c {
+                    'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | ':' => c,
+                    _ => '_',
+                })?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
 pub struct NameAndLabels<'a, I> {
     pub name: &'a str,
     pub extra_name: Option<&'a str>,
@@ -37,10 +69,7 @@ where
     V: AsRef<str>,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        f.write_str(self.name)?;
-        if let Some(extra) = self.extra_name {
-            write!(f, "_{extra}")?;
-        }
+        write!(f, "{}", EscapeMetric(self.name, self.extra_name))?;
 
         let mut iter = self.labels.into_iter();
         if let Some(first) = iter.next() {
