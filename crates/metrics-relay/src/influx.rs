@@ -12,15 +12,14 @@ impl InfluxLine {
     }
 }
 
-fn parse_escaped_until(
-    inp: &str,
-    end_predicate: impl Fn(char) -> bool,
-) -> Option<(String, char, &str)> {
+fn parse_escaped_until(inp: &str, end_predicate: impl Fn(char) -> bool) -> Option<(String, &str)> {
     let mut out = String::new();
     let mut chars = inp.chars();
     let mut backslashed = false;
 
-    while let Some(c) = chars.next() {
+    while let prev_rest = chars.as_str()
+        && let Some(c) = chars.next()
+    {
         if backslashed {
             backslashed = false;
             match c {
@@ -40,7 +39,7 @@ fn parse_escaped_until(
             continue;
         }
         if end_predicate(c) {
-            return Some((out, c, chars.as_str()));
+            return Some((out, prev_rest));
         }
         if c == '\\' {
             backslashed = true;
@@ -57,8 +56,7 @@ fn parse_quoted(inp: &str) -> Option<(String, &str)> {
     if chars.next().is_none_or(|c| c != '"') {
         return None;
     }
-    let Some((s, '"', rest)) = parse_escaped_until(chars.as_str(), |c| c == '"') else {
-        return None;
-    };
-    Some((s, rest))
+    let (s, rest) = parse_escaped_until(chars.as_str(), |c| c == '"')?;
+    assert_eq!(&rest[..1], "\"");
+    Some((s, &rest[1..]))
 }
