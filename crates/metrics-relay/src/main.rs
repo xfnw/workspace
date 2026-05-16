@@ -25,7 +25,7 @@ struct AppState {
 
 async fn get_metrics(State(state): State<Arc<AppState>>) -> String {
     let mut out = String::new();
-    for (k, v) in state.metrics.lock().unwrap().iter() {
+    for (k, v) in std::mem::take(&mut *state.metrics.lock().unwrap()) {
         writeln!(out, "{k} {v}").unwrap();
     }
     out
