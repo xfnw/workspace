@@ -5,12 +5,48 @@
 use std::{collections::BTreeMap, str::FromStr};
 
 pub struct InfluxLine {
-    name: String,
+    pub name: String,
+    pub labels: BTreeMap<String, String>,
+    pub fields: BTreeMap<String, f64>,
+    pub _timestamp: Option<f64>,
 }
 
 impl InfluxLine {
     pub fn parse(inp: &str) -> Option<Self> {
-        todo!()
+        let (name, rest) = parse_escaped_until(inp, |c| c == ',' || c == ' ')?;
+
+        let mut labels = BTreeMap::new();
+        let rest = if let Some((',', rest)) = chomp(rest) {
+            let (mut new_labels, rest) = parse_kv_list(rest, |c| c == ' ')?;
+            labels.append(&mut new_labels);
+            rest
+        } else {
+            rest
+        };
+
+        let Some((' ', rest)) = chomp(rest) else {
+            return None;
+        };
+
+        let mut fields = BTreeMap::new();
+        let (mut new_fields, rest) = parse_kv_list(rest, |c| c == ' ')?;
+        fields.append(&mut new_fields);
+
+        let timestamp = if let Some((c, rest)) = chomp(rest) {
+            if c != ' ' {
+                return None;
+            }
+            Some(rest.parse().ok()?)
+        } else {
+            None
+        };
+
+        Some(Self {
+            name,
+            labels,
+            fields,
+            _timestamp: timestamp,
+        })
     }
 }
 
@@ -138,5 +174,20 @@ mod tests {
             parse_maybe_quoted("\"meow\"", |_| false),
             Some(("meow".to_string(), ""))
         );
+    }
+
+    #[test]
+    fn parse_line() {
+        let line = InfluxLine::parse(r#"meows,name="vulpine",species=fox total=6"#).unwrap();
+        assert_eq!(line.name, "meows");
+
+        let mut expected_labels = BTreeMap::new();
+        expected_labels.insert("name".to_string(), "vulpine".to_string());
+        expected_labels.insert("species".to_string(), "fox".to_string());
+        assert_eq!(line.labels, expected_labels);
+
+        let mut expected_fields = BTreeMap::new();
+        expected_fields.insert("total".to_string(), 6f64);
+        assert_eq!(line.fields, expected_fields);
     }
 }
