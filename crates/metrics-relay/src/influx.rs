@@ -51,12 +51,16 @@ fn parse_escaped_until(inp: &str, end_predicate: impl Fn(char) -> bool) -> Optio
     None
 }
 
-fn parse_quoted(inp: &str) -> Option<(String, &str)> {
+fn chomp(inp: &str) -> Option<(char, &str)> {
     let mut chars = inp.chars();
-    if chars.next().is_none_or(|c| c != '"') {
+    Some((chars.next()?, chars.as_str()))
+}
+
+fn parse_quoted(inp: &str) -> Option<(String, &str)> {
+    let Some(('"', rest)) = chomp(inp) else {
         return None;
-    }
-    let (s, rest) = parse_escaped_until(chars.as_str(), |c| c == '"')?;
+    };
+    let (s, rest) = parse_escaped_until(rest, |c| c == '"')?;
     assert_eq!(&rest[..1], "\"");
     Some((s, &rest[1..]))
 }
