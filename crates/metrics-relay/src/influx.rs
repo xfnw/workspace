@@ -110,7 +110,7 @@ fn parse_quoted(inp: &str) -> Option<(String, &str)> {
 }
 
 fn parse_maybe_quoted(inp: &str, end_predicate: impl Fn(char) -> bool) -> Option<(String, &str)> {
-    if inp.starts_with("\"") {
+    if inp.starts_with('"') {
         return parse_quoted(inp);
     }
     Some(parse_escaped_until(inp, end_predicate))
