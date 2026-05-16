@@ -2,7 +2,12 @@
 //
 // SPDX-License-Identifier: MIT
 
-use axum::{Router, extract::State, routing::get};
+use axum::{
+    Router,
+    extract::State,
+    http::StatusCode,
+    routing::{get, post},
+};
 use std::{
     collections::BTreeMap,
     fmt::Write,
@@ -26,6 +31,34 @@ async fn get_metrics(State(state): State<Arc<AppState>>) -> String {
     out
 }
 
+async fn write_metrics(State(state): State<Arc<AppState>>, body: String) -> StatusCode {
+    let mut metrics = BTreeMap::new();
+    for line in body.lines() {
+        let Some(parsed) = influx::InfluxLine::parse(line) else {
+            continue;
+        };
+        for (field, value) in parsed.fields {
+            metrics.insert(
+                prom::NameAndLabels {
+                    name: &parsed.name,
+                    extra_name: Some(&field),
+                    labels: &parsed.labels,
+                }
+                .to_string(),
+                value,
+            );
+        }
+    }
+
+    if metrics.is_empty() {
+        return StatusCode::BAD_REQUEST;
+    }
+
+    state.metrics.lock().unwrap().append(&mut metrics);
+
+    StatusCode::NO_CONTENT
+}
+
 #[tokio::main]
 async fn main() {
     let addr: SocketAddr = std::env::args()
@@ -41,6 +74,7 @@ async fn main() {
     });
     let app = Router::new()
         .route("/metrics", get(get_metrics))
+        .route("/write", post(write_metrics))
         .with_state(state);
 
     let listen = TcpListener::bind(addr).await.unwrap();
