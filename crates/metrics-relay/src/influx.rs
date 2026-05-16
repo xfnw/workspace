@@ -13,7 +13,7 @@ pub struct InfluxLine {
 
 impl InfluxLine {
     pub fn parse(inp: &str) -> Option<Self> {
-        let (name, rest) = parse_escaped_until(inp, |c| c == ',' || c == ' ')?;
+        let (name, rest) = parse_escaped_until(inp, |c| c == ',' || c == ' ');
 
         let mut labels = BTreeMap::new();
         let rest = if let Some((',', rest)) = chomp(rest) {
@@ -50,7 +50,7 @@ impl InfluxLine {
     }
 }
 
-fn parse_escaped_until(inp: &str, end_predicate: impl Fn(char) -> bool) -> Option<(String, &str)> {
+fn parse_escaped_until(inp: &str, end_predicate: impl Fn(char) -> bool) -> (String, &str) {
     let mut out = String::new();
     let mut chars = inp.chars();
     let mut backslashed = false;
@@ -77,7 +77,7 @@ fn parse_escaped_until(inp: &str, end_predicate: impl Fn(char) -> bool) -> Optio
             continue;
         }
         if end_predicate(c) {
-            return Some((out, prev_rest));
+            return (out, prev_rest);
         }
         if c == '\\' {
             backslashed = true;
@@ -90,7 +90,7 @@ fn parse_escaped_until(inp: &str, end_predicate: impl Fn(char) -> bool) -> Optio
         out.push('\\');
     }
 
-    Some((out, chars.as_str()))
+    (out, chars.as_str())
 }
 
 fn chomp(inp: &str) -> Option<(char, &str)> {
@@ -102,7 +102,7 @@ fn parse_quoted(inp: &str) -> Option<(String, &str)> {
     let Some(('"', rest)) = chomp(inp) else {
         return None;
     };
-    let (s, rest) = parse_escaped_until(rest, |c| c == '"')?;
+    let (s, rest) = parse_escaped_until(rest, |c| c == '"');
     let Some(('"', rest)) = chomp(rest) else {
         return None;
     };
@@ -113,7 +113,7 @@ fn parse_maybe_quoted(inp: &str, end_predicate: impl Fn(char) -> bool) -> Option
     if inp.starts_with("\"") {
         return parse_quoted(inp);
     }
-    parse_escaped_until(inp, end_predicate)
+    Some(parse_escaped_until(inp, end_predicate))
 }
 
 fn parse_kv<V: FromStr>(
