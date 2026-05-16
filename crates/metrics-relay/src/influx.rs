@@ -13,6 +13,10 @@ pub struct InfluxLine {
 
 impl InfluxLine {
     pub fn parse(inp: &str) -> Option<Self> {
+        if inp.starts_with('#') {
+            return None;
+        }
+
         let (name, rest) = parse_escaped_until(inp, |c| c == ',' || c == ' ');
 
         let mut labels = BTreeMap::new();
