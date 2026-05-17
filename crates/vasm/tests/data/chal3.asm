@@ -1,4 +1,4 @@
-jump start
+	jump start
 
 x1:	dw 0
 x2:	dw 0
