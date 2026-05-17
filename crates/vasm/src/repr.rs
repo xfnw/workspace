@@ -171,7 +171,7 @@ pub enum Operand {
     ///
     /// takes an extra word
     AtYn(Offset),
-    /// `SP+n` value at address of stack pointer plus offset
+    /// `SP+n` address of stack pointer plus offset
     ///
     /// takes an extra word
     SPn(Offset),
