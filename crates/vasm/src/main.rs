@@ -73,8 +73,8 @@ fn run(opt: &Opt) -> Result<(), Error> {
         } else if let Some(f) = &opt.file {
             let mut bytes = BufReader::new(File::open(f)?).bytes();
             let mut words = vec![];
-            while let (Some(Ok(left)), Some(Ok(right))) = (bytes.next(), bytes.next()) {
-                words.push((u16::from(left) << 8) + u16::from(right));
+            while let (Some(left), Some(right)) = (bytes.next(), bytes.next()) {
+                words.push((u16::from(left?) << 8) + u16::from(right?));
             }
             words
         } else {
