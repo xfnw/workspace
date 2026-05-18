@@ -8,6 +8,8 @@ SPDX-License-Identifier: MIT
 
 ## unreleased
 
+## 0.1.2 - 2026-05-18
+
 ### added
 - `no_std` (using alloc) is now supported
 
