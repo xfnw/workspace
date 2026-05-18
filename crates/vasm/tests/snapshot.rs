@@ -2,7 +2,11 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-use std::{path::Path, process::Command};
+use std::{
+    io::Write,
+    path::Path,
+    process::{Command, Stdio},
+};
 
 static BIN: &str = env!("CARGO_BIN_EXE_vasm");
 static DATA_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data");
@@ -37,8 +41,8 @@ fn roundtrip(name: &str, h: u16) {
     let mut ass = Command::new(BIN)
         .arg("--h16")
         .arg(format!("{h:x}"))
-        .stdin(std::process::Stdio::piped())
-        .stdout(std::process::Stdio::piped())
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
         .spawn()
         .unwrap();
 
@@ -91,3 +95,30 @@ snap!(chal5);
 
 snap!(hwrite);
 snap!(uninit, 0xfffe);
+
+#[test]
+fn dis_odd() {
+    let mut dis = Command::new(BIN)
+        .arg("-d")
+        .arg("/dev/stdin")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+
+    let mut stdin = dis.stdin.take().unwrap();
+    std::thread::spawn(move || {
+        stdin.write_all(b"meowh").unwrap();
+    });
+
+    let output = dis.wait_with_output().unwrap();
+
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+
+    assert_eq!(
+        str::from_utf8(&output.stdout).unwrap(),
+        "\tdw 0x6d65\n\tdw 0x6f77\n\tpush A\n"
+    );
+}
