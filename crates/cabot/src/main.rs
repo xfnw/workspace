@@ -34,16 +34,16 @@ struct Opt {
     #[argh(switch)]
     stealthy: bool,
     /// mountpoint to mount fuse filesystem
-    #[argh(option)]
+    #[argh(option, arg_name = "mountpoint")]
     fuse: Option<PathBuf>,
     /// hash to resume fuse filesystem state from
-    #[argh(option, from_str_fn(parse_hex_digest))]
+    #[argh(option, arg_name = "digest", from_str_fn(parse_hex_digest))]
     fuse_resume: Option<[u8; 16]>,
     /// seconds between automatically syncing fuse filesystem
-    #[argh(option, default = "9")]
+    #[argh(option, arg_name = "interval", default = "9")]
     fuse_interval: u64,
     /// seconds before giving up on realizing
-    #[argh(option, default = "10")]
+    #[argh(option, arg_name = "timeout", default = "10")]
     fuse_timeout: u64,
     /// nickname to use
     #[argh(option, short = 'n', default = "\"ca\".to_string()")]
