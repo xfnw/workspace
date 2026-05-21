@@ -83,17 +83,17 @@ impl CaFilesystem {
             .unwrap()
     }
 
-    async fn attr(&self, req: Request, inode: Inode) -> Result<FileAttr, Error> {
-        self.realize(inode).await?;
+    async fn attr(&self, req: Request, inode: Inode) -> FileAttr {
+        _ = self.realize(inode).await;
         let data = &self.get(inode).data;
         let len = match data {
-            DataKind::File(lock) => lock.read().await.get().unwrap().len(),
-            DataKind::Directory(lock) => lock.read().await.get().unwrap().len(),
-        } as u64;
-        Ok(FileAttr {
+            DataKind::File(lock) => lock.read().await.get().map(|d| d.len() as u64),
+            DataKind::Directory(lock) => lock.read().await.get().map(|d| d.len() as u64),
+        };
+        FileAttr {
             ino: inode,
-            size: len,
-            blocks: len.div_ceil(4096),
+            size: len.unwrap_or(u64::MAX),
+            blocks: len.unwrap_or(u64::MAX).div_ceil(4096),
             atime: UNIX_EPOCH.into(),
             mtime: UNIX_EPOCH.into(),
             ctime: UNIX_EPOCH.into(),
@@ -113,7 +113,7 @@ impl CaFilesystem {
             gid: req.gid,
             rdev: 0,
             blksize: 4096,
-        })
+        }
     }
 
     pub fn poison(&self) {
@@ -173,7 +173,7 @@ impl Filesystem for CaFilesystem {
         });
         Ok(ReplyCreated {
             ttl: TTL,
-            attr: self.attr(req, inode).await.map_err(|_| libc::EIO)?,
+            attr: self.attr(req, inode).await,
             generation: 0,
             fh: 0,
             // no idea what is supposed to go on here.
@@ -200,7 +200,7 @@ impl Filesystem for CaFilesystem {
 
         Ok(ReplyEntry {
             ttl: TTL,
-            attr: self.attr(req, inode).await.map_err(|_| libc::EIO)?,
+            attr: self.attr(req, inode).await,
             generation: 0,
         })
     }
@@ -214,7 +214,7 @@ impl Filesystem for CaFilesystem {
     ) -> fuse3::Result<ReplyAttr> {
         Ok(ReplyAttr {
             ttl: TTL,
-            attr: self.attr(req, inode).await.map_err(|_| libc::EIO)?,
+            attr: self.attr(req, inode).await,
         })
     }
 
@@ -277,7 +277,7 @@ impl Filesystem for CaFilesystem {
         });
         Ok(ReplyEntry {
             ttl: TTL,
-            attr: self.attr(req, inode).await.map_err(|_| libc::EIO)?,
+            attr: self.attr(req, inode).await,
             generation: 0,
         })
     }
@@ -436,7 +436,7 @@ impl Filesystem for CaFilesystem {
                 kind: FileType::Directory,
                 name: OsString::from("."),
                 offset: 1,
-                attr: self.attr(req, inode).await.map_err(|_| libc::EIO)?,
+                attr: self.attr(req, inode).await,
                 entry_ttl: TTL,
                 attr_ttl: TTL,
             },
@@ -446,7 +446,7 @@ impl Filesystem for CaFilesystem {
                 kind: FileType::Directory,
                 name: OsString::from(".."),
                 offset: 2,
-                attr: self.attr(req, entry.parent).await.map_err(|_| libc::EIO)?,
+                attr: self.attr(req, entry.parent).await,
                 entry_ttl: TTL,
                 attr_ttl: TTL,
             },
@@ -462,7 +462,7 @@ impl Filesystem for CaFilesystem {
                 },
                 name: name.clone(),
                 offset: i as i64 + 3,
-                attr: self.attr(req, *inode).await.map_err(|_| libc::EIO)?,
+                attr: self.attr(req, *inode).await,
                 entry_ttl: TTL,
                 attr_ttl: TTL,
             });
