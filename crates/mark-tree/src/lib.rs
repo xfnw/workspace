@@ -251,7 +251,7 @@ impl MarkTree {
         } else {
             Self::AllMarked
         };
-        _ = core::mem::replace(self, new);
+        *self = new;
     }
 
     /// unmark the position in the tree dictated by an iterator
@@ -278,7 +278,7 @@ impl MarkTree {
         } else {
             Self::AllUnmarked
         };
-        _ = core::mem::replace(self, new);
+        *self = new;
     }
 
     /// check if a position in the tree dictated by an iterator is marked
@@ -305,7 +305,7 @@ impl MarkTree {
             if matches!(&**a, Self::AllUnmarked | Self::AllMarked) && a == b {
                 // this is only reachable when cheap to clone since this is a leaf
                 let new = (**a).clone();
-                _ = core::mem::replace(self, new);
+                *self = new;
             }
         }
     }
