@@ -33,7 +33,7 @@ use tokio::{
 
 #[derive(Debug)]
 struct Client {
-    nick: RwLock<String>,
+    nick: RwLock<Option<Vec<u8>>>,
     sender: mpsc::Sender<Vec<u8>>,
     raw_feed: broadcast::Sender<Bytes>,
     hash_feed: broadcast::Sender<u64>,
@@ -73,7 +73,14 @@ async fn status(State(state): State<Arc<AppState>>) -> Json<StatusReply> {
         for (n, client) in clients_handle.iter().enumerate() {
             clients.push(if let Some(client) = client {
                 Some(StatusClient {
-                    nick: client.nick.read().await.clone(),
+                    nick: client
+                        .nick
+                        .read()
+                        .await
+                        .as_ref()
+                        .and_then(|n| str::from_utf8(n).ok())
+                        .unwrap_or("???")
+                        .to_string(),
                     active: active.contains(&n),
                 })
             } else {
@@ -184,7 +191,7 @@ async fn reserve_client_slot(clients: &RwLock<Vec<Option<Client>>>) -> SlotInfo 
     let raw_feed = broadcast::channel(32).0;
     let hash_feed = broadcast::channel(32).0;
     let client = Client {
-        nick: RwLock::new("???".to_string()),
+        nick: RwLock::new(None),
         sender,
         raw_feed: raw_feed.clone(),
         hash_feed: hash_feed.clone(),
@@ -253,19 +260,14 @@ async fn client_loop(state: Arc<AppState>, conn: irc_connect::Stream, slot_info:
                             return;
                         }
                     }
-                    "NICK" => {
-                        if let Some(oldnick) = source_nick.and_then(|n| str::from_utf8(n).ok())
-                            && { oldnick == *state.clients.read().await[slot].as_ref().unwrap().nick.read().await }
-                            && let Some(newnick) = line.arguments.first().and_then(|n| str::from_utf8(n).ok())
-                        {
-                            let clients = state.clients.read().await;
-                            *clients[slot].as_ref().unwrap().nick.write().await = newnick.to_string();
-                        }
+                    "NICK" if { source_nick == state.clients.read().await[slot].as_ref().unwrap().nick.read().await.as_deref() } => {
+                        let clients = state.clients.read().await;
+                        *clients[slot].as_ref().unwrap().nick.write().await = line.arguments.first().cloned();
                     }
                     "001" => {
-                        if let Some(mynick) = line.arguments.first().and_then(|n| str::from_utf8(n).ok()) {
+                        {
                             let clients = state.clients.read().await;
-                            *clients[slot].as_ref().unwrap().nick.write().await = mynick.to_string();
+                            *clients[slot].as_ref().unwrap().nick.write().await = line.arguments.first().cloned();
                         }
                         if let Some(channel) = state.autojoin.read().await.as_ref() {
                             let out = irctokens::Line {
@@ -440,7 +442,7 @@ async fn send(
                 let Some(trail) = lines.next() else {
                     return;
                 };
-                let hash = hash_line(nick.as_bytes(), &command, &trail);
+                let hash = hash_line(nick.as_deref().unwrap_or(b"???"), &command, &trail);
                 let mut line = irctokens::Line {
                     tags: None,
                     source: None,
