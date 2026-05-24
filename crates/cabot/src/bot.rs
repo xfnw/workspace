@@ -20,7 +20,6 @@ use tokio::{
 pub struct Bot {
     read: AMutex<BufReader<ReadHalf<Stream>>>,
     write: AMutex<WriteHalf<Stream>>,
-    nick: Mutex<Option<Vec<u8>>>,
     channel: String,
     delay: u64,
     stealthy: bool,
@@ -37,7 +36,6 @@ impl Bot {
         Self {
             read: AMutex::new(BufReader::new(read)),
             write: AMutex::new(write),
-            nick: Mutex::new(None),
             channel: join,
             delay,
             stealthy,
@@ -75,9 +73,8 @@ impl Bot {
             line.command.make_ascii_uppercase();
 
             match line.command.as_ref() {
-                "001" => self.handle_001(line).await?,
+                "001" => self.handle_001().await?,
                 "433" => self.handle_433(line).await?,
-                "NICK" => self.handle_nick(&line),
                 "PING" => self.handle_ping(line).await?,
                 "PRIVMSG" => self.handle_privmsg(line).await?,
                 _ => (),
@@ -85,8 +82,7 @@ impl Bot {
         }
     }
 
-    async fn handle_001(&self, line: Line) -> Result<(), Error> {
-        *self.nick.lock().unwrap() = line.arguments.first().cloned();
+    async fn handle_001(&self) -> Result<(), Error> {
         let join = Line {
             tags: None,
             source: None,
@@ -112,18 +108,6 @@ impl Bot {
         }
 
         Ok(())
-    }
-
-    fn handle_nick(&self, line: &Line) {
-        if let Some(source_nick) = line
-            .source
-            .as_ref()
-            .and_then(|s| s.split(|&b| b == b'!').next())
-            && let mut mynick = self.nick.lock().unwrap()
-            && mynick.as_ref().is_some_and(|n| n == source_nick)
-        {
-            *mynick = line.arguments.first().cloned();
-        }
     }
 
     async fn handle_ping(&self, line: Line) -> Result<(), Error> {
