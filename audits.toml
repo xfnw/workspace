@@ -1508,3 +1508,11 @@ criteria = "no-sus-blobs"
 [[audits.append-only-vec]]
 version = "0.1.8"
 criteria = "skimmed"
+
+[[audits.try-lock]]
+version = "0.2.4"
+criteria = "no-sus-blobs"
+
+[[audits.try-lock]]
+version = "0.2.4"
+criteria = "skimmed"
