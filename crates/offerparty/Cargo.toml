@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: 2026 xfnw
+#
+# SPDX-License-Identifier: EUPL-1.2
+
+[package]
+name = "offerparty"
+version = "0.1.0"
+edition = "2024"
+license = "EUPL-1.2"
+repository.workspace = true
+
+[dependencies]
+argh = { version = "0.1.14", default-features = false, features = ["help"] }
+bytes = "1.11.1"
+foxerror = { version = "0.1.2", path = "../foxerror" }
+http-body-util = "0.1.3"
+hyper = { version = "1.8.1", features = ["http1"] }
+hyper-util = { version = "0.1.18", features = ["client-legacy", "http1", "tokio"] }
+irctokens = "0.1.3"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+tokio = { version = "1.52.1", features = ["macros", "rt-multi-thread", "net", "io-util", "time", "sync"] }
+url = "2.5.8"
+
+[lints]
+workspace = true
