@@ -4,7 +4,7 @@
 
 use argh::FromArgs;
 use irctokens::Line;
-use std::time::Duration;
+use std::{net::IpAddr, str::FromStr, sync::RwLock, time::Duration};
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
     net::{TcpStream, ToSocketAddrs},
@@ -47,6 +47,7 @@ struct Bot {
     send_message: mpsc::UnboundedSender<Message>,
     autojoin: Option<String>,
     copyparty_url: Url,
+    myhost: RwLock<Option<IpAddr>>,
 }
 
 impl Bot {
@@ -75,6 +76,7 @@ impl Bot {
             send_message,
             autojoin,
             copyparty_url,
+            myhost: RwLock::new(None),
         }
     }
 
@@ -101,7 +103,8 @@ impl Bot {
                     line.command.make_ascii_uppercase();
 
                     match line.command.as_ref() {
-                        "001" => self.handle_001()?,
+                        "001" => self.handle_001(line)?,
+                        "302" => self.handle_302(&line),
                         "433" => self.handle_433(line)?,
                         _ => (),
                     }
@@ -127,11 +130,24 @@ impl Bot {
         self.send_raw.send(res.format()).map_err(|_| Error::Send)
     }
 
-    fn handle_001(&self) -> Result<(), Error> {
+    fn handle_001(&self, line: Line) -> Result<(), Error> {
+        if let Some(mynick) = line.arguments.into_iter().next() {
+            self.send("USERHOST".to_string(), vec![mynick])?;
+        }
         if let Some(channel) = &self.autojoin {
             self.send("JOIN".to_string(), vec![channel.as_bytes().to_vec()])?;
         }
         Ok(())
+    }
+
+    fn handle_302(&self, line: &Line) {
+        *self.myhost.write().unwrap() = line
+            .arguments
+            .get(1)
+            .and_then(|a| str::from_utf8(a).ok())
+            .and_then(|s| s.split(' ').next())
+            .and_then(|s| s.rsplit_once('@'))
+            .and_then(|(_, h)| IpAddr::from_str(h).ok());
     }
 
     fn handle_433(&self, line: Line) -> Result<(), Error> {
