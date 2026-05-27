@@ -10,7 +10,7 @@ repository.workspace = true
 license = "MPL-2.0"
 
 [dependencies]
-argh = "0.1.13"
+argh = { version = "0.1.13", default-features = false, features = ["help"] }
 foxerror = { version = "0.1.2", path = "../foxerror" }
 rayon = "1.11.0"
 serde = { version = "1.0.226", features = ["derive"] }
