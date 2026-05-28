@@ -64,6 +64,7 @@ enum Error {
     Json(serde_json::Error),
     MyHost,
     ExtractFrame,
+    Base,
 }
 
 struct Bot {
@@ -333,7 +334,10 @@ impl Bot {
     async fn do_send(&self, target: &[u8], num: &str) -> Result<(), Error> {
         let path = self.get_path(num)?;
         let mut url = self.copyparty_url.join(&path)?;
-        if path.is_empty() || path.ends_with('/') {
+        if path.is_empty() {
+            return Err(Error::Base);
+        }
+        if path.ends_with('/') {
             url.set_query(Some("zip=crc"));
         }
         // FIXME: find a less nonsensical way to turn our url::Url into an http::Uri
