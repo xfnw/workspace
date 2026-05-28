@@ -106,6 +106,7 @@ impl Bot {
                         "001" => self.handle_001(line)?,
                         "302" => self.handle_302(&line),
                         "433" => self.handle_433(line)?,
+                        "PRIVMSG" => self.handle_privmsg(&line)?,
                         _ => (),
                     }
                 }
@@ -120,7 +121,7 @@ impl Bot {
         }
     }
 
-    fn send(&self, command: String, arguments: Vec<Vec<u8>>) -> Result<(), Error> {
+    fn send_raw(&self, command: String, arguments: Vec<Vec<u8>>) -> Result<(), Error> {
         let res = Line {
             tags: None,
             source: None,
@@ -130,12 +131,19 @@ impl Bot {
         self.send_raw.send(res.format()).map_err(|_| Error::Send)
     }
 
+    fn send_message(&self, target: Vec<u8>, content: Vec<u8>) -> Result<(), Error> {
+        let Some(msg) = Message::new(target, content) else {
+            return Ok(());
+        };
+        self.send_message.send(msg).map_err(|_| Error::Send)
+    }
+
     fn handle_001(&self, line: Line) -> Result<(), Error> {
         if let Some(mynick) = line.arguments.into_iter().next() {
-            self.send("USERHOST".to_string(), vec![mynick])?;
+            self.send_raw("USERHOST".to_string(), vec![mynick])?;
         }
         if let Some(channel) = &self.autojoin {
-            self.send("JOIN".to_string(), vec![channel.as_bytes().to_vec()])?;
+            self.send_raw("JOIN".to_string(), vec![channel.as_bytes().to_vec()])?;
         }
         Ok(())
     }
@@ -153,9 +161,50 @@ impl Bot {
     fn handle_433(&self, line: Line) -> Result<(), Error> {
         if let Some(mut badnick) = line.arguments.into_iter().nth(1) {
             badnick.push(b'_');
-            self.send("NICK".to_string(), vec![badnick])?;
+            self.send_raw("NICK".to_string(), vec![badnick])?;
         }
 
+        Ok(())
+    }
+
+    fn handle_privmsg(&self, line: &Line) -> Result<(), Error> {
+        let Some(source) = line
+            .source
+            .as_ref()
+            .and_then(|s| s.split(|&c| c == b'!').next())
+        else {
+            return Ok(());
+        };
+        if let Some(target) = line
+            .arguments
+            .first()
+            .filter(|t| t.starts_with(b"#"))
+            .map(|v| &v[..])
+        {
+            if line.arguments.get(1).is_some_and(|t| t == b"!list") {
+                self.send_message(
+                    target.to_vec(),
+                    b"ciao a tutti! message me XDCC HELP".to_vec(),
+                )?;
+            }
+            return Ok(());
+        }
+        if let Some(text) = line.arguments.get(1).and_then(|s| str::from_utf8(s).ok())
+            && let Some((first, rest)) = text.split_once(' ')
+            && first.eq_ignore_ascii_case("XDCC")
+        {
+            let (first, rest) = rest.split_once(' ').unwrap_or((rest, ""));
+            match first.to_ascii_uppercase().as_str() {
+                "HELP" => {
+                    self.send_message(source.to_vec(), b"commands: XDCC HELP - this text, XDCC LIST [directory] - list stuff to download, XDCC SEND <number> - get a file".to_vec())?;
+                }
+                "LIST" => self.send_message(source.to_vec(), b"not implemented yet".to_vec())?,
+                "SEND" => {
+                    self.send_message(source.to_vec(), b"also not implemented yet".to_vec())?;
+                }
+                _ => (),
+            }
+        }
         Ok(())
     }
 }
@@ -163,6 +212,17 @@ impl Bot {
 struct Message {
     target: Vec<u8>,
     content: Vec<u8>,
+}
+
+impl Message {
+    fn new(target: Vec<u8>, content: Vec<u8>) -> Option<Self> {
+        if target.iter().any(|c| b"\r\n\0 ".contains(c))
+            || content.iter().any(|c| b"\r\n\0".contains(c))
+        {
+            return None;
+        }
+        Some(Self { target, content })
+    }
 }
 
 #[tokio::main]
