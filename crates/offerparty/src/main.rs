@@ -219,7 +219,11 @@ impl Bot {
             if line.arguments.get(1).is_some_and(|t| t == b"!list") {
                 self.send_message(
                     target.to_vec(),
-                    b"ciao a tutti! message me XDCC HELP".to_vec(),
+                    format!(
+                        "ciao a tutti! message me XDCC HELP to download stuff from {}",
+                        self.copyparty_url
+                    )
+                    .into_bytes(),
                 )?;
             }
             return Ok(());
