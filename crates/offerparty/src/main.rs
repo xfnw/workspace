@@ -353,11 +353,22 @@ impl Bot {
         let listener = tokio::net::TcpListener::bind((myhost, 0)).await?;
         let addr = listener.local_addr()?;
 
+        let mut segments = path.rsplit('/');
+        let name = segments.next().unwrap_or("unknown");
+        let name = if name.is_empty() {
+            let dirname = match segments.next() {
+                None | Some("") => "directory",
+                Some(d) => d,
+            };
+            format!("{dirname}.zip")
+        } else {
+            name.to_string()
+        };
+
         self.send_message(
             target.to_vec(),
             format!(
-                "\x01DCC SEND {} {} {} {len}\x01",
-                path.rsplit('/').next().unwrap(),
+                "\x01DCC SEND {name} {} {} {len}\x01",
                 DccIp(addr.ip()),
                 addr.port()
             )
