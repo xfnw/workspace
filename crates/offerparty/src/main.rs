@@ -62,6 +62,9 @@ enum Error {
     Hyper(hyper::Error),
     #[err(from)]
     Json(serde_json::Error),
+    MissingLength,
+    MyHost,
+    ExtractFrame,
 }
 
 struct Bot {
@@ -241,7 +244,14 @@ impl Bot {
                     });
                 }
                 "SEND" => {
-                    self.send_message(source.to_vec(), b"also not implemented yet".to_vec())?;
+                    let target = source.to_vec();
+                    let rest = rest.to_string();
+                    let myself = Arc::clone(self);
+                    tokio::spawn(async move {
+                        myself
+                            .message_errors(&target, myself.do_send(&target, &rest))
+                            .await;
+                    });
                 }
                 _ => (),
             }
@@ -320,6 +330,50 @@ impl Bot {
 
         Ok(())
     }
+
+    async fn do_send(&self, target: &[u8], num: &str) -> Result<(), Error> {
+        let path = self.get_path(num)?;
+        let mut url = self.copyparty_url.join(&path)?;
+        if path.is_empty() || path.ends_with('/') {
+            url.set_query(Some("zip=crc"));
+        }
+        // FIXME: find a less nonsensical way to turn our url::Url into an http::Uri
+        let resp = self.http_client.get(url.as_str().parse().unwrap()).await?;
+        let Some(len) = resp
+            .headers()
+            .get("Content-Length")
+            .and_then(|h| h.to_str().ok())
+            .and_then(|h| u64::from_str(h).ok())
+        else {
+            return Err(Error::MissingLength);
+        };
+        let Some(myhost) = self.myhost.read().unwrap().as_ref().copied() else {
+            return Err(Error::MyHost);
+        };
+        let listener = tokio::net::TcpListener::bind((myhost, 0)).await?;
+        let addr = listener.local_addr()?;
+
+        self.send_message(
+            target.to_vec(),
+            format!(
+                "\x01DCC SEND {} {} {} {len}\x01",
+                path.rsplit('/').next().unwrap(),
+                DccIp(addr.ip()),
+                addr.port()
+            )
+            .into_bytes(),
+        )?;
+
+        let (mut sock, _) = listener.accept().await?;
+        let mut body = resp.into_body();
+
+        while let Some(frame) = body.frame().await {
+            sock.write_all(&frame?.into_data().map_err(|_| Error::ExtractFrame)?)
+                .await?;
+        }
+
+        Ok(())
+    }
 }
 
 struct Message {
@@ -393,6 +447,17 @@ impl fmt::Display for Human {
             20.. => write!(f, "{}MiB", self.0 >> 20),
             10.. => write!(f, "{}KiB", self.0 >> 10),
             _ => write!(f, "{}B", self.0),
+        }
+    }
+}
+
+struct DccIp(IpAddr);
+
+impl fmt::Display for DccIp {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.0 {
+            IpAddr::V4(ipv4) => write!(f, "{}", ipv4.to_bits()),
+            IpAddr::V6(ipv6) => write!(f, "{ipv6}"),
         }
     }
 }
