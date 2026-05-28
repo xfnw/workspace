@@ -62,7 +62,6 @@ enum Error {
     Hyper(hyper::Error),
     #[err(from)]
     Json(serde_json::Error),
-    MissingLength,
     MyHost,
     ExtractFrame,
 }
@@ -339,14 +338,10 @@ impl Bot {
         }
         // FIXME: find a less nonsensical way to turn our url::Url into an http::Uri
         let resp = self.http_client.get(url.as_str().parse().unwrap()).await?;
-        let Some(len) = resp
+        let len = resp
             .headers()
             .get("Content-Length")
-            .and_then(|h| h.to_str().ok())
-            .and_then(|h| u64::from_str(h).ok())
-        else {
-            return Err(Error::MissingLength);
-        };
+            .and_then(|h| h.to_str().ok());
         let Some(myhost) = self.myhost.read().unwrap().as_ref().copied() else {
             return Err(Error::MyHost);
         };
@@ -368,9 +363,10 @@ impl Bot {
         self.send_message(
             target.to_vec(),
             format!(
-                "\x01DCC SEND {name} {} {} {len}\x01",
+                "\x01DCC SEND {name} {} {}{}\x01",
                 DccIp(addr.ip()),
-                addr.port()
+                addr.port(),
+                MaybeSpace(len),
             )
             .into_bytes(),
         )?;
@@ -470,6 +466,17 @@ impl fmt::Display for DccIp {
             IpAddr::V4(ipv4) => write!(f, "{}", ipv4.to_bits()),
             IpAddr::V6(ipv6) => write!(f, "{ipv6}"),
         }
+    }
+}
+
+struct MaybeSpace<'a>(Option<&'a str>);
+
+impl fmt::Display for MaybeSpace<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(inner) = self.0 {
+            write!(f, " {inner}")?;
+        }
+        Ok(())
     }
 }
 
