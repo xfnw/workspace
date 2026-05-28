@@ -253,7 +253,11 @@ impl Bot {
     where
         F: Future<Output = Result<(), Error>> + Send,
     {
-        if let Err(e) = future.await {
+        let Ok(res) = tokio::time::timeout(Duration::from_mins(10), future).await else {
+            _ = self.send_message(target.to_vec(), b"timed out".to_vec());
+            return;
+        };
+        if let Err(e) = res {
             let formatted = format!("oh noes: {e}");
             for line in formatted.lines() {
                 let mut line = line.as_bytes().to_vec();
