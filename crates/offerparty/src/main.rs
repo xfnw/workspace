@@ -387,6 +387,8 @@ impl Bot {
                 .await?;
         }
 
+        sock.shutdown().await?;
+
         Ok(())
     }
 }
