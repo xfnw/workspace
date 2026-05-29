@@ -4,7 +4,7 @@
 
 use argh::{FromArgs, from_env};
 use irc_connect::{
-    Stream,
+    Connection,
     tokio_rustls::rustls::{
         RootCertStore,
         pki_types::{CertificateDer, pem::PemObject},
@@ -155,7 +155,7 @@ fn parse_hex_digest(inp: &str) -> Result<[u8; 16], String> {
 async fn main() {
     let opt: Opt = from_env();
 
-    let stream = Stream::new_tcp(opt.addr);
+    let stream = Connection::new_tcp(opt.addr);
     let stream = if opt.tls {
         let mut root = RootCertStore::empty();
         root.add_parsable_certificates(CertificateDer::pem_file_iter(opt.trust).unwrap().flatten());

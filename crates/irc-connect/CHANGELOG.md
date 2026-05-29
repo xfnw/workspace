@@ -6,6 +6,13 @@ SPDX-License-Identifier: MIT
 
 # changelog
 
+## unreleased
+- `Stream` has been renamed to `Connection`, since the name was easily
+  confusable with `futures_core::Stream`. using the old name is
+  deprecated
+- `StreamBuilder` has been renamed to `ConnectionBuilder`. using the
+  old name is deprecated
+
 ## 0.2.0 - 2025-07-29
 - `Stream::new_tcp` now accepts anything implementing `IntoTargetAddr`
 - socks behavior switched around and now requires a `SocketAddr`

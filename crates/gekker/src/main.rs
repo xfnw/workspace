@@ -131,7 +131,7 @@ async fn connect(
     State(state): State<Arc<AppState>>,
     Query(args): Query<ConnectArgs>,
 ) -> Result<(), (StatusCode, String)> {
-    let conn = irc_connect::Stream::new_tcp(args.host);
+    let conn = irc_connect::Connection::new_tcp(args.host);
     let conn = if let Some(addr) = args.socks5 {
         conn.socks5(addr)
     } else {
@@ -212,7 +212,7 @@ async fn reserve_client_slot(clients: &RwLock<Vec<Option<Client>>>) -> SlotInfo 
     }
 }
 
-async fn client_loop(state: Arc<AppState>, conn: irc_connect::Stream, slot_info: SlotInfo) {
+async fn client_loop(state: Arc<AppState>, conn: irc_connect::Connection, slot_info: SlotInfo) {
     let SlotInfo {
         slot,
         mut receiver,

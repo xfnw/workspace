@@ -4,7 +4,7 @@
 
 use crate::{Error, tohex_digest, unhex_digest};
 use hashlink::LruCache;
-use irc_connect::Stream;
+use irc_connect::Connection;
 use irctokens::Line;
 use rand::{Rng, seq::SliceRandom, thread_rng};
 use std::{
@@ -18,8 +18,8 @@ use tokio::{
 };
 
 pub struct Bot {
-    read: AMutex<BufReader<ReadHalf<Stream>>>,
-    write: AMutex<WriteHalf<Stream>>,
+    read: AMutex<BufReader<ReadHalf<Connection>>>,
+    write: AMutex<WriteHalf<Connection>>,
     channel: String,
     delay: u64,
     stealthy: bool,
@@ -30,7 +30,13 @@ pub struct Bot {
 }
 
 impl Bot {
-    pub fn new(stream: Stream, join: String, delay: u64, capacity: usize, stealthy: bool) -> Self {
+    pub fn new(
+        stream: Connection,
+        join: String,
+        delay: u64,
+        capacity: usize,
+        stealthy: bool,
+    ) -> Self {
         let (read, write) = io::split(stream);
 
         Self {
