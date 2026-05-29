@@ -5,7 +5,8 @@
 use argh::FromArgs;
 use bytes::{Buf, Bytes};
 use http_body_util::{BodyExt, Empty};
-use hyper_util::client::legacy::{Client, connect::HttpConnector};
+use hyper::{Request, Response, body::Incoming};
+use hyper_util::rt::TokioIo;
 use irctokens::Line;
 use serde::Deserialize;
 use std::{
@@ -57,7 +58,7 @@ enum Error {
     #[err(from)]
     UrlParse(url::ParseError),
     #[err(from)]
-    HttpClient(hyper_util::client::legacy::Error),
+    Http(hyper::http::Error),
     #[err(from)]
     Hyper(hyper::Error),
     #[err(from)]
@@ -65,13 +66,15 @@ enum Error {
     MyHost,
     ExtractFrame,
     Base,
+    #[err(from)]
+    TokioJoin(tokio::task::JoinError),
+    HostlessUrl,
 }
 
 struct Bot {
     send_raw: mpsc::UnboundedSender<Vec<u8>>,
     send_raw_receiver: AMutex<mpsc::UnboundedReceiver<Vec<u8>>>,
     send_message: mpsc::UnboundedSender<Message>,
-    http_client: Client<HttpConnector, Empty<Bytes>>,
     autojoin: Option<String>,
     copyparty_url: Url,
     myhost: RwLock<Option<IpAddr>>,
@@ -97,13 +100,11 @@ impl Bot {
                 tokio::time::sleep(Duration::from_millis(delay)).await;
             }
         });
-        let http_client = Client::builder(hyper_util::rt::TokioExecutor::new()).build_http();
 
         Arc::new(Self {
             send_raw,
             send_raw_receiver,
             send_message,
-            http_client,
             autojoin,
             copyparty_url,
             myhost: RwLock::new(None),
@@ -308,8 +309,7 @@ impl Bot {
         let mut url = self.copyparty_url.join(&path)?;
         // ask copyparty for json
         url.set_query(Some("ls"));
-        // FIXME: find a less nonsensical way to turn our url::Url into an http::Uri
-        let resp = self.http_client.get(url.as_str().parse().unwrap()).await?;
+        let resp = self.http_get(url).await?;
         let body = resp.collect().await?.aggregate();
         let dir: Directory = serde_json::from_reader(body.reader())?;
 
@@ -344,8 +344,7 @@ impl Bot {
         if path.ends_with('/') {
             url.set_query(Some("zip=crc"));
         }
-        // FIXME: find a less nonsensical way to turn our url::Url into an http::Uri
-        let resp = self.http_client.get(url.as_str().parse().unwrap()).await?;
+        let resp = self.http_get(url).await?;
         let len = resp
             .headers()
             .get("Content-Length")
@@ -390,6 +389,34 @@ impl Bot {
         sock.shutdown().await?;
 
         Ok(())
+    }
+
+    async fn http_get(&self, url: Url) -> Result<Response<Incoming>, Error> {
+        if !url.has_host() {
+            return Err(Error::HostlessUrl);
+        }
+
+        let (addrs, url) =
+            tokio::task::spawn_blocking(move || (url.socket_addrs(|| None), url)).await?;
+
+        let stream = TcpStream::connect(addrs?.as_slice()).await?;
+        let io = TokioIo::new(stream);
+        let (mut sender, conn) = hyper::client::conn::http1::handshake(io).await?;
+
+        tokio::spawn(async move {
+            _ = conn.await;
+        });
+
+        let req = Request::builder()
+            .uri(&url[url::Position::BeforePath..url::Position::AfterQuery])
+            .header(hyper::header::HOST, url.host_str().unwrap())
+            .header(
+                hyper::header::USER_AGENT,
+                concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION")),
+            )
+            .body(Empty::<Bytes>::new())?;
+
+        Ok(sender.send_request(req).await?)
     }
 }
 
