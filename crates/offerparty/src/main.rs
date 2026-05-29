@@ -5,7 +5,7 @@
 use argh::FromArgs;
 use bytes::{Buf, Bytes};
 use http_body_util::{BodyExt, Empty};
-use hyper::{Request, Response, body::Incoming};
+use hyper::{Request, Response, body::Incoming, header::HeaderValue};
 use hyper_util::rt::TokioIo;
 use irctokens::Line;
 use serde::Deserialize;
@@ -36,6 +36,9 @@ struct Opt {
     /// nickname to use
     #[argh(option, default = "\"offerparty\".to_string()")]
     nick: String,
+    /// authorization header value to send copyparty
+    #[argh(option)]
+    auth: Option<HeaderValue>,
     /// copyparty url to get files from
     #[argh(positional)]
     url: Url,
@@ -76,13 +79,19 @@ struct Bot {
     send_raw_receiver: AMutex<mpsc::UnboundedReceiver<Vec<u8>>>,
     send_message: mpsc::UnboundedSender<Message>,
     autojoin: Option<String>,
+    auth: Option<HeaderValue>,
     copyparty_url: Url,
     myhost: RwLock<Option<IpAddr>>,
     paths: Mutex<PathIdStore>,
 }
 
 impl Bot {
-    fn new(autojoin: Option<String>, copyparty_url: Url, delay: u64) -> Arc<Self> {
+    fn new(
+        autojoin: Option<String>,
+        auth: Option<HeaderValue>,
+        copyparty_url: Url,
+        delay: u64,
+    ) -> Arc<Self> {
         let (send_raw, send_raw_receiver) = mpsc::unbounded_channel();
         let send_raw_receiver = AMutex::new(send_raw_receiver);
         let (send_message, mut send_message_receiver) = mpsc::unbounded_channel();
@@ -106,6 +115,7 @@ impl Bot {
             send_raw_receiver,
             send_message,
             autojoin,
+            auth,
             copyparty_url,
             myhost: RwLock::new(None),
             paths: Mutex::new(PathIdStore::new()),
@@ -309,7 +319,7 @@ impl Bot {
         let mut url = self.copyparty_url.join(&path)?;
         // ask copyparty for json
         url.set_query(Some("ls"));
-        let resp = self.http_get(url).await?;
+        let resp = self.http_get(url, self.auth.as_ref()).await?;
         let body = resp.collect().await?.aggregate();
         let dir: Directory = serde_json::from_reader(body.reader())?;
 
@@ -344,7 +354,7 @@ impl Bot {
         if path.ends_with('/') {
             url.set_query(Some("zip=crc"));
         }
-        let resp = self.http_get(url).await?;
+        let resp = self.http_get(url, self.auth.as_ref()).await?;
         let len = resp
             .headers()
             .get("Content-Length")
@@ -391,7 +401,11 @@ impl Bot {
         Ok(())
     }
 
-    async fn http_get(&self, url: Url) -> Result<Response<Incoming>, Error> {
+    async fn http_get(
+        &self,
+        url: Url,
+        auth: Option<&HeaderValue>,
+    ) -> Result<Response<Incoming>, Error> {
         if !url.has_host() {
             return Err(Error::HostlessUrl);
         }
@@ -413,8 +427,15 @@ impl Bot {
             .header(
                 hyper::header::USER_AGENT,
                 concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION")),
-            )
-            .body(Empty::<Bytes>::new())?;
+            );
+
+        let req = if let Some(auth) = auth {
+            req.header(hyper::header::AUTHORIZATION, auth)
+        } else {
+            req
+        };
+
+        let req = req.body(Empty::<Bytes>::new())?;
 
         Ok(sender.send_request(req).await?)
     }
@@ -520,6 +541,6 @@ impl fmt::Display for MaybeSpace<'_> {
 #[tokio::main]
 async fn main() {
     let opt: Opt = argh::from_env();
-    let bot = Bot::new(opt.join, opt.url, opt.delay);
+    let bot = Bot::new(opt.join, opt.auth, opt.url, opt.delay);
     bot.connect_once(&opt.nick, &opt.addr).await.unwrap();
 }
