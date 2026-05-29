@@ -11,7 +11,7 @@ repository.workspace = true
 
 [dependencies]
 axum = { version = "0.8.7", features = ["query"] }
-irc-connect = { version = "0.2.0", path = "../irc-connect", features = ["ring", "tls12"] }
+irc-connect = { version = "0.2.1", path = "../irc-connect", features = ["ring", "tls12"] }
 irctokens = "0.1.3"
 serde = { version = "1.0.228", features = ["derive"] }
 tokio = { version = "1.48.0", features = ["macros", "rt-multi-thread", "net", "io-util", "time", "sync"] }

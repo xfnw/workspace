@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 # changelog
 
-## unreleased
+## 0.2.1 - 2026-05-29
 - `Stream` has been renamed to `Connection`, since the name was easily
   confusable with `futures_core::Stream`. using the old name is
   deprecated
