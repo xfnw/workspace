@@ -7,19 +7,26 @@ use bytes::{Buf, Bytes};
 use http_body_util::{BodyExt, Empty};
 use hyper::{Request, Response, body::Incoming, header::HeaderValue};
 use hyper_util::rt::TokioIo;
+use irc_connect::{
+    Connection,
+    tokio_rustls::rustls::{
+        RootCertStore,
+        pki_types::{CertificateDer, ServerName, pem::PemObject},
+    },
+};
 use irctokens::Line;
 use serde::Deserialize;
 use std::{
     collections::HashMap,
     fmt,
     net::IpAddr,
+    path::PathBuf,
     str::FromStr,
     sync::{Arc, Mutex, RwLock},
     time::Duration,
 };
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
-    net::{TcpStream, ToSocketAddrs},
     sync::{Mutex as AMutex, mpsc},
 };
 use url::Url;
@@ -36,6 +43,12 @@ struct Opt {
     /// nickname to use
     #[argh(option, default = "\"offerparty\".to_string()")]
     nick: String,
+    /// enable tls for connecting to irc
+    #[argh(switch, short = 't')]
+    tls: bool,
+    /// path of certificate store to trust
+    #[argh(option, default = "\"/etc/ssl/certs/ca-bundle.crt\".into()")]
+    trust: PathBuf,
     /// authorization header value to send copyparty
     #[argh(option)]
     auth: Option<HeaderValue>,
@@ -72,6 +85,9 @@ enum Error {
     #[err(from)]
     TokioJoin(tokio::task::JoinError),
     HostlessUrl,
+    #[err(from)]
+    Connect(irc_connect::Error),
+    UnsupportedScheme(String),
 }
 
 struct Bot {
@@ -81,6 +97,7 @@ struct Bot {
     autojoin: Option<String>,
     auth: Option<HeaderValue>,
     copyparty_url: Url,
+    castore: RootCertStore,
     myhost: RwLock<Option<IpAddr>>,
     paths: Mutex<PathIdStore>,
 }
@@ -91,6 +108,7 @@ impl Bot {
         auth: Option<HeaderValue>,
         copyparty_url: Url,
         delay: u64,
+        castore: RootCertStore,
     ) -> Arc<Self> {
         let (send_raw, send_raw_receiver) = mpsc::unbounded_channel();
         let send_raw_receiver = AMutex::new(send_raw_receiver);
@@ -117,6 +135,7 @@ impl Bot {
             autojoin,
             auth,
             copyparty_url,
+            castore,
             myhost: RwLock::new(None),
             paths: Mutex::new(PathIdStore::new()),
         })
@@ -125,9 +144,16 @@ impl Bot {
     async fn connect_once(
         self: &Arc<Self>,
         nick: &str,
-        addr: impl ToSocketAddrs,
+        addr: &str,
+        tls: bool,
     ) -> Result<(), Error> {
-        let conn = TcpStream::connect(addr).await?;
+        let conn = Connection::new_tcp(addr);
+        let conn = if tls {
+            conn.tls_with_root(None, self.castore.clone())
+        } else {
+            conn
+        };
+        let conn = conn.connect().await?;
         let (reader, mut writer) = tokio::io::split(conn);
         let mut reader = BufReader::new(reader);
         let mut buf = Vec::with_capacity(512);
@@ -403,17 +429,42 @@ impl Bot {
 
     async fn http_get(
         &self,
-        url: Url,
+        mut url: Url,
         auth: Option<&HeaderValue>,
     ) -> Result<Response<Incoming>, Error> {
         if !url.has_host() {
             return Err(Error::HostlessUrl);
         }
+        if url.path().is_empty() {
+            // Url normalizes this automatically for http(s) but not
+            // other schemes >:(
+            url.set_path("/");
+        }
 
-        let (addrs, url) =
-            tokio::task::spawn_blocking(move || (url.socket_addrs(|| None), url)).await?;
+        let (addrs, url) = tokio::task::spawn_blocking(move || {
+            (
+                url.socket_addrs(|| (url.scheme() == "https+insecure").then_some(443)),
+                url,
+            )
+        })
+        .await?;
+        let addrs = addrs?;
 
-        let stream = TcpStream::connect(addrs?.as_slice()).await?;
+        let stream = Connection::new_tcp(addrs.first().unwrap());
+
+        let stream = match url.scheme() {
+            "https" => stream.tls_with_root(
+                url.host_str()
+                    .and_then(|h| ServerName::try_from(h).ok())
+                    .map(|h| h.to_owned()),
+                self.castore.clone(),
+            ),
+            "https+insecure" => stream.tls_danger_insecure(None),
+            "http" => stream,
+            unknown => return Err(Error::UnsupportedScheme(unknown.to_string())),
+        };
+
+        let stream = stream.connect().await?;
         let io = TokioIo::new(stream);
         let (mut sender, conn) = hyper::client::conn::http1::handshake(io).await?;
 
@@ -541,6 +592,13 @@ impl fmt::Display for MaybeSpace<'_> {
 #[tokio::main]
 async fn main() {
     let opt: Opt = argh::from_env();
-    let bot = Bot::new(opt.join, opt.auth, opt.url, opt.delay);
-    bot.connect_once(&opt.nick, &opt.addr).await.unwrap();
+
+    let mut castore = RootCertStore::empty();
+    castore.add_parsable_certificates(CertificateDer::pem_file_iter(opt.trust).unwrap().flatten());
+
+    let bot = Bot::new(opt.join, opt.auth, opt.url, opt.delay, castore);
+
+    bot.connect_once(&opt.nick, &opt.addr, opt.tls)
+        .await
+        .unwrap();
 }

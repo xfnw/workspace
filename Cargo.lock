@@ -1018,6 +1018,7 @@ dependencies = [
  "http-body-util",
  "hyper",
  "hyper-util",
+ "irc-connect",
  "irctokens",
  "serde",
  "serde_json",
