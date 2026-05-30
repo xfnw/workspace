@@ -5,7 +5,7 @@
 use argh::FromArgs;
 use bytes::{Buf, Bytes};
 use http_body_util::{BodyExt, Empty};
-use hyper::{Request, Response, body::Incoming, header::HeaderValue};
+use hyper::{Request, Response, StatusCode, body::Incoming, header::HeaderValue};
 use hyper_util::rt::TokioIo;
 use irc_connect::{
     Connection,
@@ -88,6 +88,7 @@ enum Error {
     #[err(from)]
     Connect(irc_connect::Error),
     UnsupportedScheme(String),
+    HttpStatus(StatusCode),
 }
 
 struct Bot {
@@ -381,6 +382,9 @@ impl Bot {
             url.set_query(Some("zip=crc"));
         }
         let resp = self.http_get(url, self.auth.as_ref()).await?;
+        if resp.status() != StatusCode::OK {
+            return Err(Error::HttpStatus(resp.status()));
+        }
         let len = resp
             .headers()
             .get("Content-Length")
