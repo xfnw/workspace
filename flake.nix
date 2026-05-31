@@ -90,6 +90,7 @@
           cabot = buildPackage "cabot" [ "foxerror" "irc-connect" ];
           gekker = buildPackage "gekker" [ "irc-connect" ];
           maw = buildPackage "maw" [ ];
+          offerparty = buildPackage "offerparty" [ "foxerror" "irc-connect" ];
           vancouver = buildPackage "vancouver" [ "foxerror" ];
           vasm = buildPackage "vasm" [ "foxerror" ];
         };
