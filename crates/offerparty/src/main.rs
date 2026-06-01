@@ -392,33 +392,37 @@ impl Bot {
         let Some(myhost) = self.myhost.read().unwrap().as_ref().copied() else {
             return Err(Error::MyHost);
         };
-        let listener = tokio::net::TcpListener::bind((myhost, 0)).await?;
-        let addr = listener.local_addr()?;
 
-        let mut segments = path.rsplit('/');
-        let name = segments.next().unwrap_or("unknown");
-        let name = if name.is_empty() {
-            let dirname = match segments.next() {
-                None | Some("") => "directory",
-                Some(d) => d,
+        let (mut sock, _) = {
+            let listener = tokio::net::TcpListener::bind((myhost, 0)).await?;
+            let addr = listener.local_addr()?;
+
+            let mut segments = path.rsplit('/');
+            let name = segments.next().unwrap_or("unknown");
+            let name = if name.is_empty() {
+                let dirname = match segments.next() {
+                    None | Some("") => "directory",
+                    Some(d) => d,
+                };
+                format!("{dirname}.zip")
+            } else {
+                name.to_string()
             };
-            format!("{dirname}.zip")
-        } else {
-            name.to_string()
+
+            self.send_message(
+                target.to_vec(),
+                format!(
+                    "\x01DCC SEND {name} {} {}{}\x01",
+                    DccIp(addr.ip()),
+                    addr.port(),
+                    MaybeSpace(len),
+                )
+                .into_bytes(),
+            )?;
+
+            listener.accept().await?
         };
 
-        self.send_message(
-            target.to_vec(),
-            format!(
-                "\x01DCC SEND {name} {} {}{}\x01",
-                DccIp(addr.ip()),
-                addr.port(),
-                MaybeSpace(len),
-            )
-            .into_bytes(),
-        )?;
-
-        let (mut sock, _) = listener.accept().await?;
         let mut body = resp.into_body();
 
         while let Some(frame) = body.frame().await {
