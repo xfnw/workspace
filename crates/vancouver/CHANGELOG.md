@@ -8,11 +8,11 @@ SPDX-License-Identifier: MPL-2.0
 
 ## 0.1.2 - 2025-12-13
 
-### fixes
+### fixed
 - duplicate full audits will no longer cause spurious unused exempt
   warnings
 
-### changes
+### changed
 - check now includes the reason a dependency failed verification in
   its error messages
 - the failure reason is also included in check's json output
@@ -23,7 +23,7 @@ SPDX-License-Identifier: MPL-2.0
 
 ## 0.1.1 - 2025-10-15
 
-### fixes
+### fixed
 - version sorting to find a previous audited version is now in the
   correct order
 - audits are no longer required for dependencies from unsupported
