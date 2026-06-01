@@ -16,6 +16,7 @@ use irc_connect::{
 };
 use irctokens::Line;
 use serde::Deserialize;
+use sha2::{Digest, Sha256};
 use std::{
     collections::HashMap,
     fmt,
@@ -424,17 +425,20 @@ impl Bot {
         };
 
         let mut body = resp.into_body();
+        let mut hasher = Sha256::new();
 
         while let Some(frame) = body.frame().await {
-            sock.write_all(&frame?.into_data().map_err(|_| Error::ExtractFrame)?)
-                .await?;
+            let data = &frame?.into_data().map_err(|_| Error::ExtractFrame)?;
+            sock.write_all(data).await?;
+            hasher.update(data);
         }
 
         sock.shutdown().await?;
 
+        let hash = hasher.finalize();
         self.send_message(
             target.to_vec(),
-            format!("successfully sent {name}").into_bytes(),
+            format!("successfully sent {name} (sha256 {})", Hex(&hash)).into_bytes(),
         )?;
 
         Ok(())
@@ -597,6 +601,17 @@ impl fmt::Display for MaybeSpace<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(inner) = self.0 {
             write!(f, " {inner}")?;
+        }
+        Ok(())
+    }
+}
+
+struct Hex<'a>(&'a [u8]);
+
+impl fmt::Display for Hex<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for b in self.0 {
+            write!(f, "{b:02x}")?;
         }
         Ok(())
     }
