@@ -96,6 +96,7 @@ struct Bot {
     send_raw: mpsc::UnboundedSender<Vec<u8>>,
     send_raw_receiver: AMutex<mpsc::UnboundedReceiver<Vec<u8>>>,
     send_message: mpsc::UnboundedSender<Message>,
+    delay: Duration,
     autojoin: Option<String>,
     auth: Option<HeaderValue>,
     copyparty_url: Url,
@@ -115,6 +116,7 @@ impl Bot {
         let (send_raw, send_raw_receiver) = mpsc::unbounded_channel();
         let send_raw_receiver = AMutex::new(send_raw_receiver);
         let (send_message, mut send_message_receiver) = mpsc::unbounded_channel();
+        let delay = Duration::from_millis(delay);
 
         let send_raw_ = send_raw.clone();
         tokio::spawn(async move {
@@ -126,7 +128,7 @@ impl Bot {
                     arguments: vec![target, content],
                 };
                 _ = send_raw_.send(line.format());
-                tokio::time::sleep(Duration::from_millis(delay)).await;
+                tokio::time::sleep(delay).await;
             }
         });
 
@@ -134,6 +136,7 @@ impl Bot {
             send_raw,
             send_raw_receiver,
             send_message,
+            delay,
             autojoin,
             auth,
             copyparty_url,
@@ -368,6 +371,7 @@ impl Bot {
                 target.to_vec(),
                 format!("#{id} [{}] {fullpath}", Human(entry.size)).into_bytes(),
             )?;
+            tokio::time::sleep(self.delay).await;
         }
 
         Ok(())
