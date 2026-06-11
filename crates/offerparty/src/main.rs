@@ -38,6 +38,9 @@ struct Opt {
     /// milliseconds to wait between sending messages
     #[argh(option, default = "0")]
     delay: u64,
+    /// seconds to wait between reconnection attempts
+    #[argh(option)]
+    autoconn: Option<u64>,
     /// channel to autojoin
     #[argh(option)]
     join: Option<String>,
@@ -144,6 +147,23 @@ impl Bot {
             myhost: RwLock::new(None),
             paths: Mutex::new(PathIdStore::new()),
         })
+    }
+
+    async fn connect(self: &Arc<Self>, nick: &str, addr: &str, tls: bool, autoreconn: Option<u64>) {
+        let delay = autoreconn.map(Duration::from_secs);
+        loop {
+            if let Err(e) = self.connect_once(nick, addr, tls).await {
+                eprintln!("connection failed: {e}");
+            } else {
+                eprintln!("disconnected gracefully...");
+            }
+            if let Some(delay) = delay {
+                tokio::time::sleep(delay).await;
+                eprintln!("reconnecting...");
+            } else {
+                break;
+            }
+        }
     }
 
     async fn connect_once(
@@ -630,7 +650,6 @@ async fn main() {
 
     let bot = Bot::new(opt.join, opt.auth, opt.url, opt.delay, castore);
 
-    bot.connect_once(&opt.nick, &opt.addr, opt.tls)
-        .await
-        .unwrap();
+    bot.connect(&opt.nick, &opt.addr, opt.tls, opt.autoconn)
+        .await;
 }
