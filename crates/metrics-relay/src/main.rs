@@ -21,13 +21,36 @@ mod prom;
 
 struct AppState {
     metrics: Mutex<BTreeMap<String, f64>>,
+    prev: Mutex<BTreeMap<String, f64>>,
+}
+
+impl AppState {
+    async fn background(self: Arc<Self>) {
+        loop {
+            tokio::time::sleep(std::time::Duration::from_mins(1)).await;
+            let mut new = self.metrics.lock().unwrap();
+            let mut prev = self.prev.lock().unwrap();
+            *prev = std::mem::take(&mut *new);
+        }
+    }
 }
 
 async fn get_metrics(State(state): State<Arc<AppState>>) -> String {
     let mut out = String::new();
-    for (k, v) in std::mem::take(&mut *state.metrics.lock().unwrap()) {
+    let new = state.metrics.lock().unwrap();
+    let prev = state.prev.lock().unwrap();
+
+    for (k, v) in new.iter() {
         writeln!(out, "{k} {v}").unwrap();
     }
+
+    for (k, v) in prev.iter() {
+        if new.contains_key(k) {
+            continue;
+        }
+        writeln!(out, "{k} {v}").unwrap();
+    }
+
     out
 }
 
@@ -77,7 +100,11 @@ async fn main() {
 
     let state = Arc::new(AppState {
         metrics: Mutex::new(BTreeMap::new()),
+        prev: Mutex::new(BTreeMap::new()),
     });
+
+    tokio::spawn(state.clone().background());
+
     let app = Router::new()
         .route("/metrics", get(get_metrics))
         .route("/write", post(write_metrics))
