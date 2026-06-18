@@ -52,6 +52,15 @@ pub fn run(args: &Args) {
                 eprintln!("skipping line without tab: {line:?}");
                 continue;
             };
+
+            if winner.len() >= 3
+                && winner.as_bytes()[winner.len() - 3] == b'.'
+                && let Ok(rating) = winner.parse()
+            {
+                scores.insert(loser.to_string(), rating);
+                continue;
+            }
+
             let old_win = scores.get(winner).copied().unwrap_or(args.initial);
             let old_lose = scores.get(loser).copied().unwrap_or(args.initial);
             let (new_win, new_lose) = new_ratings(old_win, old_lose, args.max_adjustment);
