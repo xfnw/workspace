@@ -1532,3 +1532,11 @@ criteria = "skimmed"
 [[audits.pastey]]
 version = "0.2.3"
 criteria = "no-sus-blobs"
+
+[[audits.riscv]]
+delta = "0.16.0 -> 0.16.1"
+criteria = "skimmed"
+
+[[audits.riscv]]
+delta = "0.16.0 -> 0.16.1"
+criteria = "no-sus-blobs"
