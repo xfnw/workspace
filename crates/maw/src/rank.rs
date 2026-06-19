@@ -66,6 +66,12 @@ pub fn run(args: &Args) {
                 ["set", fst, snd] if let Ok(rating) = snd.parse() => {
                     scores.insert(fst.to_string(), rating);
                 }
+                ["predict", fst, snd] => {
+                    let rating_fst = scores.get(fst).copied().unwrap_or(args.initial);
+                    let rating_snd = scores.get(snd).copied().unwrap_or(args.initial);
+                    let (expected_fst, expected_snd) = predict(rating_fst, rating_snd);
+                    println!("{fst}\t{expected_fst}\t{snd}\t{expected_snd}");
+                }
                 _ => eprintln!("skipping malformed line: {line:?}"),
             }
         }
