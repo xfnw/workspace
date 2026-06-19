@@ -25,12 +25,16 @@ pub struct Args {
 }
 
 // https://en.wikipedia.org/wiki/Elo_rating_system#Mathematical_details
-fn new_ratings(winner: f64, loser: f64, max_adjustment: f64) -> (f64, f64) {
-    let q_win = 10f64.powf(winner / 400.0);
-    let q_lose = 10f64.powf(loser / 400.0);
-    let expected_win = q_win / (q_win + q_lose);
-    let expected_lose = q_lose / (q_win + q_lose);
+fn predict(a: f64, b: f64) -> (f64, f64) {
+    let q_a = 10f64.powf(a / 400.0);
+    let q_b = 10f64.powf(b / 400.0);
+    let expected_a = q_a / (q_a + q_b);
+    let expected_b = q_b / (q_a + q_b);
+    (expected_a, expected_b)
+}
 
+fn new_ratings(winner: f64, loser: f64, max_adjustment: f64) -> (f64, f64) {
+    let (expected_win, expected_lose) = predict(winner, loser);
     let new_win = winner + max_adjustment * (1.0 - expected_win);
     let new_lose = loser + max_adjustment * (0.0 - expected_lose);
 
