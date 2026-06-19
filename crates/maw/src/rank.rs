@@ -52,24 +52,21 @@ pub fn run(args: &Args) {
     for name in files {
         for line in BufReader::new(File::open(name).unwrap()).lines() {
             let line = line.unwrap();
-            let Some((winner, loser)) = line.split_once('\t') else {
-                eprintln!("skipping line without tab: {line:?}");
-                continue;
-            };
+            let split: Vec<_> = line.split('\t').collect();
 
-            if winner.len() >= 3
-                && winner.as_bytes()[winner.len() - 3] == b'.'
-                && let Ok(rating) = winner.parse()
-            {
-                scores.insert(loser.to_string(), rating);
-                continue;
+            match split[..] {
+                [winner, loser] => {
+                    let old_win = scores.get(winner).copied().unwrap_or(args.initial);
+                    let old_lose = scores.get(loser).copied().unwrap_or(args.initial);
+                    let (new_win, new_lose) = new_ratings(old_win, old_lose, args.max_adjustment);
+                    scores.insert(winner.to_string(), new_win);
+                    scores.insert(loser.to_string(), new_lose);
+                }
+                ["set", fst, snd] if let Ok(rating) = snd.parse() => {
+                    scores.insert(fst.to_string(), rating);
+                }
+                _ => eprintln!("skipping malformed line: {line:?}"),
             }
-
-            let old_win = scores.get(winner).copied().unwrap_or(args.initial);
-            let old_lose = scores.get(loser).copied().unwrap_or(args.initial);
-            let (new_win, new_lose) = new_ratings(old_win, old_lose, args.max_adjustment);
-            scores.insert(winner.to_string(), new_win);
-            scores.insert(loser.to_string(), new_lose);
         }
     }
 
