@@ -62,6 +62,7 @@ pub fn run(args: &Args) {
                     scores.insert(winner.to_string(), new_win);
                     scores.insert(loser.to_string(), new_lose);
                 }
+                [id] => println!("{}\t{id}", scores.get(id).copied().unwrap_or(args.initial)),
                 ["set", fst, snd] if let Ok(rating) = snd.parse() => {
                     scores.insert(fst.to_string(), rating);
                 }
