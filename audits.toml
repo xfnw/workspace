@@ -1548,3 +1548,11 @@ criteria = "skimmed"
 [[audits.riscv-macros]]
 delta = "0.4.0 -> 0.4.1"
 criteria = "no-sus-blobs"
+
+[[audits.riscv-rt]]
+delta = "0.17.1 -> 0.18.0"
+criteria = "skimmed"
+
+[[audits.riscv-rt]]
+delta = "0.17.1 -> 0.18.0"
+criteria = "no-sus-blobs"
