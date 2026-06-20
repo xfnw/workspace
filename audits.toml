@@ -1580,3 +1580,28 @@ criteria = "skimmed"
 [[audits.boilerplate-parser]]
 version = "0.0.1"
 criteria = "no-sus-blobs"
+
+[[audits.darling]]
+delta = "0.20.11 -> 0.23.0"
+criteria = "skimmed"
+
+[[audits.darling]]
+delta = "0.20.11 -> 0.23.0"
+criteria = "no-sus-blobs"
+
+[[audits.darling_core]]
+delta = "0.20.11 -> 0.23.0"
+criteria = "skimmed"
+
+[[audits.darling_core]]
+delta = "0.20.11 -> 0.23.0"
+criteria = "no-sus-blobs"
+
+[[audits.darling_macro]]
+delta = "0.20.11 -> 0.23.0"
+criteria = "skimmed"
+notes = "no code changes"
+
+[[audits.darling_macro]]
+delta = "0.20.11 -> 0.23.0"
+criteria = "no-sus-blobs"
