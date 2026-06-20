@@ -1564,3 +1564,11 @@ criteria = "skimmed"
 [[audits.boilerplate]]
 version = "1.2.1"
 criteria = "no-sus-blobs"
+
+[[audits.boilerplate-macros]]
+version = "0.0.3"
+criteria = "skimmed"
+
+[[audits.boilerplate-macros]]
+version = "0.0.3"
+criteria = "no-sus-blobs"
