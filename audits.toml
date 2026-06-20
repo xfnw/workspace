@@ -1556,3 +1556,11 @@ criteria = "skimmed"
 [[audits.riscv-rt]]
 delta = "0.17.1 -> 0.18.0"
 criteria = "no-sus-blobs"
+
+[[audits.boilerplate]]
+version = "1.2.1"
+criteria = "skimmed"
+
+[[audits.boilerplate]]
+version = "1.2.1"
+criteria = "no-sus-blobs"
