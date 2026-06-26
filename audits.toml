@@ -1605,3 +1605,20 @@ notes = "no code changes"
 [[audits.darling_macro]]
 delta = "0.20.11 -> 0.23.0"
 criteria = "no-sus-blobs"
+
+[[audits.unicode_names2]]
+version = "3.1.0"
+criteria = "blobs-ok"
+notes = "contains unicode data files, identical to what is on unicode's website"
+
+[[audits.unicode_names2]]
+version = "3.1.0"
+criteria = "skimmed"
+
+[[audits.unicode_names2_generator]]
+version = "3.1.0"
+criteria = "no-sus-blobs"
+
+[[audits.unicode_names2_generator]]
+version = "3.1.0"
+criteria = "skimmed"
