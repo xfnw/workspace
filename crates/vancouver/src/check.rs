@@ -106,7 +106,13 @@ impl UsedMarker {
 
 #[derive(Debug)]
 struct TrustRoot {
-    used: UsedMarker,
+    used_exempt: UsedMarker,
+}
+
+impl TrustRoot {
+    fn is_exempt(&self) -> bool {
+        self.used_exempt.0.is_some()
+    }
 }
 
 #[derive(Debug)]
@@ -241,7 +247,7 @@ impl Rules {
                         name.clone(),
                         Version::new(version),
                         TrustRoot {
-                            used: UsedMarker(Some(allow_unused.into())),
+                            used_exempt: UsedMarker(Some(allow_unused.into())),
                         },
                     );
                 }
@@ -277,10 +283,10 @@ impl Rules {
                             name.clone(),
                             Version::new(version),
                             TrustRoot {
-                                used: UsedMarker(None),
+                                used_exempt: UsedMarker(None),
                             },
                         )
-                        .is_some_and(|r| r.used.0.is_some())
+                        .is_some_and(|r| r.is_exempt())
                 {
                     extra_unused.insert(UnusedExempt {
                         name: name.clone(),
@@ -338,6 +344,7 @@ impl Rules {
         criteria: &str,
         implied_criteria: Option<&CriteriaCons>,
         recursion_limit: usize,
+        ignore_exempts: bool,
     ) -> CheckResult {
         let is_violation = self.violations.contains(criteria, name, version);
 
@@ -353,7 +360,10 @@ impl Rules {
                     .find_map(|cr| self.trust_roots.get(cr, name, version))
             })
         {
-            trust.used.mark_used();
+            if ignore_exempts && trust.is_exempt() {
+                return CheckResult::Missing;
+            }
+            trust.used_exempt.mark_used();
             return CheckResult::Validated;
         }
 
@@ -382,6 +392,7 @@ impl Rules {
                 criteria,
                 implied_criteria,
                 recursion_limit - 1,
+                ignore_exempts,
             );
         }
 
@@ -398,6 +409,7 @@ impl Rules {
                     c,
                     Some(&CriteriaCons(criteria, implied_criteria)),
                     recursion_limit - 1,
+                    ignore_exempts,
                 ) == CheckResult::Validated
             })
         {
@@ -412,6 +424,7 @@ impl Rules {
                     c,
                     Some(&CriteriaCons(criteria, implied_criteria)),
                     recursion_limit - 1,
+                    ignore_exempts,
                 ) == CheckResult::Validated
             })
         {
@@ -427,6 +440,7 @@ impl Rules {
         version: &Version,
         criteria: &str,
         recursion_limit: usize,
+        ignore_exempts: bool,
     ) -> Option<Version> {
         let recursion_limit = recursion_limit.checked_sub(1)?;
 
@@ -448,8 +462,14 @@ impl Rules {
             .collect();
 
         for &potential in versions.range::<&Version, _>(..version).rev() {
-            if self.check_criteria(name, potential, criteria, None, recursion_limit)
-                == CheckResult::Validated
+            if self.check_criteria(
+                name,
+                potential,
+                criteria,
+                None,
+                recursion_limit,
+                ignore_exempts,
+            ) == CheckResult::Validated
             {
                 return Some(potential.clone());
             }
@@ -458,13 +478,20 @@ impl Rules {
         None
     }
 
-    fn check(&self, name: String, version: Version, recursion_limit: usize) -> Receipt {
+    fn check(
+        &self,
+        name: String,
+        version: Version,
+        recursion_limit: usize,
+        ignore_exempts: bool,
+    ) -> Receipt {
         let Policy { require_all } = self.get_policy(&name);
 
         let fails: Vec<_> = require_all
             .iter()
-            .filter_map(
-                |c| match self.check_criteria(&name, &version, c, None, recursion_limit) {
+            .filter_map(|c| {
+                match self.check_criteria(&name, &version, c, None, recursion_limit, ignore_exempts)
+                {
                     CheckResult::Validated => None,
                     f => Some(Fail {
                         needed: c.clone(),
@@ -474,10 +501,16 @@ impl Rules {
                             CheckResult::RecursionLimitReached => FailReason::RecursionLimitReached,
                             CheckResult::Violation => FailReason::Violation,
                         },
-                        prev_version: self.find_prev(&name, &version, c, recursion_limit),
+                        prev_version: self.find_prev(
+                            &name,
+                            &version,
+                            c,
+                            recursion_limit,
+                            ignore_exempts,
+                        ),
                     }),
-                },
-            )
+                }
+            })
             .collect();
 
         let status = if fails.is_empty() {
@@ -500,7 +533,7 @@ impl Rules {
             for (dep, map) in map {
                 for (version, root) in map {
                     if root
-                        .used
+                        .used_exempt
                         .0
                         .as_ref()
                         .is_some_and(|b| !b.load(Ordering::Relaxed))
@@ -603,19 +636,15 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
     }
 
     let config = read_to_string(&args.config).map_err(Error::ConfigOpen)?;
-    let mut config: Config = toml_edit::de::from_str(&config)?;
+    let config: Config = toml_edit::de::from_str(&config)?;
     let audits = read_to_string(&args.audits).map_err(Error::AuditsOpen)?;
     let audits: Audits = toml_edit::de::from_str(&audits)?;
-
-    if args.ignore_exempts {
-        config.exempt.clear();
-    }
 
     let rules = Rules::new(config, audits)?;
 
     let receipts: Vec<_> = dependencies
         .into_par_iter()
-        .map(|(name, version)| rules.check(name, version, args.recursion_limit))
+        .map(|(name, version)| rules.check(name, version, args.recursion_limit, args.ignore_exempts))
         .collect();
     let total = receipts.len();
     let unused = rules.unused_exempts();
