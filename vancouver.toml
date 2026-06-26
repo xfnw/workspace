@@ -44,6 +44,9 @@ require-all = ["blobs-ok", "skimmed"]
 [policy.crc-catalog]
 require-all = ["blobs-ok", "skimmed"]
 
+[policy.unicode_names2]
+require-all = ["blobs-ok", "skimmed"]
+
 [[exempt.aho-corasick]]
 version = "1.1.3"
 criteria = "no-sus-blobs"
@@ -918,22 +921,6 @@ criteria = "no-sus-blobs"
 
 [[exempt.unicode-ident]]
 version = "1.0.19"
-criteria = "skimmed"
-
-[[exempt.unicode_names2]]
-version = "2.0.0"
-criteria = "no-sus-blobs"
-
-[[exempt.unicode_names2]]
-version = "2.0.0"
-criteria = "skimmed"
-
-[[exempt.unicode_names2_generator]]
-version = "2.0.0"
-criteria = "no-sus-blobs"
-
-[[exempt.unicode_names2_generator]]
-version = "2.0.0"
 criteria = "skimmed"
 
 [[exempt.untrusted]]
