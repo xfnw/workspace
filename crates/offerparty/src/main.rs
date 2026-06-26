@@ -203,6 +203,7 @@ impl Bot {
                         "001" => self.handle_001(line)?,
                         "302" => self.handle_302(&line),
                         "433" => self.handle_433(line)?,
+                        "PING" => self.handle_ping(line)?,
                         "PRIVMSG" => self.handle_privmsg(&line)?,
                         _ => (),
                     }
@@ -262,6 +263,10 @@ impl Bot {
         }
 
         Ok(())
+    }
+
+    fn handle_ping(&self, line: Line) -> Result<(), Error> {
+        self.send_raw("PONG".to_string(), line.arguments)
     }
 
     fn handle_privmsg(self: &Arc<Self>, line: &Line) -> Result<(), Error> {
