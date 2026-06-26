@@ -6,6 +6,18 @@ SPDX-License-Identifier: MPL-2.0
 
 # changelog
 
+## unreleased
+
+### changed
+- check now links directly to the docs.rs source view instead of
+  diff.rs when suggesting a full audit
+- check will no longer suggest doing delta audits against a previous
+  exempted version
+
+### added
+- check now has a --no-suggest-delta option to never suggest doing
+  delta audits
+
 ## 0.1.2 - 2025-12-13
 
 ### fixed
