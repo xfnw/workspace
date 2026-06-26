@@ -698,7 +698,9 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
                         println!(" needs {needed}");
                         match reason {
                             FailReason::Missing => {
-                                if let Some(prev) = prev_version {
+                                if !args.no_suggest_delta
+                                    && let Some(prev) = prev_version
+                                {
                                     println!("  help: found a previous audit for {prev}");
                                     println!("  review https://diff.rs/{name}/{prev}/{version}");
                                     println!(

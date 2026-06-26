@@ -33,6 +33,7 @@ enum Cmds {
 #[argh(subcommand)]
 #[argh(name = "check")]
 #[argh(help_triggers("-h", "--help"))]
+#[expect(clippy::struct_excessive_bools)]
 pub struct CheckArgs {
     /// path to your cargo lock
     #[argh(option, default = "PathBuf::from(\"Cargo.lock\")")]
@@ -55,6 +56,9 @@ pub struct CheckArgs {
     /// remove unused exempts from the config
     #[argh(switch)]
     ratchet: bool,
+    /// do not recommend doing a delta audit
+    #[argh(switch)]
+    no_suggest_delta: bool,
     /// the output format to use (human or json)
     #[argh(option, default = "OutputFormat::Human")]
     output: OutputFormat,
