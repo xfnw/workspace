@@ -35,9 +35,9 @@ enum Cmds {
 #[argh(help_triggers("-h", "--help"))]
 #[expect(clippy::struct_excessive_bools)]
 pub struct CheckArgs {
-    /// path to your cargo lock
-    #[argh(option, default = "PathBuf::from(\"Cargo.lock\")")]
-    lock: PathBuf,
+    /// path to your cargo manifest
+    #[argh(option)]
+    manifest: Option<PathBuf>,
     /// path to your vancouver config
     #[argh(option, default = "PathBuf::from(\"vancouver.toml\")")]
     config: PathBuf,

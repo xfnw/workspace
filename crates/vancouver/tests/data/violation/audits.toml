@@ -1,0 +1,23 @@
+[[audits.try-lock]]
+version = "0.2.1"
+criteria = "meow"
+
+[[audits.try-lock]]
+delta = "0.2.1 -> 0.2.3"
+criteria = "meow"
+
+[[audits.try-lock]]
+delta = "0.2.3 -> 0.2.4"
+criteria = "meow"
+
+[[audits.try-lock]]
+violation = "0.2.3"
+criteria = "meow"
+
+[[audits.equivalent]]
+violation = "1.0.2"
+criteria = "meow"
+
+[[audits.equivalent]]
+version = "1.0.2"
+criteria = "meow"

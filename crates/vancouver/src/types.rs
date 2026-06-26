@@ -8,8 +8,10 @@ use serde::Serialize;
 
 #[derive(Debug, foxerror::FoxError)]
 pub enum Error {
-    /// could not open lock file
-    LockOpen(std::io::Error),
+    /// could not run cargo metadata
+    MetadataCommand(std::io::Error),
+    /// cargo metadata returned non-zero exit code
+    MetadataExit(std::process::ExitStatus),
     /// could not open config file
     ConfigOpen(std::io::Error),
     /// could not write config
@@ -22,7 +24,10 @@ pub enum Error {
     MergeSourceOpen(std::io::Error),
     /// could not deserialize toml
     #[err(from)]
-    Deserialize(toml_edit::de::Error),
+    DeserializeToml(toml_edit::de::Error),
+    /// could not deserialize json
+    #[err(from)]
+    DeserializeJson(serde_json::Error),
     /// could not find any dependencies
     ///
     /// this is probably a bug unless you actually have an empty lock

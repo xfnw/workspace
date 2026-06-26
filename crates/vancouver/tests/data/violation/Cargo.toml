@@ -1,0 +1,10 @@
+[package]
+name = "violation"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+equivalent = "=1.0.2"
+try-lock = "=0.2.4"
+
+[workspace]

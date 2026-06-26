@@ -17,8 +17,8 @@ fn command_output(args: impl IntoIterator<Item = impl AsRef<OsStr>>) -> Output {
 fn test_exitcode(name: &str, output: &str, code: i32) -> String {
     let output = command_output([
         "check",
-        "--lock",
-        &format!("{name}Cargo.lock"),
+        "--manifest",
+        &format!("{name}Cargo.toml"),
         "--config",
         &format!("{name}vancouver.toml"),
         "--audits",
@@ -40,13 +40,13 @@ fn workspace_check() {
 #[test]
 fn violation() {
     let stdout = test_exitcode(
-        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/violation-"),
+        concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/violation/"),
         "json",
         1,
     );
     assert_eq!(
         stdout,
-        r#"{"dependencies":[{"fails":[{"needed":"yote","prev_version":"0.1.0","reason":"Violation"}],"name":"yip","status":"failed","version":"0.3.0"},{"fails":[{"needed":"yote","prev_version":null,"reason":"Violation"}],"name":"yap","status":"failed","version":"1.0.0"}],"total":2,"total_failed":2,"total_passed":0,"unused_exempts":[]}
+        r#"{"dependencies":[{"fails":[{"needed":"meow","prev_version":null,"reason":"Violation"}],"name":"equivalent","status":"failed","version":"1.0.2"},{"fails":[{"needed":"meow","prev_version":"0.2.1","reason":"Violation"}],"name":"try-lock","status":"failed","version":"0.2.4"}],"total":2,"total_failed":2,"total_passed":0,"unused_exempts":[]}
 "#
     );
 }

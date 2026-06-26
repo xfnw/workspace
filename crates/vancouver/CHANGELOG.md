@@ -13,10 +13,16 @@ SPDX-License-Identifier: MPL-2.0
   diff.rs when suggesting a full audit
 - check will no longer suggest doing delta audits against a previous
   exempted version
+- metadata is now obtained by running cargo metadata, instead of
+  reading Cargo.lock ourselves
+- check's --lock option has been removed, as cargo metadata does not
+  allow choosing where to look for Cargo.lock
 
 ### added
 - check now has a --no-suggest-delta option to never suggest doing
   delta audits
+- check now has a --manifest option to tell cargo metadata where the
+  cargo manifest is
 
 ## 0.1.2 - 2025-12-13
 
