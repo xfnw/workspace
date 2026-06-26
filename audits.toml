@@ -1525,6 +1525,14 @@ criteria = "no-sus-blobs"
 version = "0.3.0"
 criteria = "skimmed"
 
+[[audits.want]]
+delta = "0.3.0 -> 0.3.1"
+criteria = "no-sus-blobs"
+
+[[audits.want]]
+delta = "0.3.0 -> 0.3.1"
+criteria = "skimmed"
+
 [[audits.pastey]]
 version = "0.2.3"
 criteria = "skimmed"
