@@ -440,7 +440,6 @@ impl Rules {
         version: &Version,
         criteria: &str,
         recursion_limit: usize,
-        ignore_exempts: bool,
     ) -> Option<Version> {
         let recursion_limit = recursion_limit.checked_sub(1)?;
 
@@ -462,14 +461,8 @@ impl Rules {
             .collect();
 
         for &potential in versions.range::<&Version, _>(..version).rev() {
-            if self.check_criteria(
-                name,
-                potential,
-                criteria,
-                None,
-                recursion_limit,
-                ignore_exempts,
-            ) == CheckResult::Validated
+            if self.check_criteria(name, potential, criteria, None, recursion_limit, true)
+                == CheckResult::Validated
             {
                 return Some(potential.clone());
             }
@@ -501,13 +494,7 @@ impl Rules {
                             CheckResult::RecursionLimitReached => FailReason::RecursionLimitReached,
                             CheckResult::Violation => FailReason::Violation,
                         },
-                        prev_version: self.find_prev(
-                            &name,
-                            &version,
-                            c,
-                            recursion_limit,
-                            ignore_exempts,
-                        ),
+                        prev_version: self.find_prev(&name, &version, c, recursion_limit),
                     }),
                 }
             })
@@ -644,7 +631,9 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
 
     let receipts: Vec<_> = dependencies
         .into_par_iter()
-        .map(|(name, version)| rules.check(name, version, args.recursion_limit, args.ignore_exempts))
+        .map(|(name, version)| {
+            rules.check(name, version, args.recursion_limit, args.ignore_exempts)
+        })
         .collect();
     let total = receipts.len();
     let unused = rules.unused_exempts();
