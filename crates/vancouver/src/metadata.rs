@@ -29,7 +29,7 @@ pub fn get_dependencies(manifest: Option<&Path>) -> Result<Vec<(String, Version)
         .arg("metadata")
         .arg("--format-version=1")
         .arg("--all-features")
-        .arg("--frozen");
+        .arg("--locked");
 
     if let Some(manifest) = manifest {
         command.arg("--manifest-path").arg(manifest);
