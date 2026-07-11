@@ -440,6 +440,7 @@ impl Rules {
         version: &Version,
         criteria: &str,
         recursion_limit: usize,
+        suggest_via_exempt: bool,
     ) -> Option<Version> {
         let recursion_limit = recursion_limit.checked_sub(1)?;
 
@@ -461,8 +462,14 @@ impl Rules {
             .collect();
 
         for &potential in versions.range::<&Version, _>(..version).rev() {
-            if self.check_criteria(name, potential, criteria, None, recursion_limit, true)
-                == CheckResult::Validated
+            if self.check_criteria(
+                name,
+                potential,
+                criteria,
+                None,
+                recursion_limit,
+                !suggest_via_exempt,
+            ) == CheckResult::Validated
             {
                 return Some(potential.clone());
             }
@@ -477,6 +484,7 @@ impl Rules {
         version: Version,
         recursion_limit: usize,
         ignore_exempts: bool,
+        suggest_via_exempt: bool,
     ) -> Receipt {
         let Policy { require_all } = self.get_policy(&name);
 
@@ -494,7 +502,13 @@ impl Rules {
                             CheckResult::RecursionLimitReached => FailReason::RecursionLimitReached,
                             CheckResult::Violation => FailReason::Violation,
                         },
-                        prev_version: self.find_prev(&name, &version, c, recursion_limit),
+                        prev_version: self.find_prev(
+                            &name,
+                            &version,
+                            c,
+                            recursion_limit,
+                            suggest_via_exempt,
+                        ),
                     }),
                 }
             })
@@ -632,7 +646,13 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
     let receipts: Vec<_> = dependencies
         .into_par_iter()
         .map(|(name, version)| {
-            rules.check(name, version, args.recursion_limit, args.ignore_exempts)
+            rules.check(
+                name,
+                version,
+                args.recursion_limit,
+                args.ignore_exempts,
+                args.suggest_via_exempt,
+            )
         })
         .collect();
     let total = receipts.len();

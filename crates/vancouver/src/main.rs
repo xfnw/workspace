@@ -59,6 +59,9 @@ pub struct CheckArgs {
     /// do not recommend doing a delta audit
     #[argh(switch)]
     no_suggest_delta: bool,
+    /// recommend delta audits going to exempts
+    #[argh(switch)]
+    suggest_via_exempt: bool,
     /// the output format to use (human or json)
     #[argh(option, default = "OutputFormat::Human")]
     output: OutputFormat,
