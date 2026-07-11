@@ -321,7 +321,7 @@ fn generate(parsed: ParsedErrors) -> TokenStream {
 #[allow(clippy::missing_panics_doc)]
 #[proc_macro_derive(FoxError, attributes(err))]
 pub fn foxerror(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let input = syn::parse(input).unwrap();
+    let input = syn::parse(input).expect("input should be parseable");
     let parsed = parse_derive(input);
     let output = generate(parsed);
 
