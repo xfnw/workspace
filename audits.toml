@@ -1533,6 +1533,14 @@ criteria = "no-sus-blobs"
 version = "0.2.4"
 criteria = "skimmed"
 
+[[audits.try-lock]]
+delta = "0.2.4 -> 0.2.5"
+criteria = "no-sus-blobs"
+
+[[audits.try-lock]]
+delta = "0.2.4 -> 0.2.5"
+criteria = "skimmed"
+
 [[audits.want]]
 version = "0.3.0"
 criteria = "no-sus-blobs"
