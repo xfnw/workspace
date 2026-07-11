@@ -50,6 +50,12 @@
           pname = "workspace";
           version = "0";
           inherit src;
+          cargoVendorDir = crane'.vendorMultipleCargoDeps {
+            cargoLockList = [
+              ./Cargo.lock
+              ./crates/vancouver/tests/data/violation/Cargo.lock
+            ];
+          };
         };
         cargoArtifacts = buildDepsOnly common;
         commonFileSet = fileset.union ./Cargo.toml ./Cargo.lock;
