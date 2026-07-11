@@ -1654,3 +1654,11 @@ criteria = "no-sus-blobs"
 [[audits.unicode_names2_generator]]
 version = "3.1.0"
 criteria = "skimmed"
+
+[[audits.tokio-socks]]
+delta = "0.5.2 -> 0.5.3"
+criteria = "no-sus-blobs"
+
+[[audits.tokio-socks]]
+delta = "0.5.2 -> 0.5.3"
+criteria = "skimmed"
