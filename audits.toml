@@ -1686,3 +1686,11 @@ criteria = "no-sus-blobs"
 [[audits.crossbeam-epoch]]
 delta = "0.9.18 -> 0.9.20"
 criteria = "skimmed"
+
+[[audits.hyper]]
+delta = "1.8.1 -> 1.10.1"
+criteria = "no-sus-blobs"
+
+[[audits.hyper]]
+delta = "1.8.1 -> 1.10.1"
+criteria = "skimmed"
