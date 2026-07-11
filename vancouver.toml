@@ -595,14 +595,6 @@ criteria = "no-sus-blobs"
 version = "0.2.16"
 criteria = "skimmed"
 
-[[exempt.pin-utils]]
-version = "0.1.0"
-criteria = "no-sus-blobs"
-
-[[exempt.pin-utils]]
-version = "0.1.0"
-criteria = "skimmed"
-
 [[exempt.potential_utf]]
 version = "0.1.3"
 criteria = "no-sus-blobs"
