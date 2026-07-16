@@ -1702,3 +1702,11 @@ criteria = "no-sus-blobs"
 [[audits.hyper]]
 delta = "1.8.1 -> 1.10.1"
 criteria = "skimmed"
+
+[[audits.unix_path]]
+version = "1.0.1"
+criteria = "no-sus-blobs"
+
+[[audits.unix_path]]
+version = "1.0.1"
+criteria = "skimmed"
