@@ -1710,3 +1710,11 @@ criteria = "no-sus-blobs"
 [[audits.unix_path]]
 version = "1.0.1"
 criteria = "skimmed"
+
+[[audits.unix_str]]
+version = "1.0.0"
+criteria = "no-sus-blobs"
+
+[[audits.unix_str]]
+version = "1.0.0"
+criteria = "skimmed"
