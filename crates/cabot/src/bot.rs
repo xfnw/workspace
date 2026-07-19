@@ -255,7 +255,7 @@ impl Bot {
         }
     }
 
-    pub async fn quit(&self) -> Result<(), Error> {
+    pub async fn shutdown(&self) -> Result<(), Error> {
         let quit = Line {
             tags: None,
             source: None,
