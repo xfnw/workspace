@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: MIT
 
-use crate::{Error, tohex_digest, unhex_digest};
+use crate::Error;
+use const_hex_lite::{tohex_array, unhex_array};
 use hashlink::LruCache;
 use irc_connect::Connection;
 use irctokens::Line;
@@ -145,7 +146,7 @@ impl Bot {
         };
 
         #[expect(clippy::cast_possible_truncation)]
-        if let Some(digest) = unhex_digest(&message)
+        if let Some(digest) = unhex_array(&message)
             && {
                 Instant::now()
                     .duration_since(*self.last_sent.lock().unwrap())
@@ -223,7 +224,7 @@ impl Bot {
             tags: None,
             source: None,
             command: "PRIVMSG".to_string(),
-            arguments: vec![self.channel.as_bytes().to_vec(), tohex_digest(digest)],
+            arguments: vec![self.channel.as_bytes().to_vec(), tohex_array(digest)],
         };
 
         loop {

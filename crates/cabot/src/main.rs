@@ -17,9 +17,7 @@ use tokio::{
 };
 
 mod bot;
-mod directory;
 mod file_store;
-mod fuse;
 
 /// content addressed irc bot
 #[derive(Debug, FromArgs)]
@@ -82,77 +80,8 @@ pub enum Error {
     Replaced,
 }
 
-fn tohex_nibble(n: u8) -> u8 {
-    match n {
-        0..=9 => n + b'0',
-        0xa..=0xf => n + b'a' - 0xa,
-        _ => panic!("that is not a nibble"),
-    }
-}
-
-fn tohex_digest<const D: usize>(inp: [u8; D]) -> Vec<u8> {
-    // FIXME: turn this back into a fixed size array
-    // once generic_const_exprs or whatever stabilizes
-    let mut out = Vec::with_capacity(D * 2);
-
-    for b in inp {
-        out.push(tohex_nibble(b >> 4));
-        out.push(tohex_nibble(b & 0b1111));
-    }
-
-    assert_eq!(out.len(), D * 2);
-
-    out
-}
-
-fn unhex_nibble(b: u8) -> Option<u8> {
-    match b {
-        b'0'..=b'9' => Some(b - b'0'),
-        b'a'..=b'f' => Some(b - b'a' + 0xa),
-        _ => None,
-    }
-}
-
-fn unhex_digest<const D: usize>(inp: &[u8]) -> Option<[u8; D]> {
-    if inp.len() != D * 2 {
-        return None;
-    }
-
-    let (chunks, []) = inp.as_chunks::<2>() else {
-        panic!("{} should be a multiple of 2", D * 2);
-    };
-
-    let mut out = [0; D];
-
-    for (i, &[h, l]) in chunks.iter().enumerate() {
-        out[i] = (unhex_nibble(h)? << 4) | unhex_nibble(l)?;
-    }
-
-    Some(out)
-}
-
-#[test]
-fn check_unhex_digest() {
-    let expect = [
-        0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef, 0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd,
-        0xef,
-    ];
-    assert_eq!(
-        unhex_digest(b"1234567890abcdef1234567890abcdef"),
-        Some(expect)
-    );
-}
-
-#[test]
-fn digest_round_trip() {
-    assert_eq!(
-        tohex_digest(unhex_digest::<16>(b"33c6c2397a1b079e903c474df792d0e2").unwrap()),
-        *b"33c6c2397a1b079e903c474df792d0e2"
-    );
-}
-
 fn parse_hex_digest(inp: &str) -> Result<[u8; 16], String> {
-    unhex_digest(inp.as_bytes()).ok_or_else(|| "invalid digest".to_string())
+    const_hex_lite::unhex_array(inp.as_bytes()).ok_or_else(|| "invalid digest".to_string())
 }
 
 #[tokio::main]
@@ -195,8 +124,10 @@ async fn main() {
 
     if let Some(mountpoint) = opt.fuse {
         let file_store = file_store::IrcFileStore::new(bot.clone());
-        let filesystem = fuse::CaFilesystem::new(file_store, opt.fuse_resume, opt.fuse_timeout);
-        let mount_handle = fuse::mount(filesystem.clone(), &mountpoint).await;
+        let filesystem = cabotfs::CaFilesystem::new(file_store, opt.fuse_resume, opt.fuse_timeout);
+        let mount_handle = cabotfs::mount(filesystem.clone(), &mountpoint)
+            .await
+            .unwrap();
 
         let filesystem_ = filesystem.clone();
         tokio::spawn(async move {

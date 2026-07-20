@@ -2,17 +2,10 @@
 //
 // SPDX-License-Identifier: MIT
 
-use crate::{Error, bot::Bot, tohex_digest, unhex_digest};
+use crate::{Error, bot::Bot};
 use base64::{Engine, engine::general_purpose::STANDARD_NO_PAD as BASE64};
+use const_hex_lite::{tohex_array, unhex_array};
 use std::sync::Arc;
-
-pub trait FileStore<const D: usize>: Send + Sync + 'static {
-    fn store(&self, file: &[u8]) -> impl Future<Output = Result<[u8; D], Error>> + Send;
-
-    fn retrieve(&self, digest: [u8; D]) -> impl Future<Output = Result<Vec<u8>, Error>> + Send;
-
-    fn shutdown(&self) -> impl Future<Output = Result<(), Error>> + Send;
-}
 
 pub struct IrcFileStore {
     bot: Arc<Bot>,
@@ -24,7 +17,9 @@ impl IrcFileStore {
     }
 }
 
-impl FileStore<16> for IrcFileStore {
+impl cabotfs::FileStore<16> for IrcFileStore {
+    type Error = Error;
+
     async fn store(&self, file: &[u8]) -> Result<[u8; 16], Error> {
         let mut contents = BASE64.encode(file).into_bytes();
         if contents.is_empty() {
@@ -40,11 +35,11 @@ impl FileStore<16> for IrcFileStore {
             let mut line = vec![];
 
             for hash in hash_chunk {
-                line.extend_from_slice(&tohex_digest(*hash));
+                line.extend_from_slice(&tohex_array(*hash));
             }
 
             if let Some(prev) = lines.last() {
-                line.extend_from_slice(&tohex_digest(md5::compute(prev).0));
+                line.extend_from_slice(&tohex_array(md5::compute(prev).0));
             }
 
             lines.push(line);
@@ -67,7 +62,7 @@ impl FileStore<16> for IrcFileStore {
 
         loop {
             let hashes = self.bot.retrieve(next_hash).await?;
-            let Some(hashes): Option<Vec<_>> = hashes.chunks(32).map(unhex_digest).collect() else {
+            let Some(hashes): Option<Vec<_>> = hashes.chunks(32).map(unhex_array).collect() else {
                 return Err(Error::FileInvalidHashes);
             };
 

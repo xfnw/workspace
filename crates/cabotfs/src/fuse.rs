@@ -2,8 +2,11 @@
 //
 // SPDX-License-Identifier: MIT
 
-use crate::{Error, directory, file_store::FileStore, tohex_digest, unhex_digest};
+#![expect(clippy::missing_errors_doc)]
+
+use crate::{Error, FileStore, directory};
 use append_only_vec::AppendOnlyVec;
+use const_hex_lite::{tohex_array, unhex_array};
 use fuse3::{
     Inode, MountOptions,
     raw::{MountHandle, prelude::*},
@@ -137,7 +140,7 @@ impl<const D: usize, F: FileStore<D>> Filesystem for CaFilesystem<D, F> {
         if let Ok(hash) = self.sync().await {
             use std::io::{Write, stdout};
             let mut p = stdout();
-            p.write_all(&tohex_digest(hash)).unwrap();
+            p.write_all(&tohex_array(hash)).unwrap();
             p.write_all(b"\n").unwrap();
         }
 
@@ -490,7 +493,7 @@ impl<const D: usize, F: FileStore<D>> Filesystem for CaFilesystem<D, F> {
         if name.as_encoded_bytes() != b"user.hash" {
             return Err(libc::ENODATA.into());
         }
-        let hash = unhex_digest(value).ok_or(libc::EINVAL)?;
+        let hash = unhex_array(value).ok_or(libc::EINVAL)?;
         let entry = self.get(inode);
         let parent = self.get(entry.parent);
         parent.mark_dirty(self).await?;
@@ -534,7 +537,7 @@ impl<const D: usize, F: FileStore<D>> Filesystem for CaFilesystem<D, F> {
             return Err(libc::ERANGE.into());
         }
         let hash = self.sync_inode(inode).await.map_err(|_| libc::EIO)?;
-        Ok(ReplyXAttr::Data(tohex_digest(hash).into()))
+        Ok(ReplyXAttr::Data(tohex_array(hash).into()))
     }
 
     #[expect(clippy::cast_possible_truncation)]
@@ -588,11 +591,7 @@ impl<const D: usize> Entry<D> {
             fs.0.store
                 .retrieve(placeholder_hash)
                 .await
-                .inspect_err(|e| {
-                    if matches!(e, Error::Io(_)) {
-                        fs.poison();
-                    }
-                })?;
+                .map_err(|e| Error::FileStore(Box::new(e)))?;
 
         match &self.data {
             DataKind::File(lock) => lock
@@ -722,7 +721,11 @@ impl<const D: usize> DataStatus<D, u8> {
         match self {
             Self::Placeholder { hash } | Self::Clean { hash, .. } => Ok(*hash),
             Self::Dirty { body } => {
-                let newhash = fs.0.store.store(body).await?;
+                let newhash =
+                    fs.0.store
+                        .store(body)
+                        .await
+                        .map_err(|e| Error::FileStore(Box::new(e)))?;
                 self.dirty_add_hash(newhash);
                 Ok(newhash)
             }
@@ -757,7 +760,11 @@ impl<const D: usize> DataStatus<D, DirEntry> {
                         .then_with(|| a.kind.cmp(&b.kind))
                 });
 
-                let newhash = fs.0.store.store(&dir.serialize()).await?;
+                let newhash =
+                    fs.0.store
+                        .store(&dir.serialize())
+                        .await
+                        .map_err(|e| Error::FileStore(Box::new(e)))?;
                 self.dirty_add_hash(newhash);
                 Ok(newhash)
             }
@@ -773,7 +780,7 @@ struct DirEntry {
 pub async fn mount<const D: usize, F: FileStore<D>>(
     fs: CaFilesystem<D, F>,
     mount_path: &Path,
-) -> MountHandle {
+) -> Result<MountHandle, std::io::Error> {
     let mut mount_options = MountOptions::default();
     mount_options
         .fs_name("cabotfs".to_string())
@@ -784,5 +791,4 @@ pub async fn mount<const D: usize, F: FileStore<D>>(
     Session::new(mount_options)
         .mount_with_unprivileged(fs, mount_path)
         .await
-        .unwrap()
 }

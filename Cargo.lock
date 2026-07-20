@@ -208,18 +208,29 @@ checksum = "fc652a48c352aef3ea3aed32080501cf3ef6ed5da78602a020c991775b0aff04"
 name = "cabot"
 version = "0.1.0"
 dependencies = [
- "append-only-vec",
  "argh",
  "base64",
+ "cabotfs",
+ "const-hex-lite",
  "foxerror",
- "fuse3",
- "futures-util",
  "hashlink",
  "irc-connect",
  "irctokens",
- "libc",
  "md5",
  "rand",
+ "tokio",
+]
+
+[[package]]
+name = "cabotfs"
+version = "0.1.0"
+dependencies = [
+ "append-only-vec",
+ "const-hex-lite",
+ "foxerror",
+ "fuse3",
+ "futures-util",
+ "libc",
  "tokio",
  "zerocopy",
 ]
@@ -294,6 +305,10 @@ checksum = "4ca0197aee26d1ae37445ee532fefce43251d24cc7c166799f4d46817f1d3973"
 dependencies = [
  "crossbeam-utils",
 ]
+
+[[package]]
+name = "const-hex-lite"
+version = "0.1.0"
 
 [[package]]
 name = "cpufeatures"

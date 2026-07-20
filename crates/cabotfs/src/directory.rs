@@ -14,6 +14,7 @@ pub struct Directory<const N: usize> {
 }
 
 impl<const N: usize> Directory<N> {
+    #[must_use]
     pub fn parse(inp: &[u8]) -> Option<Self> {
         let mut rest = inp;
         let mut entries = vec![];
@@ -30,6 +31,7 @@ impl<const N: usize> Directory<N> {
         Some(Self { entries })
     }
 
+    #[must_use]
     pub fn serialize(&self) -> Vec<u8> {
         let mut out = vec![];
 

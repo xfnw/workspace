@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: 2026 xfnw
+#
+# SPDX-License-Identifier: MIT
+
+[package]
+name = "cabotfs"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+repository.workspace = true
+
+[dependencies]
+append-only-vec = "0.1.8"
+const-hex-lite = { version = "0.1.0", path = "../const-hex-lite" }
+foxerror = { version = "0.1.2", path = "../foxerror" }
+fuse3 = { version = "0.9.0", features = ["tokio-runtime", "unprivileged"] }
+futures-util = "0.3.32"
+libc = "0.2.186"
+tokio = { version = "1.48", default-features = false, features = ["sync", "time"] }
+zerocopy = "0.8.48"
+
+[lints]
+workspace = true
