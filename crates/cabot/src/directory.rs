@@ -9,11 +9,11 @@ use std::{
 
 // format: directory entries just concatenated together
 #[derive(Debug, PartialEq, Eq)]
-pub struct Directory {
-    pub entries: Vec<DirectoryEntry>,
+pub struct Directory<const N: usize> {
+    pub entries: Vec<DirectoryEntry<N>>,
 }
 
-impl Directory {
+impl<const N: usize> Directory<N> {
     pub fn parse(inp: &[u8]) -> Option<Self> {
         let mut rest = inp;
         let mut entries = vec![];
@@ -42,7 +42,7 @@ impl Directory {
 }
 
 // format:
-// 16 bytes     - hash
+// N bytes      - hash
 // big endian 16 bits (
 //   3 bits  - reserved
 //   1 bit   - is directory
@@ -50,13 +50,13 @@ impl Directory {
 // )
 // 0-4095 bytes - name
 #[derive(Debug, PartialEq, Eq)]
-pub struct DirectoryEntry {
-    pub hash: [u8; 16],
+pub struct DirectoryEntry<const N: usize> {
+    pub hash: [u8; N],
     pub kind: DirectoryEntryKind,
     pub name: OsString,
 }
 
-impl DirectoryEntry {
+impl<const N: usize> DirectoryEntry<N> {
     fn parse(inp: &[u8]) -> Option<(Self, &[u8])> {
         let (hash, rest) = parse_hash(inp)?;
         let (kind, length, rest) = parse_flags(rest)?;
@@ -88,8 +88,8 @@ pub enum DirectoryEntryKind {
     Subdirectory,
 }
 
-fn parse_hash(inp: &[u8]) -> Option<([u8; 16], &[u8])> {
-    inp.split_first_chunk::<16>().map(|(&h, r)| (h, r))
+fn parse_hash<const N: usize>(inp: &[u8]) -> Option<([u8; N], &[u8])> {
+    inp.split_first_chunk::<N>().map(|(&h, r)| (h, r))
 }
 
 fn parse_flags(inp: &[u8]) -> Option<(DirectoryEntryKind, u16, &[u8])> {
