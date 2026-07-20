@@ -223,10 +223,7 @@ impl Bot {
             tags: None,
             source: None,
             command: "PRIVMSG".to_string(),
-            arguments: vec![
-                self.channel.as_bytes().to_vec(),
-                tohex_digest(digest).to_vec(),
-            ],
+            arguments: vec![self.channel.as_bytes().to_vec(), tohex_digest(digest)],
         };
 
         loop {

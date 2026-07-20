@@ -6,16 +6,26 @@ use crate::{Error, bot::Bot, tohex_digest, unhex_digest};
 use base64::{Engine, engine::general_purpose::STANDARD_NO_PAD as BASE64};
 use std::sync::Arc;
 
-pub struct FileStore {
+pub trait FileStore<const D: usize>: Send + Sync + 'static {
+    fn store(&self, file: &[u8]) -> impl Future<Output = Result<[u8; D], Error>> + Send;
+
+    fn retrieve(&self, digest: [u8; D]) -> impl Future<Output = Result<Vec<u8>, Error>> + Send;
+
+    fn shutdown(&self) -> impl Future<Output = Result<(), Error>> + Send;
+}
+
+pub struct IrcFileStore {
     bot: Arc<Bot>,
 }
 
-impl FileStore {
+impl IrcFileStore {
     pub fn new(bot: Arc<Bot>) -> Self {
         Self { bot }
     }
+}
 
-    pub async fn store(&self, file: &[u8]) -> Result<[u8; 16], Error> {
+impl FileStore<16> for IrcFileStore {
+    async fn store(&self, file: &[u8]) -> Result<[u8; 16], Error> {
         let mut contents = BASE64.encode(file).into_bytes();
         if contents.is_empty() {
             // we cannot send an empty irc message.
@@ -51,7 +61,7 @@ impl FileStore {
         Ok(last_hash)
     }
 
-    pub async fn retrieve(&self, digest: [u8; 16]) -> Result<Vec<u8>, Error> {
+    async fn retrieve(&self, digest: [u8; 16]) -> Result<Vec<u8>, Error> {
         let mut futures = vec![];
         let mut next_hash = digest;
 
@@ -91,7 +101,7 @@ impl FileStore {
         Ok(result)
     }
 
-    pub async fn shutdown(&self) -> Result<(), Error> {
+    async fn shutdown(&self) -> Result<(), Error> {
         self.bot.shutdown().await
     }
 }

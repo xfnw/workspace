@@ -67,7 +67,7 @@ struct Opt {
 }
 
 #[derive(Debug, foxerror::FoxError)]
-enum Error {
+pub enum Error {
     #[err(from)]
     Io(io::Error),
     Broadcast(broadcast::error::RecvError),
@@ -90,13 +90,17 @@ fn tohex_nibble(n: u8) -> u8 {
     }
 }
 
-fn tohex_digest(inp: [u8; 16]) -> [u8; 32] {
-    let mut out = [0; 32];
+fn tohex_digest<const D: usize>(inp: [u8; D]) -> Vec<u8> {
+    // FIXME: turn this back into a fixed size array
+    // once generic_const_exprs or whatever stabilizes
+    let mut out = Vec::with_capacity(D * 2);
 
-    for (i, b) in inp.iter().enumerate() {
-        out[i * 2] = tohex_nibble(b >> 4);
-        out[i * 2 + 1] = tohex_nibble(b & 0b1111);
+    for b in inp {
+        out.push(tohex_nibble(b >> 4));
+        out.push(tohex_nibble(b & 0b1111));
     }
+
+    assert_eq!(out.len(), D * 2);
 
     out
 }
@@ -109,16 +113,16 @@ fn unhex_nibble(b: u8) -> Option<u8> {
     }
 }
 
-fn unhex_digest(inp: &[u8]) -> Option<[u8; 16]> {
-    if inp.len() != 32 {
+fn unhex_digest<const D: usize>(inp: &[u8]) -> Option<[u8; D]> {
+    if inp.len() != D * 2 {
         return None;
     }
 
     let (chunks, []) = inp.as_chunks::<2>() else {
-        panic!("32 should be a multiple of 2");
+        panic!("{} should be a multiple of 2", D * 2);
     };
 
-    let mut out = [0; 16];
+    let mut out = [0; D];
 
     for (i, &[h, l]) in chunks.iter().enumerate() {
         out[i] = (unhex_nibble(h)? << 4) | unhex_nibble(l)?;
@@ -142,7 +146,7 @@ fn check_unhex_digest() {
 #[test]
 fn digest_round_trip() {
     assert_eq!(
-        tohex_digest(unhex_digest(b"33c6c2397a1b079e903c474df792d0e2").unwrap()),
+        tohex_digest(unhex_digest::<16>(b"33c6c2397a1b079e903c474df792d0e2").unwrap()),
         *b"33c6c2397a1b079e903c474df792d0e2"
     );
 }
@@ -190,7 +194,7 @@ async fn main() {
     };
 
     if let Some(mountpoint) = opt.fuse {
-        let file_store = file_store::FileStore::new(bot.clone());
+        let file_store = file_store::IrcFileStore::new(bot.clone());
         let filesystem = fuse::CaFilesystem::new(file_store, opt.fuse_resume, opt.fuse_timeout);
         let mount_handle = fuse::mount(filesystem.clone(), &mountpoint).await;
 

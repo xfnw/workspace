@@ -23,18 +23,23 @@ use zerocopy::{Immutable, IntoBytes};
 
 const TTL: Duration = Duration::from_secs(1);
 
-struct CaInner {
-    store: FileStore,
-    inodes: AppendOnlyVec<Entry>,
+struct CaInner<const D: usize, F: FileStore<D>> {
+    store: F,
+    inodes: AppendOnlyVec<Entry<D>>,
     realize_timeout: Duration,
     poisoned: AtomicBool,
 }
 
-#[derive(Clone)]
-pub struct CaFilesystem(Arc<CaInner>);
+pub struct CaFilesystem<const D: usize, F: FileStore<D>>(Arc<CaInner<D, F>>);
 
-impl CaFilesystem {
-    pub fn new(store: FileStore, resume: Option<[u8; 16]>, timeout: u64) -> Self {
+impl<const D: usize, F: FileStore<D>> Clone for CaFilesystem<D, F> {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+
+impl<const D: usize, F: FileStore<D>> CaFilesystem<D, F> {
+    pub fn new(store: F, resume: Option<[u8; D]>, timeout: u64) -> Self {
         let inodes = AppendOnlyVec::new();
         inodes.push(Entry {
             parent: 1,
@@ -52,26 +57,26 @@ impl CaFilesystem {
         }))
     }
 
-    fn get(&self, inode: Inode) -> &Entry {
+    fn get(&self, inode: Inode) -> &Entry<D> {
         #[expect(clippy::cast_possible_truncation)]
         &self.0.inodes[inode as usize - 1]
     }
 
-    fn push(&self, entry: Entry) -> Result<Inode, Error> {
+    fn push(&self, entry: Entry<D>) -> Result<Inode, Error> {
         if self.0.poisoned.load(Ordering::Relaxed) {
             return Err(Error::Poisoned);
         }
         Ok(self.0.inodes.push(entry) as Inode + 1)
     }
 
-    async fn sync_inode(&self, inode: Inode) -> Result<[u8; 16], Error> {
+    async fn sync_inode(&self, inode: Inode) -> Result<[u8; D], Error> {
         self.get(inode)
             .sync(self)
             .await
             .inspect_err(|_| self.poison())
     }
 
-    pub async fn sync(&self) -> Result<[u8; 16], Error> {
+    pub async fn sync(&self) -> Result<[u8; D], Error> {
         self.sync_inode(1).await
     }
 
@@ -121,7 +126,7 @@ impl CaFilesystem {
     }
 }
 
-impl Filesystem for CaFilesystem {
+impl<const D: usize, F: FileStore<D>> Filesystem for CaFilesystem<D, F> {
     async fn init(&self, _req: Request) -> fuse3::Result<ReplyInit> {
         Ok(ReplyInit {
             max_write: NonZeroU32::new(16 * 1024).unwrap(),
@@ -529,7 +534,7 @@ impl Filesystem for CaFilesystem {
             return Err(libc::ERANGE.into());
         }
         let hash = self.sync_inode(inode).await.map_err(|_| libc::EIO)?;
-        Ok(ReplyXAttr::Data(tohex_digest(hash).to_vec().into()))
+        Ok(ReplyXAttr::Data(tohex_digest(hash).into()))
     }
 
     #[expect(clippy::cast_possible_truncation)]
@@ -550,20 +555,24 @@ impl Filesystem for CaFilesystem {
     }
 }
 
-struct Entry {
+struct Entry<const D: usize> {
     parent: Inode,
-    data: DataKind,
+    data: DataKind<D>,
 }
 
-impl Entry {
-    async fn sync(&self, fs: &CaFilesystem) -> Result<[u8; 16], Error> {
+impl<const D: usize> Entry<D> {
+    async fn sync<F: FileStore<D>>(&self, fs: &CaFilesystem<D, F>) -> Result<[u8; D], Error> {
         match &self.data {
             DataKind::File(status) => status.write().await.sync(fs).await,
             DataKind::Directory(status) => status.write().await.sync(fs).await,
         }
     }
 
-    async fn realize(&self, fs: &CaFilesystem, my_inode: Inode) -> Result<(), Error> {
+    async fn realize<F: FileStore<D>>(
+        &self,
+        fs: &CaFilesystem<D, F>,
+        my_inode: Inode,
+    ) -> Result<(), Error> {
         let placeholder_hash = match &self.data {
             DataKind::File(lock) => match *lock.read().await {
                 DataStatus::Placeholder { hash } => hash,
@@ -618,7 +627,7 @@ impl Entry {
         Ok(())
     }
 
-    async fn mark_dirty(&self, fs: &CaFilesystem) -> fuse3::Result<()> {
+    async fn mark_dirty<F: FileStore<D>>(&self, fs: &CaFilesystem<D, F>) -> fuse3::Result<()> {
         if fs.0.poisoned.load(Ordering::Relaxed) {
             return Err(libc::EROFS.into());
         }
@@ -636,24 +645,24 @@ impl Entry {
     }
 }
 
-enum DataKind {
-    File(RwLock<DataStatus<u8>>),
-    Directory(RwLock<DataStatus<DirEntry>>),
+enum DataKind<const D: usize> {
+    File(RwLock<DataStatus<D, u8>>),
+    Directory(RwLock<DataStatus<D, DirEntry>>),
 }
 
-enum DataStatus<T> {
-    Placeholder { hash: [u8; 16] },
-    Clean { hash: [u8; 16], body: Vec<T> },
+enum DataStatus<const D: usize, T> {
+    Placeholder { hash: [u8; D] },
+    Clean { hash: [u8; D], body: Vec<T> },
     Dirty { body: Vec<T> },
 }
 
-impl<T> DataStatus<T> {
-    fn dirty_add_hash(&mut self, hash: [u8; 16]) {
+impl<const D: usize, T> DataStatus<D, T> {
+    fn dirty_add_hash(&mut self, hash: [u8; D]) {
         // naughty temporary nonsense value.
         // would be more efficient to transmute to a MaybeUninit and then replace
         // it with uninitialized data, but this is not exactly performance
         // sensitive so it is not worth it
-        let old = std::mem::replace(self, Self::Placeholder { hash: [0; 16] });
+        let old = std::mem::replace(self, Self::Placeholder { hash: [0; D] });
 
         if let Self::Dirty { body } = old {
             *self = Self::Clean { hash, body };
@@ -665,7 +674,7 @@ impl<T> DataStatus<T> {
         panic!("tried to add a hash to non-dirty data");
     }
 
-    fn overwrite_placeholder(&mut self, expected: [u8; 16], body: Vec<T>) -> Result<(), Error> {
+    fn overwrite_placeholder(&mut self, expected: [u8; D], body: Vec<T>) -> Result<(), Error> {
         if let Self::Placeholder { hash } = self {
             if *hash != expected {
                 return Err(Error::Replaced);
@@ -689,7 +698,7 @@ impl<T> DataStatus<T> {
         match self {
             Self::Placeholder { .. } => None,
             Self::Clean { .. } => {
-                let old = std::mem::replace(self, Self::Placeholder { hash: [0; 16] });
+                let old = std::mem::replace(self, Self::Placeholder { hash: [0; D] });
                 let Self::Clean { body, .. } = old else {
                     unreachable!();
                 };
@@ -708,8 +717,8 @@ impl<T> DataStatus<T> {
     }
 }
 
-impl DataStatus<u8> {
-    async fn sync(&mut self, fs: &CaFilesystem) -> Result<[u8; 16], Error> {
+impl<const D: usize> DataStatus<D, u8> {
+    async fn sync<F: FileStore<D>>(&mut self, fs: &CaFilesystem<D, F>) -> Result<[u8; D], Error> {
         match self {
             Self::Placeholder { hash } | Self::Clean { hash, .. } => Ok(*hash),
             Self::Dirty { body } => {
@@ -721,8 +730,8 @@ impl DataStatus<u8> {
     }
 }
 
-impl DataStatus<DirEntry> {
-    async fn sync(&mut self, fs: &CaFilesystem) -> Result<[u8; 16], Error> {
+impl<const D: usize> DataStatus<D, DirEntry> {
+    async fn sync<F: FileStore<D>>(&mut self, fs: &CaFilesystem<D, F>) -> Result<[u8; D], Error> {
         match self {
             Self::Placeholder { hash } | Self::Clean { hash, .. } => Ok(*hash),
             Self::Dirty { body } => {
@@ -761,7 +770,10 @@ struct DirEntry {
     inode: Inode,
 }
 
-pub async fn mount(fs: CaFilesystem, mount_path: &Path) -> MountHandle {
+pub async fn mount<const D: usize, F: FileStore<D>>(
+    fs: CaFilesystem<D, F>,
+    mount_path: &Path,
+) -> MountHandle {
     let mut mount_options = MountOptions::default();
     mount_options
         .fs_name("cabotfs".to_string())
