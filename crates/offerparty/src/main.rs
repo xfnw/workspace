@@ -56,6 +56,9 @@ struct Opt {
     /// authorization header value to send copyparty
     #[argh(option)]
     auth: Option<HeaderValue>,
+    /// description to use when responding to !list
+    #[argh(option)]
+    desc: Option<String>,
     /// copyparty url to get files from
     #[argh(positional)]
     url: Url,
@@ -102,6 +105,7 @@ struct Bot {
     delay: Duration,
     autojoin: Option<String>,
     auth: Option<HeaderValue>,
+    desc: String,
     copyparty_url: Url,
     castore: RootCertStore,
     myhost: RwLock<Option<IpAddr>>,
@@ -112,6 +116,7 @@ impl Bot {
     fn new(
         autojoin: Option<String>,
         auth: Option<HeaderValue>,
+        desc: Option<String>,
         copyparty_url: Url,
         delay: u64,
         castore: RootCertStore,
@@ -142,6 +147,7 @@ impl Bot {
             delay,
             autojoin,
             auth,
+            desc: desc.unwrap_or_else(|| format!("stuff from {copyparty_url}")),
             copyparty_url,
             castore,
             myhost: RwLock::new(None),
@@ -287,8 +293,8 @@ impl Bot {
                 self.send_message(
                     target.to_vec(),
                     format!(
-                        "ciao a tutti! message me XDCC HELP to download stuff from {}",
-                        self.copyparty_url
+                        "ciao a tutti! message me XDCC HELP to download {}",
+                        self.desc
                     )
                     .into_bytes(),
                 )?;
@@ -653,7 +659,7 @@ async fn main() {
     let mut castore = RootCertStore::empty();
     castore.add_parsable_certificates(CertificateDer::pem_file_iter(opt.trust).unwrap().flatten());
 
-    let bot = Bot::new(opt.join, opt.auth, opt.url, opt.delay, castore);
+    let bot = Bot::new(opt.join, opt.auth, opt.desc, opt.url, opt.delay, castore);
 
     bot.connect(&opt.nick, &opt.addr, opt.tls, opt.autoconn)
         .await;
