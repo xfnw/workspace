@@ -52,7 +52,7 @@ pub fn tohex_vec<const D: usize>(inp: [u8; D]) -> Vec<u8> {
 pub fn tohex_string<const D: usize>(inp: [u8; D]) -> String {
     let hex = tohex_vec(inp);
 
-    // SAFETY: 0-9a-f is always valid utf-8
+    // SAFETY: 0-9a-fA-F is always valid utf-8
     unsafe { String::from_utf8_unchecked(hex) }
 }
 
@@ -60,6 +60,7 @@ fn unhex_nibble(b: u8) -> Option<u8> {
     match b {
         b'0'..=b'9' => Some(b - b'0'),
         b'a'..=b'f' => Some(b - b'a' + 0xa),
+        b'A'..=b'F' => Some(b - b'A' + 0xa),
         _ => None,
     }
 }
@@ -94,7 +95,7 @@ mod tests {
             0xcd, 0xef,
         ];
         assert_eq!(
-            unhex_array(b"1234567890abcdef1234567890abcdef"),
+            unhex_array(b"1234567890abcdef1234567890ABCDEF"),
             Some(expect)
         );
     }
