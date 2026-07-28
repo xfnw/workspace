@@ -380,6 +380,15 @@ notes = "some generated files with rather silly formatting"
 delta = "1.18.0 -> 1.19.0"
 criteria = "skimmed"
 
+[[audits.typenum]]
+delta = "1.19.0 -> 1.20.1"
+criteria = "blobs-ok"
+notes = "added a bunch of generated tests"
+
+[[audits.typenum]]
+delta = "1.19.0 -> 1.20.1"
+criteria = "skimmed"
+
 [[audits.serde_derive]]
 delta = "1.0.226 -> 1.0.228"
 criteria = "no-sus-blobs"
