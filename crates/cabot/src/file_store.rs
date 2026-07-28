@@ -4,7 +4,7 @@
 
 use crate::{Error, bot::Bot};
 use base64::{Engine, engine::general_purpose::STANDARD_NO_PAD as BASE64};
-use const_hex_lite::{tohex_array, unhex_array};
+use const_hex_lite::{tohex_vec, unhex_array};
 use std::sync::Arc;
 
 pub struct IrcFileStore {
@@ -35,11 +35,11 @@ impl cabotfs::FileStore<16> for IrcFileStore {
             let mut line = vec![];
 
             for hash in hash_chunk {
-                line.extend_from_slice(&tohex_array(*hash));
+                line.extend_from_slice(&tohex_vec(*hash));
             }
 
             if let Some(prev) = lines.last() {
-                line.extend_from_slice(&tohex_array(md5::compute(prev).0));
+                line.extend_from_slice(&tohex_vec(md5::compute(prev).0));
             }
 
             lines.push(line);

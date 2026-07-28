@@ -12,9 +12,7 @@ fn tohex_nibble(n: u8) -> u8 {
 
 #[must_use]
 #[allow(clippy::missing_panics_doc, reason = "should be unreachable")]
-pub fn tohex_array<const D: usize>(inp: [u8; D]) -> Vec<u8> {
-    // FIXME: turn this back into a fixed size array
-    // once generic_const_exprs or whatever stabilizes
+pub fn tohex_vec<const D: usize>(inp: [u8; D]) -> Vec<u8> {
     let mut out = Vec::with_capacity(D * 2);
 
     for b in inp {
@@ -69,7 +67,7 @@ fn check_unhex() {
 #[test]
 fn hex_round_trip() {
     assert_eq!(
-        tohex_array(unhex_array::<16>(b"33c6c2397a1b079e903c474df792d0e2").unwrap()),
+        tohex_vec(unhex_array::<16>(b"33c6c2397a1b079e903c474df792d0e2").unwrap()),
         *b"33c6c2397a1b079e903c474df792d0e2"
     );
 }

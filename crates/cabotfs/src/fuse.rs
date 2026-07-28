@@ -6,7 +6,7 @@
 
 use crate::{Error, FileStore, directory};
 use append_only_vec::AppendOnlyVec;
-use const_hex_lite::{tohex_array, unhex_array};
+use const_hex_lite::{tohex_vec, unhex_array};
 use fuse3::{
     Inode, MountOptions,
     raw::{MountHandle, prelude::*},
@@ -140,7 +140,7 @@ impl<const D: usize, F: FileStore<D>> Filesystem for CaFilesystem<D, F> {
         if let Ok(hash) = self.sync().await {
             use std::io::{Write, stdout};
             let mut p = stdout();
-            p.write_all(&tohex_array(hash)).unwrap();
+            p.write_all(&tohex_vec(hash)).unwrap();
             p.write_all(b"\n").unwrap();
         }
 
@@ -537,7 +537,7 @@ impl<const D: usize, F: FileStore<D>> Filesystem for CaFilesystem<D, F> {
             return Err(libc::ERANGE.into());
         }
         let hash = self.sync_inode(inode).await.map_err(|_| libc::EIO)?;
-        Ok(ReplyXAttr::Data(tohex_array(hash).into()))
+        Ok(ReplyXAttr::Data(tohex_vec(hash).into()))
     }
 
     #[expect(clippy::cast_possible_truncation)]

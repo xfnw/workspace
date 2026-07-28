@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::Error;
-use const_hex_lite::{tohex_array, unhex_array};
+use const_hex_lite::{tohex_vec, unhex_array};
 use hashlink::LruCache;
 use irc_connect::Connection;
 use irctokens::Line;
@@ -224,7 +224,7 @@ impl Bot {
             tags: None,
             source: None,
             command: "PRIVMSG".to_string(),
-            arguments: vec![self.channel.as_bytes().to_vec(), tohex_array(digest)],
+            arguments: vec![self.channel.as_bytes().to_vec(), tohex_vec(digest)],
         };
 
         loop {
