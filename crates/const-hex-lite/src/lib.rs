@@ -2,12 +2,35 @@
 //
 // SPDX-License-Identifier: MIT
 
+use hybrid_array::{Array, ArraySize, AssocArraySize};
+use std::ops::Mul;
+use typenum::{Prod, U2};
+
 fn tohex_nibble(n: u8) -> u8 {
     match n {
         0..=9 => n + b'0',
         0xa..=0xf => n + b'a' - 0xa,
         _ => panic!("that is not a nibble"),
     }
+}
+
+#[must_use]
+pub fn tohex_array<const D: usize>(
+    inp: [u8; D],
+) -> Array<u8, Prod<<[u8; D] as AssocArraySize>::Size, U2>>
+where
+    [u8; D]: AssocArraySize,
+    <[u8; D] as AssocArraySize>::Size: Mul<U2>,
+    Prod<<[u8; D] as AssocArraySize>::Size, U2>: ArraySize,
+{
+    let mut out = <Array<u8, Prod<<[u8; D] as AssocArraySize>::Size, U2>>>::default();
+
+    for (i, b) in inp.iter().enumerate() {
+        out[i * 2] = tohex_nibble(b >> 4);
+        out[i * 2 + 1] = tohex_nibble(b & 0b1111);
+    }
+
+    out
 }
 
 #[must_use]
