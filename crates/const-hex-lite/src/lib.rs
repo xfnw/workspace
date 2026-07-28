@@ -36,14 +36,13 @@ fn unhex_nibble(b: u8) -> Option<u8> {
 }
 
 #[must_use]
-#[allow(clippy::missing_panics_doc, reason = "should be unreachable")]
 pub fn unhex_array<const D: usize>(inp: &[u8]) -> Option<[u8; D]> {
     if inp.len() != D * 2 {
         return None;
     }
 
     let (chunks, []) = inp.as_chunks::<2>() else {
-        panic!("{} should be a multiple of 2", D * 2);
+        unreachable!();
     };
 
     let mut out = [0; D];
