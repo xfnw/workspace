@@ -39,22 +39,23 @@ where
 /// convert from bytes to a vec of hex
 #[must_use]
 #[allow(clippy::missing_panics_doc, reason = "should be unreachable")]
-pub fn tohex_vec<const D: usize>(inp: [u8; D]) -> Vec<u8> {
-    let mut out = Vec::with_capacity(D * 2);
+pub fn tohex_vec(inp: impl AsRef<[u8]>) -> Vec<u8> {
+    let inp = inp.as_ref();
+    let mut out = Vec::with_capacity(inp.len() * 2);
 
     for b in inp {
         out.push(tohex_nibble(b >> 4));
         out.push(tohex_nibble(b & 0b1111));
     }
 
-    assert_eq!(out.len(), D * 2);
+    assert_eq!(out.len(), inp.len() * 2);
 
     out
 }
 
 /// convert from bytes to a hex string
 #[must_use]
-pub fn tohex_string<const D: usize>(inp: [u8; D]) -> String {
+pub fn tohex_string(inp: impl AsRef<[u8]>) -> String {
     let hex = tohex_vec(inp);
 
     // SAFETY: 0-9a-fA-F is always valid utf-8
