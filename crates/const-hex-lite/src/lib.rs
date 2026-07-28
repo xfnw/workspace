@@ -48,6 +48,14 @@ pub fn tohex_vec<const D: usize>(inp: [u8; D]) -> Vec<u8> {
     out
 }
 
+#[must_use]
+pub fn tohex_string<const D: usize>(inp: [u8; D]) -> String {
+    let hex = tohex_vec(inp);
+
+    // SAFETY: 0-9a-f is always valid utf-8
+    unsafe { String::from_utf8_unchecked(hex) }
+}
+
 fn unhex_nibble(b: u8) -> Option<u8> {
     match b {
         b'0'..=b'9' => Some(b - b'0'),
@@ -90,7 +98,12 @@ fn check_unhex() {
 #[test]
 fn hex_round_trip() {
     assert_eq!(
-        tohex_vec(unhex_array::<16>(b"33c6c2397a1b079e903c474df792d0e2").unwrap()),
+        tohex_array(unhex_array::<16>(b"33c6c2397a1b079e903c474df792d0e2").unwrap()),
         *b"33c6c2397a1b079e903c474df792d0e2"
     );
+}
+
+#[test]
+fn to_string() {
+    assert_eq!(tohex_string(*b"meow :3"), "6d656f77203a33");
 }
