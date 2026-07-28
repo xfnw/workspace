@@ -1141,6 +1141,14 @@ criteria = "no-sus-blobs"
 version = "0.4.10"
 criteria = "skimmed"
 
+[[audits.hybrid-array]]
+version = "0.4.13"
+criteria = "no-sus-blobs"
+
+[[audits.hybrid-array]]
+version = "0.4.13"
+criteria = "skimmed"
+
 [[audits.atoi]]
 version = "2.0.0"
 criteria = "no-sus-blobs"
