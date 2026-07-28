@@ -83,27 +83,32 @@ pub fn unhex_array<const D: usize>(inp: &[u8]) -> Option<[u8; D]> {
     Some(out)
 }
 
-#[test]
-fn check_unhex() {
-    let expect = [
-        0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef, 0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd,
-        0xef,
-    ];
-    assert_eq!(
-        unhex_array(b"1234567890abcdef1234567890abcdef"),
-        Some(expect)
-    );
-}
+#[cfg(test)]
+mod tests {
+    use crate::*;
 
-#[test]
-fn hex_round_trip() {
-    assert_eq!(
-        tohex_array(unhex_array::<16>(b"33c6c2397a1b079e903c474df792d0e2").unwrap()),
-        *b"33c6c2397a1b079e903c474df792d0e2"
-    );
-}
+    #[test]
+    fn check_unhex() {
+        let expect = [
+            0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd, 0xef, 0x12, 0x34, 0x56, 0x78, 0x90, 0xab,
+            0xcd, 0xef,
+        ];
+        assert_eq!(
+            unhex_array(b"1234567890abcdef1234567890abcdef"),
+            Some(expect)
+        );
+    }
 
-#[test]
-fn to_string() {
-    assert_eq!(tohex_string(*b"meow :3"), "6d656f77203a33");
+    #[test]
+    fn hex_round_trip() {
+        assert_eq!(
+            tohex_array(unhex_array::<16>(b"33c6c2397a1b079e903c474df792d0e2").unwrap()),
+            *b"33c6c2397a1b079e903c474df792d0e2"
+        );
+    }
+
+    #[test]
+    fn to_string() {
+        assert_eq!(tohex_string(*b"meow :3"), "6d656f77203a33");
+    }
 }
