@@ -4,6 +4,7 @@
 
 [package]
 name = "fixed-hex"
+description = "encoding and decoding hex with fixed-size arrays"
 version = "0.1.0"
 edition = "2024"
 license = "MIT"

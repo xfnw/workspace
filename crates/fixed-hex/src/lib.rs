@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: MIT
 
+//! encoding and decoding hex with fixed-size arrays
+
 use hybrid_array::{Array, ArraySize, AssocArraySize};
 use std::ops::Mul;
 use typenum::{Prod, U2};
@@ -14,6 +16,7 @@ fn tohex_nibble(n: u8) -> u8 {
     }
 }
 
+/// convert from a fixed-size array of bytes to a fixed-size array of hex
 #[must_use]
 pub fn tohex_array<const D: usize>(
     inp: [u8; D],
@@ -33,6 +36,7 @@ where
     out
 }
 
+/// convert from bytes to a vec of hex
 #[must_use]
 #[allow(clippy::missing_panics_doc, reason = "should be unreachable")]
 pub fn tohex_vec<const D: usize>(inp: [u8; D]) -> Vec<u8> {
@@ -48,6 +52,7 @@ pub fn tohex_vec<const D: usize>(inp: [u8; D]) -> Vec<u8> {
     out
 }
 
+/// convert from bytes to a hex string
 #[must_use]
 pub fn tohex_string<const D: usize>(inp: [u8; D]) -> String {
     let hex = tohex_vec(inp);
@@ -65,6 +70,7 @@ fn unhex_nibble(b: u8) -> Option<u8> {
     }
 }
 
+/// convert from hex to a fixed-size array of bytes
 #[must_use]
 pub fn unhex_array<const D: usize>(inp: &[u8]) -> Option<[u8; D]> {
     if inp.len() != D * 2 {
