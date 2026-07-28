@@ -73,7 +73,9 @@ fn unhex_nibble(b: u8) -> Option<u8> {
 
 /// convert from hex to a fixed-size array of bytes
 #[must_use]
-pub fn unhex_array<const D: usize>(inp: &[u8]) -> Option<[u8; D]> {
+pub fn unhex_array<const D: usize>(inp: impl AsRef<[u8]>) -> Option<[u8; D]> {
+    let inp = inp.as_ref();
+
     if inp.len() != D * 2 {
         return None;
     }
