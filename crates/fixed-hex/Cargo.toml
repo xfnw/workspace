@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 [package]
-name = "const-hex-lite"
+name = "fixed-hex"
 version = "0.1.0"
 edition = "2024"
 license = "MIT"

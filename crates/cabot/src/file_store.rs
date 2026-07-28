@@ -4,7 +4,7 @@
 
 use crate::{Error, bot::Bot};
 use base64::{Engine, engine::general_purpose::STANDARD_NO_PAD as BASE64};
-use const_hex_lite::{tohex_vec, unhex_array};
+use fixed_hex::{tohex_vec, unhex_array};
 use std::sync::Arc;
 
 pub struct IrcFileStore {

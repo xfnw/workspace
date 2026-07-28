@@ -11,7 +11,7 @@ repository.workspace = true
 
 [dependencies]
 append-only-vec = "0.1.8"
-const-hex-lite = { version = "0.1.0", path = "../const-hex-lite" }
+fixed-hex = { version = "0.1.0", path = "../fixed-hex" }
 foxerror = { version = "0.1.2", path = "../foxerror" }
 fuse3 = { version = "0.9.0", features = ["tokio-runtime", "unprivileged"] }
 futures-util = "0.3.32"

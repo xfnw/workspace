@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::Error;
-use const_hex_lite::{tohex_vec, unhex_array};
+use fixed_hex::{tohex_vec, unhex_array};
 use hashlink::LruCache;
 use irc_connect::Connection;
 use irctokens::Line;

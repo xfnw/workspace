@@ -81,7 +81,7 @@ pub enum Error {
 }
 
 fn parse_hex_digest(inp: &str) -> Result<[u8; 16], String> {
-    const_hex_lite::unhex_array(inp.as_bytes()).ok_or_else(|| "invalid digest".to_string())
+    fixed_hex::unhex_array(inp.as_bytes()).ok_or_else(|| "invalid digest".to_string())
 }
 
 #[tokio::main]

@@ -6,7 +6,7 @@
 
 use crate::{Error, FileStore, directory};
 use append_only_vec::AppendOnlyVec;
-use const_hex_lite::{tohex_vec, unhex_array};
+use fixed_hex::{tohex_vec, unhex_array};
 use fuse3::{
     Inode, MountOptions,
     raw::{MountHandle, prelude::*},

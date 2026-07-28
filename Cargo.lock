@@ -211,7 +211,7 @@ dependencies = [
  "argh",
  "base64",
  "cabotfs",
- "const-hex-lite",
+ "fixed-hex",
  "foxerror",
  "hashlink",
  "irc-connect",
@@ -226,7 +226,7 @@ name = "cabotfs"
 version = "0.1.0"
 dependencies = [
  "append-only-vec",
- "const-hex-lite",
+ "fixed-hex",
  "foxerror",
  "fuse3",
  "futures-util",
@@ -304,14 +304,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ca0197aee26d1ae37445ee532fefce43251d24cc7c166799f4d46817f1d3973"
 dependencies = [
  "crossbeam-utils",
-]
-
-[[package]]
-name = "const-hex-lite"
-version = "0.1.0"
-dependencies = [
- "hybrid-array",
- "typenum",
 ]
 
 [[package]]
@@ -429,6 +421,14 @@ name = "find-msvc-tools"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a3076410a55c90011c298b04d0cfa770b00fa04e1e3c97d3f6c9de105a03844"
+
+[[package]]
+name = "fixed-hex"
+version = "0.1.0"
+dependencies = [
+ "hybrid-array",
+ "typenum",
+]
 
 [[package]]
 name = "foldhash"
