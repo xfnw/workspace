@@ -12,7 +12,7 @@ repository.workspace = true
 
 [dependencies]
 hybrid-array = "0.4.13"
-typenum = { version = "1.20.1", features = ["const-generics"] }
+typenum = "1.20.1"
 
 [lints]
 workspace = true
