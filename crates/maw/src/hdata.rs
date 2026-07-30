@@ -260,4 +260,13 @@ pub fn run(args: &Args) {
             }
         }
     }
+
+    if !bitbuf.is_empty() {
+        let mut o: u8 = 0;
+        for &b in bitbuf.iter().chain(std::iter::repeat(&false)).take(8) {
+            o <<= 1;
+            o |= u8::from(b);
+        }
+        stdout.write_all(std::slice::from_ref(&o)).unwrap();
+    }
 }
