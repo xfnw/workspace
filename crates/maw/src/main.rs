@@ -6,6 +6,7 @@ use argh::{FromArgs, from_env};
 
 mod floater;
 mod fmt;
+mod hdata;
 mod human;
 mod now;
 mod rank;
@@ -27,6 +28,7 @@ struct Opt {
 enum Cmds {
     Floater(floater::Args),
     Fmt(fmt::Args),
+    Hdata(hdata::Args),
     Human(human::Args),
     Now(now::Args),
     Sort(sort::Args),
@@ -42,6 +44,7 @@ fn main() {
     match &opt.command {
         Cmds::Floater(args) => floater::run(args),
         Cmds::Fmt(args) => fmt::run(args),
+        Cmds::Hdata(args) => hdata::run(args),
         Cmds::Human(args) => human::run(args),
         Cmds::Now(args) => now::run(args),
         Cmds::Sort(args) => sort::run(args),
