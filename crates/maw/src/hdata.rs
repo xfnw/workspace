@@ -224,14 +224,14 @@ pub fn run(args: &Args) {
                 Token::Syntax(b) => stdout.write_all(std::slice::from_ref(b)).unwrap(),
                 Token::Identifier(i) => {
                     for &b in *i {
-                        if b.is_ascii_alphabetic() {
-                            let c = if dataiter.next().unwrap_or(false) {
-                                b.to_ascii_uppercase()
-                            } else {
-                                b.to_ascii_lowercase()
-                            };
-                            stdout.write_all(std::slice::from_ref(&c)).unwrap();
-                        }
+                        let c = if !b.is_ascii_alphabetic() {
+                            b
+                        } else if dataiter.next().unwrap_or(false) {
+                            b.to_ascii_uppercase()
+                        } else {
+                            b.to_ascii_lowercase()
+                        };
+                        stdout.write_all(std::slice::from_ref(&c)).unwrap();
                     }
                 }
             }
