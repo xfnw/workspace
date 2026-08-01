@@ -1743,3 +1743,12 @@ criteria = "no-sus-blobs"
 [[audits.unix_str]]
 version = "1.0.0"
 criteria = "skimmed"
+
+[[audits.sha2]]
+version = "0.11.0"
+criteria = "blobs-ok"
+notes = "has some bin test data"
+
+[[audits.sha2]]
+version = "0.11.0"
+criteria = "skimmed"
