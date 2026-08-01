@@ -1792,3 +1792,12 @@ criteria = "no-sus-blobs"
 [[audits.event-listener]]
 delta = "5.4.1 -> 5.4.2"
 criteria = "skimmed"
+
+[[audits.const-oid]]
+version = "0.10.2"
+criteria = "blobs-ok"
+notes = "huge generated file of constants"
+
+[[audits.const-oid]]
+version = "0.10.2"
+criteria = "skimmed"
