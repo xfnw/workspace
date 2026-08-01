@@ -1760,3 +1760,11 @@ criteria = "no-sus-blobs"
 [[audits.block-buffer]]
 version = "0.12.1"
 criteria = "skimmed"
+
+[[audits.cpufeatures]]
+version = "0.3.0"
+criteria = "no-sus-blobs"
+
+[[audits.cpufeatures]]
+version = "0.3.0"
+criteria = "skimmed"
