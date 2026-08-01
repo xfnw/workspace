@@ -47,6 +47,12 @@ require-all = ["blobs-ok", "skimmed"]
 [policy.unicode_names2]
 require-all = ["blobs-ok", "skimmed"]
 
+[policy.sha2]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.const-oid]
+require-all = ["blobs-ok", "skimmed"]
+
 [[exempt.aho-corasick]]
 version = "1.1.3"
 criteria = "no-sus-blobs"
@@ -101,14 +107,6 @@ criteria = "no-sus-blobs"
 
 [[exempt.bitflags]]
 version = "2.9.4"
-criteria = "skimmed"
-
-[[exempt.block-buffer]]
-version = "0.10.4"
-criteria = "no-sus-blobs"
-
-[[exempt.block-buffer]]
-version = "0.10.4"
 criteria = "skimmed"
 
 [[exempt.bytes]]
@@ -167,14 +165,6 @@ criteria = "no-sus-blobs"
 version = "0.1.54"
 criteria = "skimmed"
 
-[[exempt.cpufeatures]]
-version = "0.2.17"
-criteria = "no-sus-blobs"
-
-[[exempt.cpufeatures]]
-version = "0.2.17"
-criteria = "skimmed"
-
 [[exempt.crossbeam-deque]]
 version = "0.8.6"
 criteria = "no-sus-blobs"
@@ -205,22 +195,6 @@ criteria = "no-sus-blobs"
 
 [[exempt.crunchy]]
 version = "0.2.4"
-criteria = "skimmed"
-
-[[exempt.crypto-common]]
-version = "0.1.6"
-criteria = "no-sus-blobs"
-
-[[exempt.crypto-common]]
-version = "0.1.6"
-criteria = "skimmed"
-
-[[exempt.digest]]
-version = "0.10.7"
-criteria = "no-sus-blobs"
-
-[[exempt.digest]]
-version = "0.10.7"
 criteria = "skimmed"
 
 [[exempt.displaydoc]]
@@ -293,14 +267,6 @@ criteria = "no-sus-blobs"
 
 [[exempt.futures-util]]
 version = "0.3.31"
-criteria = "skimmed"
-
-[[exempt.generic-array]]
-version = "0.14.7"
-criteria = "no-sus-blobs"
-
-[[exempt.generic-array]]
-version = "0.14.7"
 criteria = "skimmed"
 
 [[exempt.getrandom]]
@@ -751,14 +717,6 @@ criteria = "no-sus-blobs"
 version = "1.0.226"
 criteria = "skimmed"
 
-[[exempt.sha2]]
-version = "0.10.9"
-criteria = "no-sus-blobs"
-
-[[exempt.sha2]]
-version = "0.10.9"
-criteria = "skimmed"
-
 [[exempt.shlex]]
 version = "1.3.0"
 criteria = "no-sus-blobs"
@@ -939,14 +897,6 @@ criteria = "no-sus-blobs"
 version = "1.0.4"
 criteria = "skimmed"
 
-[[exempt.version_check]]
-version = "0.9.5"
-criteria = "no-sus-blobs"
-
-[[exempt.version_check]]
-version = "0.9.5"
-criteria = "skimmed"
-
 [[exempt.wasi]]
 version = "0.11.1+wasi-snapshot-preview1"
 criteria = "no-sus-blobs"
@@ -1345,14 +1295,6 @@ criteria = "no-sus-blobs"
 
 [[exempt.tokio-util]]
 version = "0.7.17"
-criteria = "skimmed"
-
-[[exempt.concurrent-queue]]
-version = "2.5.0"
-criteria = "no-sus-blobs"
-
-[[exempt.concurrent-queue]]
-version = "2.5.0"
 criteria = "skimmed"
 
 [[exempt.event-listener]]

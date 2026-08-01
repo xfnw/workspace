@@ -16,7 +16,7 @@ chrono = { version = "0.4.40", default-features = false, features = ["std"] }
 half = "2.4.1"
 lazy-regex = { version = "3.4.1", default-features = false, features = ["std"] }
 rayon = "1.10.0"
-sha2 = "0.10.8"
+sha2 = "0.11"
 unicode_names2 = "3"
 url = { version = "2.5.4", default-features = false }
 
