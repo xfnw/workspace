@@ -1752,3 +1752,11 @@ notes = "has some bin test data"
 [[audits.sha2]]
 version = "0.11.0"
 criteria = "skimmed"
+
+[[audits.block-buffer]]
+version = "0.12.1"
+criteria = "no-sus-blobs"
+
+[[audits.block-buffer]]
+version = "0.12.1"
+criteria = "skimmed"
