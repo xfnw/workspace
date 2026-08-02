@@ -1801,3 +1801,11 @@ notes = "huge generated file of constants"
 [[audits.const-oid]]
 version = "0.10.2"
 criteria = "skimmed"
+
+[[audits.http]]
+delta = "1.4.0 -> 1.5.0"
+criteria = "no-sus-blobs"
+
+[[audits.http]]
+delta = "1.4.0 -> 1.5.0"
+criteria = "skimmed"
