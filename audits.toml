@@ -1833,3 +1833,11 @@ criteria = "no-sus-blobs"
 [[audits.http]]
 delta = "1.4.0 -> 1.5.0"
 criteria = "skimmed"
+
+[[audits.pin-project-lite]]
+delta = "0.2.16 -> 0.2.17"
+criteria = "no-sus-blobs"
+
+[[audits.pin-project-lite]]
+delta = "0.2.16 -> 0.2.17"
+criteria = "skimmed"
