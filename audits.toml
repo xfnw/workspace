@@ -1267,6 +1267,14 @@ criteria = "no-sus-blobs"
 delta = "0.8.5 -> 0.8.6"
 criteria = "skimmed"
 
+[[audits.rand]]
+delta = "0.8.6 -> 0.8.7"
+criteria = "no-sus-blobs"
+
+[[audits.rand]]
+delta = "0.8.6 -> 0.8.7"
+criteria = "skimmed"
+
 [[audits.thiserror-impl]]
 version = "2.0.18"
 criteria = "no-sus-blobs"
