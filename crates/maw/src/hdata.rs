@@ -64,6 +64,10 @@ fn quoted(inp: &[u8]) -> Option<([Token<'_>; 3], &[u8])> {
 fn tag(inp: &[u8]) -> Option<(Vec<Token<'_>>, &[u8])> {
     let (opening, rest) = syntax(inp, |&b| b == b'<')?;
 
+    if rest.first().is_none_or(|&b| b.is_ascii_whitespace() || b == b'>') {
+        return None;
+    }
+
     let mut out = Vec::with_capacity(2);
     let mut tail = rest;
     out.push(opening);
@@ -106,7 +110,7 @@ fn tag(inp: &[u8]) -> Option<(Vec<Token<'_>>, &[u8])> {
             return Some((out, rest));
         }
 
-        if let Some((tok, rest)) = syntax(tail, |_| true) {
+        if let Some((tok, rest)) = syntax(tail, |&b| b.is_ascii_whitespace() || b == b'/') {
             out.push(tok);
             tail = rest;
             continue;
