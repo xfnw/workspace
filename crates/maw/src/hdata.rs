@@ -64,7 +64,10 @@ fn quoted(inp: &[u8]) -> Option<([Token<'_>; 3], &[u8])> {
 fn tag(inp: &[u8]) -> Option<(Vec<Token<'_>>, &[u8])> {
     let (opening, rest) = syntax(inp, |&b| b == b'<')?;
 
-    if rest.first().is_none_or(|&b| b.is_ascii_whitespace() || b == b'>') {
+    if rest
+        .first()
+        .is_none_or(|&b| b.is_ascii_whitespace() || b == b'>')
+    {
         return None;
     }
 
