@@ -1414,6 +1414,14 @@ criteria = "no-sus-blobs"
 version = "0.8.0"
 criteria = "skimmed"
 
+[[audits.md5]]
+delta = "0.8.0 -> 0.8.1"
+criteria = "no-sus-blobs"
+
+[[audits.md5]]
+delta = "0.8.0 -> 0.8.1"
+criteria = "skimmed"
+
 [[audits.winapi]]
 version = "0.3.9"
 criteria = "too-big-to-fail"
