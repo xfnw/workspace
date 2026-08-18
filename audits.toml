@@ -1905,3 +1905,11 @@ criteria = "no-sus-blobs"
 [[audits.hyper-util]]
 delta = "0.1.18 -> 0.1.20"
 criteria = "skimmed"
+
+[[audits.either]]
+delta = "1.15.0 -> 1.17.0"
+criteria = "no-sus-blobs"
+
+[[audits.either]]
+delta = "1.15.0 -> 1.17.0"
+criteria = "skimmed"
