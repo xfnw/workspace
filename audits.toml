@@ -1158,6 +1158,14 @@ criteria = "no-sus-blobs"
 delta = "0.1.13 -> 0.1.14"
 criteria = "skimmed"
 
+[[audits.argh]]
+delta = "0.1.14 -> 0.1.19"
+criteria = "no-sus-blobs"
+
+[[audits.argh]]
+delta = "0.1.14 -> 0.1.19"
+criteria = "skimmed"
+
 [[audits.argh_shared]]
 delta = "0.1.13 -> 0.1.14"
 criteria = "no-sus-blobs"
@@ -1166,12 +1174,28 @@ criteria = "no-sus-blobs"
 delta = "0.1.13 -> 0.1.14"
 criteria = "skimmed"
 
+[[audits.argh_shared]]
+delta = "0.1.14 -> 0.1.19"
+criteria = "no-sus-blobs"
+
+[[audits.argh_shared]]
+delta = "0.1.14 -> 0.1.19"
+criteria = "skimmed"
+
 [[audits.argh_derive]]
 delta = "0.1.13 -> 0.1.14"
 criteria = "no-sus-blobs"
 
 [[audits.argh_derive]]
 delta = "0.1.13 -> 0.1.14"
+criteria = "skimmed"
+
+[[audits.argh_derive]]
+delta = "0.1.14 -> 0.1.19"
+criteria = "no-sus-blobs"
+
+[[audits.argh_derive]]
+delta = "0.1.14 -> 0.1.19"
 criteria = "skimmed"
 
 [[audits.hybrid-array]]
