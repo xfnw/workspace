@@ -1630,6 +1630,14 @@ criteria = "no-sus-blobs"
 version = "0.2.1"
 criteria = "skimmed"
 
+[[audits.cfg_aliases]]
+delta = "0.2.1 -> 0.2.2"
+criteria = "no-sus-blobs"
+
+[[audits.cfg_aliases]]
+delta = "0.2.1 -> 0.2.2"
+criteria = "skimmed"
+
 [[audits.async-notify]]
 version = "0.3.4"
 criteria = "no-sus-blobs"
