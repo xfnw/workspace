@@ -13,6 +13,7 @@ use fuse3::{
 };
 use std::{
     ffi::{OsStr, OsString},
+    future::ready,
     num::NonZeroU32,
     path::Path,
     sync::{
@@ -130,10 +131,10 @@ impl<const D: usize, F: FileStore<D>> CaFilesystem<D, F> {
 }
 
 impl<const D: usize, F: FileStore<D>> Filesystem for CaFilesystem<D, F> {
-    async fn init(&self, _req: Request) -> fuse3::Result<ReplyInit> {
-        Ok(ReplyInit {
+    fn init(&self, _req: Request) -> impl Future<Output = fuse3::Result<ReplyInit>> {
+        ready(Ok(ReplyInit {
             max_write: NonZeroU32::new(16 * 1024).unwrap(),
-        })
+        }))
     }
 
     async fn destroy(&self, _req: Request) {
@@ -541,20 +542,20 @@ impl<const D: usize, F: FileStore<D>> Filesystem for CaFilesystem<D, F> {
     }
 
     #[expect(clippy::cast_possible_truncation)]
-    async fn listxattr(
+    fn listxattr(
         &self,
         _req: Request,
         _inode: Inode,
         size: u32,
-    ) -> fuse3::Result<ReplyXAttr> {
+    ) -> impl Future<Output = fuse3::Result<ReplyXAttr>> {
         const XATTR_LIST: &[u8] = b"user.hash\0";
         if size == 0 {
-            return Ok(ReplyXAttr::Size(XATTR_LIST.len() as u32));
+            return ready(Ok(ReplyXAttr::Size(XATTR_LIST.len() as u32)));
         }
         if size < XATTR_LIST.len() as u32 {
-            return Err(libc::ERANGE.into());
+            return ready(Err(libc::ERANGE.into()));
         }
-        Ok(ReplyXAttr::Data(XATTR_LIST.to_vec().into()))
+        ready(Ok(ReplyXAttr::Data(XATTR_LIST.to_vec().into())))
     }
 }
 
