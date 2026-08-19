@@ -1542,6 +1542,14 @@ criteria = "no-sus-blobs"
 delta = "0.30.1 -> 0.31.2"
 criteria = "skimmed"
 
+[[audits.nix]]
+delta = "0.31.2 -> 0.31.3"
+criteria = "no-sus-blobs"
+
+[[audits.nix]]
+delta = "0.31.2 -> 0.31.3"
+criteria = "skimmed"
+
 [[audits.memoffset]]
 version = "0.9.1"
 criteria = "no-sus-blobs"
