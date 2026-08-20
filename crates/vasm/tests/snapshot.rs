@@ -77,6 +77,7 @@ fn roundtrip(name: &str, h: u16) {
 macro_rules! snap {
     ($name:ident, $offset:expr) => {
         #[test]
+        #[cfg_attr(miri, ignore)]
         fn $name() {
             snapshot(stringify!($name), $offset);
             roundtrip(stringify!($name), $offset);
@@ -97,6 +98,7 @@ snap!(hwrite);
 snap!(uninit, 0xfffe);
 
 #[test]
+#[cfg_attr(miri, ignore)]
 fn dis_odd() {
     let mut dis = Command::new(BIN)
         .arg("-d")

@@ -33,11 +33,13 @@ fn test_exitcode(name: &str, output: &str, code: i32) -> String {
 }
 
 #[test]
+#[cfg_attr(miri, ignore)]
 fn workspace_check() {
     assert_eq!(test_exitcode(WORKSPACE, "human", 0), "");
 }
 
 #[test]
+#[cfg_attr(miri, ignore)]
 fn violation() {
     let stdout = test_exitcode(
         concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/violation/"),
