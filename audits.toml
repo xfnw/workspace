@@ -175,6 +175,15 @@ criteria = "no-sus-blobs"
 delta = "0.4.11 -> 0.4.13"
 criteria = "skimmed"
 
+[[audits.regex-automata]]
+version = "0.4.18"
+criteria = "no-sus-blobs"
+notes = "yay they stopped including the binary dfa files in the crate"
+
+[[audits.regex-automata]]
+delta = "0.4.13 -> 0.4.18"
+criteria = "skimmed"
+
 [[audits.regex]]
 delta = "1.11.2 -> 1.11.3"
 criteria = "skimmed"
