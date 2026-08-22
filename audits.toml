@@ -740,6 +740,14 @@ criteria = "no-sus-blobs"
 delta = "0.8.6 -> 0.8.8"
 criteria = "skimmed"
 
+[[audits.regex-syntax]]
+version = "0.8.11"
+criteria = "no-sus-blobs"
+
+[[audits.regex-syntax]]
+delta = "0.8.8 -> 0.8.11"
+criteria = "skimmed"
+
 [[audits.cfg-if]]
 delta = "1.0.3 -> 1.0.4"
 criteria = "no-sus-blobs"
