@@ -1977,3 +1977,12 @@ criteria = "no-sus-blobs"
 [[audits.foldhash]]
 version = "0.2.0"
 criteria = "skimmed"
+
+[[audits.rnix]]
+version = "0.14.0"
+criteria = "blobs-ok"
+notes = "has a copy of nixpkgs' all-packages.nix for some reason???"
+
+[[audits.rnix]]
+version = "0.14.0"
+criteria = "skimmed"
