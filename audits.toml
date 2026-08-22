@@ -201,6 +201,15 @@ criteria = "no-sus-blobs"
 delta = "1.11.3 -> 1.12.2"
 criteria = "skimmed"
 
+[[audits.regex]]
+version = "1.13.1"
+criteria = "no-sus-blobs"
+notes = "yay they got rid of the test data and weird scripts"
+
+[[audits.regex]]
+delta = "1.12.2 -> 1.13.1"
+criteria = "skimmed"
+
 [[audits.addr2line]]
 delta = "0.24.2 -> 0.25.1"
 criteria = "skimmed"
