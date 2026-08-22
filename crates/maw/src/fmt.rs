@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-use lazy_regex::regex_captures;
+use regex::regex;
 use std::{
     convert::From,
     fmt,
@@ -37,8 +37,11 @@ struct InfoLine {
 impl InfoLine {
     #[allow(clippy::cast_possible_wrap)]
     fn parse_line(inp: &str, prev: isize) -> (Self, isize) {
-        let (_, key, whitespace, value) =
-            regex_captures!(r"^(?:([^ \t]*):)?([ \t]*)((?:[^ \t].*)?)$", inp).unwrap();
+        let (_, [key, whitespace, value]) = regex!(r"^((?:[^ \t]*:)?)([ \t]*)((?:[^ \t].*)?)$")
+            .captures(inp)
+            .unwrap()
+            .extract();
+        let key = key.strip_suffix(':').unwrap_or(key);
         let (new, indent) = if key.is_empty() {
             (prev, whitespace.len() as isize - prev)
         } else {

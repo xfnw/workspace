@@ -402,22 +402,6 @@ criteria = "no-sus-blobs"
 version = "0.1.34"
 criteria = "skimmed"
 
-[[exempt.lazy-regex]]
-version = "3.4.1"
-criteria = "no-sus-blobs"
-
-[[exempt.lazy-regex]]
-version = "3.4.1"
-criteria = "skimmed"
-
-[[exempt.lazy-regex-proc_macros]]
-version = "3.4.1"
-criteria = "no-sus-blobs"
-
-[[exempt.lazy-regex-proc_macros]]
-version = "3.4.1"
-criteria = "skimmed"
-
 [[exempt.libc]]
 version = "0.2.186"
 criteria = "no-sus-blobs"
