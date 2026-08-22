@@ -1994,3 +1994,11 @@ criteria = "no-sus-blobs"
 [[audits.text-size]]
 version = "1.1.1"
 criteria = "skimmed"
+
+[[audits.countme]]
+version = "3.0.1"
+criteria = "no-sus-blobs"
+
+[[audits.countme]]
+version = "3.0.1"
+criteria = "skimmed"
