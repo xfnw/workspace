@@ -2036,3 +2036,11 @@ criteria = "no-sus-blobs"
 [[audits.countme]]
 version = "3.0.1"
 criteria = "skimmed"
+
+[[audits.proc-macro2]]
+delta = "1.0.101 -> 1.0.107"
+criteria = "no-sus-blobs"
+
+[[audits.proc-macro2]]
+delta = "1.0.101 -> 1.0.107"
+criteria = "skimmed"
