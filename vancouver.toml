@@ -14,9 +14,6 @@ require-all = ["blobs-ok", "skimmed"]
 [policy.find-msvc-tools]
 require-all = ["blobs-ok", "skimmed"]
 
-[policy.regex-automata]
-require-all = ["blobs-ok", "skimmed"]
-
 [policy.rustls-pki-types]
 require-all = ["blobs-ok", "skimmed"]
 
@@ -647,15 +644,7 @@ criteria = "skimmed"
 
 [[exempt.regex-automata]]
 version = "0.4.10"
-criteria = "no-sus-blobs"
-
-[[exempt.regex-automata]]
-version = "0.4.10"
 criteria = "skimmed"
-
-[[exempt.regex-syntax]]
-version = "0.8.6"
-criteria = "no-sus-blobs"
 
 [[exempt.regex-syntax]]
 version = "0.8.6"
