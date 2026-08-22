@@ -2044,3 +2044,11 @@ criteria = "no-sus-blobs"
 [[audits.proc-macro2]]
 delta = "1.0.101 -> 1.0.107"
 criteria = "skimmed"
+
+[[audits.syn]]
+delta = "2.0.106 -> 3.0.3"
+criteria = "no-sus-blobs"
+
+[[audits.syn]]
+delta = "2.0.106 -> 3.0.3"
+criteria = "skimmed"
