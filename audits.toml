@@ -256,6 +256,14 @@ criteria = "no-sus-blobs"
 delta = "1.0.40 -> 1.0.41"
 criteria = "skimmed"
 
+[[audits.quote]]
+delta = "1.0.41 -> 1.0.47"
+criteria = "no-sus-blobs"
+
+[[audits.quote]]
+delta = "1.0.41 -> 1.0.47"
+criteria = "skimmed"
+
 [[audits.zeroize]]
 delta = "1.8.1 -> 1.8.2"
 criteria = "no-sus-blobs"
