@@ -6,6 +6,9 @@ SPDX-License-Identifier: MIT
 
 # changelog
 
+## unreleased
+- update to syn 3
+
 ## 0.1.2 - 2025-09-13
 - add support for multiline error messages
 
