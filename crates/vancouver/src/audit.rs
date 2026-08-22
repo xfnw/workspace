@@ -53,7 +53,30 @@ pub fn add_audit(args: &crate::AuditArgs) -> Result<ExitCode, Error> {
     if let Some(notes) = &args.notes {
         t["notes"] = value(notes);
     }
-    arr.push(t);
+
+    macro_rules! get {
+        ($table:expr, $field:expr) => {
+            $table
+                .get($field)
+                .and_then(|i| i.as_value())
+                .and_then(|i| i.as_str())
+        };
+    }
+
+    if let Some(old) = arr.iter_mut().find(|o| {
+        get!(o, "violation") == get!(t, "violation")
+            && get!(o, "delta") == get!(t, "delta")
+            && get!(o, "version") == get!(t, "version")
+            && get!(o, "criteria") == get!(t, "criteria")
+    }) {
+        if let Some(notes) = t.remove("notes") {
+            old["notes"] = notes;
+        } else {
+            old.remove("notes");
+        }
+    } else {
+        arr.push(t);
+    }
 
     file.rewind().map_err(Error::AuditsWrite)?;
     file.set_len(0).map_err(Error::AuditsWrite)?;

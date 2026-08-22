@@ -17,6 +17,7 @@ SPDX-License-Identifier: MPL-2.0
   reading Cargo.lock ourselves
 - check's --lock option has been removed, as cargo metadata does not
   allow choosing where to look for Cargo.lock
+- audit will no longer add duplicate audits
 
 ### added
 - check now has a --no-suggest-delta option to never suggest doing
