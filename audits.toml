@@ -3,21 +3,21 @@
 # SPDX-License-Identifier: CC0-1.0
 
 [criteria.blobs-ok]
-description = "may have blobs, but it is obvious where they come from or are reproducible"
+description = "may have blobs, but it is obvious where they come from or are reproducible or can be reasonably explained"
 
 [criteria.by-xfnw]
 description = "i wrote it, so it must be Secure™®©!"
 implies = ["blobs-ok", "skimmed"]
 
 [criteria.no-sus-blobs]
-description = "the crate does not include weird blobs"
+description = "the crate does not include binaries or too much generated code to reasonably read"
 implies = "blobs-ok"
 
 [criteria.skimmed]
 description = "i glanced at it and nothing seemed too suspicious"
 
 [criteria.too-big-to-fail]
-description = "popular enough that i dont think it needs to be audited (famous last words)"
+description = "popular enough that i do not think it needs to be audited (famous last words)"
 
 [[audits.foxerror]]
 version = "0.1.0"
