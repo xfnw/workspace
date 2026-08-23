@@ -8,6 +8,10 @@ SPDX-License-Identifier: MPL-2.0
 
 ## unreleased
 
+### fixed
+- check no longer incorrectly rejects implied criteria for delta
+  audits on criteria where the version is in violation
+
 ### changed
 - check now links directly to the docs.rs source view instead of
   diff.rs when suggesting a full audit

@@ -1,2 +1,5 @@
+[criteria.woof]
+implies = "meow"
+
 [default-policy]
 require-all = ["meow"]

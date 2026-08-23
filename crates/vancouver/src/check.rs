@@ -377,7 +377,7 @@ impl Rules {
         if let Some(trust) = self
             .trust_deltas
             .get(criteria, name, version)
-            .filter(|_| !is_violation)
+            .filter(|_| implied_criteria.is_some() || !is_violation)
             .or_else(|| {
                 implied_criteria
                     .iter()

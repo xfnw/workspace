@@ -48,7 +48,7 @@ fn violation() {
     );
     assert_eq!(
         stdout,
-        r#"{"dependencies":[{"fails":[{"needed":"meow","prev_version":null,"reason":"Violation"}],"name":"equivalent","status":"failed","version":"1.0.2"},{"fails":[{"needed":"meow","prev_version":"0.2.1","reason":"Violation"}],"name":"try-lock","status":"failed","version":"0.2.4"}],"total":2,"total_failed":2,"total_passed":0,"unused_exempts":[]}
+        r#"{"dependencies":[{"name":"cfg-if","status":"passed","version":"1.0.4"},{"fails":[{"needed":"meow","prev_version":null,"reason":"Violation"}],"name":"equivalent","status":"failed","version":"1.0.2"},{"fails":[{"needed":"meow","prev_version":"0.2.1","reason":"Violation"}],"name":"try-lock","status":"failed","version":"0.2.4"}],"total":3,"total_failed":2,"total_passed":1,"unused_exempts":[]}
 "#
     );
 }

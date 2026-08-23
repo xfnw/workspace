@@ -21,3 +21,15 @@ criteria = "meow"
 [[audits.equivalent]]
 version = "1.0.2"
 criteria = "meow"
+
+[[audits.cfg-if]]
+version = "1.0.0"
+criteria = "meow"
+
+[[audits.cfg-if]]
+delta = "1.0.0 -> 1.0.4"
+criteria = "woof"
+
+[[audits.cfg-if]]
+violation = "1.0.4"
+criteria = "woof"
