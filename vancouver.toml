@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 [criteria.too-big-to-fail]
-implies = ["no-sus-blobs", "skimmed"]
+implies = ["no-sus-blobs", "blobs-ok", "skimmed"]
 
 [default-policy]
 require-all = ["no-sus-blobs", "skimmed"]
@@ -48,6 +48,48 @@ require-all = ["blobs-ok", "skimmed"]
 require-all = ["blobs-ok", "skimmed"]
 
 [policy.const-oid]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.aws-lc-sys]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.digest]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.libloading]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.ring]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.unicode-ident]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.windows_aarch64_gnullvm]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.windows_aarch64_msvc]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.windows_i686_gnu]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.windows_i686_gnullvm]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.windows_i686_msvc]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.windows_x86_64_gnu]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.windows_x86_64_gnullvm]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.windows_x86_64_msvc]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.wit-bindgen]
 require-all = ["blobs-ok", "skimmed"]
 
 [[exempt.aho-corasick]]
@@ -412,7 +454,7 @@ criteria = "skimmed"
 
 [[exempt.libloading]]
 version = "0.8.8"
-criteria = "no-sus-blobs"
+criteria = "blobs-ok"
 
 [[exempt.litemap]]
 version = "0.8.0"
@@ -636,7 +678,7 @@ criteria = "skimmed"
 
 [[exempt.ring]]
 version = "0.17.14"
-criteria = "no-sus-blobs"
+criteria = "blobs-ok"
 
 [[exempt.ring]]
 version = "0.17.14"
@@ -896,7 +938,7 @@ criteria = "skimmed"
 
 [[exempt.windows_aarch64_gnullvm]]
 version = "0.52.6"
-criteria = "no-sus-blobs"
+criteria = "blobs-ok"
 
 [[exempt.windows_aarch64_gnullvm]]
 version = "0.52.6"
@@ -904,7 +946,7 @@ criteria = "skimmed"
 
 [[exempt.windows_aarch64_msvc]]
 version = "0.52.6"
-criteria = "no-sus-blobs"
+criteria = "blobs-ok"
 
 [[exempt.windows_aarch64_msvc]]
 version = "0.52.6"
@@ -912,7 +954,7 @@ criteria = "skimmed"
 
 [[exempt.windows_i686_gnu]]
 version = "0.52.6"
-criteria = "no-sus-blobs"
+criteria = "blobs-ok"
 
 [[exempt.windows_i686_gnu]]
 version = "0.52.6"
@@ -920,7 +962,7 @@ criteria = "skimmed"
 
 [[exempt.windows_i686_gnullvm]]
 version = "0.52.6"
-criteria = "no-sus-blobs"
+criteria = "blobs-ok"
 
 [[exempt.windows_i686_gnullvm]]
 version = "0.52.6"
@@ -928,7 +970,7 @@ criteria = "skimmed"
 
 [[exempt.windows_i686_msvc]]
 version = "0.52.6"
-criteria = "no-sus-blobs"
+criteria = "blobs-ok"
 
 [[exempt.windows_i686_msvc]]
 version = "0.52.6"
@@ -936,7 +978,7 @@ criteria = "skimmed"
 
 [[exempt.windows_x86_64_gnu]]
 version = "0.52.6"
-criteria = "no-sus-blobs"
+criteria = "blobs-ok"
 
 [[exempt.windows_x86_64_gnu]]
 version = "0.52.6"
@@ -944,7 +986,7 @@ criteria = "skimmed"
 
 [[exempt.windows_x86_64_gnullvm]]
 version = "0.52.6"
-criteria = "no-sus-blobs"
+criteria = "blobs-ok"
 
 [[exempt.windows_x86_64_gnullvm]]
 version = "0.52.6"
@@ -952,7 +994,7 @@ criteria = "skimmed"
 
 [[exempt.windows_x86_64_msvc]]
 version = "0.52.6"
-criteria = "no-sus-blobs"
+criteria = "blobs-ok"
 
 [[exempt.windows_x86_64_msvc]]
 version = "0.52.6"
@@ -968,7 +1010,7 @@ criteria = "skimmed"
 
 [[exempt.wit-bindgen]]
 version = "0.46.0"
-criteria = "no-sus-blobs"
+criteria = "blobs-ok"
 
 [[exempt.wit-bindgen]]
 version = "0.46.0"
