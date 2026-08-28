@@ -52,3 +52,51 @@ fn violation() {
 "#
     );
 }
+
+#[test]
+#[cfg_attr(miri, ignore)]
+fn package() {
+    let output = command_output([
+        "check",
+        "--config",
+        &format!("{WORKSPACE}vancouver.toml"),
+        "--audits",
+        &format!("{WORKSPACE}audits.toml"),
+        "--package",
+        "countme@3.0.1",
+    ]);
+    let stdout = dbg!(str::from_utf8(&output.stdout).unwrap());
+    dbg!(str::from_utf8(&output.stderr).unwrap());
+    assert_eq!(output.status.code().unwrap(), 0);
+    assert_eq!(stdout.to_string(), "");
+}
+
+#[test]
+#[cfg_attr(miri, ignore)]
+fn package_fail() {
+    let output = command_output([
+        "check",
+        "--config",
+        &format!("{WORKSPACE}vancouver.toml"),
+        "--audits",
+        &format!("{WORKSPACE}audits.toml"),
+        "--package",
+        "not-a-real-package@6.2.1",
+    ]);
+    let stdout = dbg!(str::from_utf8(&output.stdout).unwrap());
+    dbg!(str::from_utf8(&output.stderr).unwrap());
+    assert_eq!(output.status.code().unwrap(), 1);
+    assert_eq!(
+        stdout.to_string(),
+        "not-a-real-package 6.2.1
+ needs no-sus-blobs
+  help: could not find previous audits :(
+  review https://docs.rs/crate/not-a-real-package/6.2.1/source/
+  then vancouver audit not-a-real-package 6.2.1 no-sus-blobs
+ needs skimmed
+  help: could not find previous audits :(
+  review https://docs.rs/crate/not-a-real-package/6.2.1/source/
+  then vancouver audit not-a-real-package 6.2.1 skimmed
+"
+    );
+}
