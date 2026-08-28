@@ -65,6 +65,9 @@ pub struct CheckArgs {
     /// the output format to use (human or json)
     #[argh(option, default = "OutputFormat::Human")]
     output: OutputFormat,
+    /// check specified crate instead of all dependencies
+    #[argh(option)]
+    package: Option<NameAndVersion>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -81,6 +84,25 @@ impl std::str::FromStr for OutputFormat {
             "json" => Ok(Self::Json),
             _ => Err("output format must be human or json"),
         }
+    }
+}
+
+#[derive(Debug, Clone)]
+struct NameAndVersion {
+    name: String,
+    version: types::Version,
+}
+
+impl std::str::FromStr for NameAndVersion {
+    type Err = &'static str;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let Some((name, version)) = s.split_once('@') else {
+            return Err("crate name and version separated by an @ is required");
+        };
+        Ok(Self {
+            name: name.to_string(),
+            version: types::Version::new(version),
+        })
     }
 }
 

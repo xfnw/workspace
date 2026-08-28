@@ -30,6 +30,8 @@ SPDX-License-Identifier: MPL-2.0
   cargo manifest is
 - check now has a --suggest-via-exempt option to go back to
   suggesting delta audits against previous exempted versions
+- check now has a --package option to check a single package instead
+  of everything from cargo metadata
 
 ## 0.1.2 - 2025-12-13
 

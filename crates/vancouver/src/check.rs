@@ -631,7 +631,11 @@ struct Receipt {
 
 #[allow(clippy::too_many_lines)]
 pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
-    let dependencies = crate::metadata::get_dependencies(args.manifest.as_deref())?;
+    let dependencies = if let Some(package) = args.package.clone() {
+        vec![(package.name, package.version)]
+    } else {
+        crate::metadata::get_dependencies(args.manifest.as_deref())?
+    };
     if dependencies.is_empty() {
         return Err(Error::EmptyDependencies);
     }
