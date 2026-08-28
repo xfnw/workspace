@@ -2169,3 +2169,11 @@ criteria = "no-sus-blobs"
 [[audits.yoke]]
 version = "0.8.3"
 criteria = "skimmed"
+
+[[audits.displaydoc]]
+version = "0.2.7"
+criteria = "no-sus-blobs"
+
+[[audits.displaydoc]]
+version = "0.2.7"
+criteria = "skimmed"
