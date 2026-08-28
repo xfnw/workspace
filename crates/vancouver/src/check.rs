@@ -660,7 +660,11 @@ pub fn do_check(args: &crate::CheckArgs) -> Result<ExitCode, Error> {
         })
         .collect();
     let total = receipts.len();
-    let unused = rules.unused_exempts();
+    let unused = if args.package.is_some() {
+        BTreeSet::new()
+    } else {
+        rules.unused_exempts()
+    };
 
     if args.output == OutputFormat::Json {
         let passed = receipts
