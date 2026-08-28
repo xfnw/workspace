@@ -318,6 +318,14 @@ criteria = "no-sus-blobs"
 version = "1.0.228"
 criteria = "skimmed"
 
+[[audits.serde_core]]
+delta = "1.0.228 -> 1.0.229"
+criteria = "no-sus-blobs"
+
+[[audits.serde_core]]
+delta = "1.0.228 -> 1.0.229"
+criteria = "skimmed"
+
 [[audits.itoa]]
 version = "1.0.15"
 criteria = "no-sus-blobs"
@@ -435,12 +443,28 @@ criteria = "no-sus-blobs"
 delta = "1.0.226 -> 1.0.228"
 criteria = "skimmed"
 
+[[audits.serde_derive]]
+delta = "1.0.228 -> 1.0.229"
+criteria = "no-sus-blobs"
+
+[[audits.serde_derive]]
+delta = "1.0.228 -> 1.0.229"
+criteria = "skimmed"
+
 [[audits.serde]]
 version = "1.0.228"
 criteria = "no-sus-blobs"
 
 [[audits.serde]]
 version = "1.0.228"
+criteria = "skimmed"
+
+[[audits.serde]]
+delta = "1.0.228 -> 1.0.229"
+criteria = "no-sus-blobs"
+
+[[audits.serde]]
+delta = "1.0.228 -> 1.0.229"
 criteria = "skimmed"
 
 [[audits.anstyle]]
