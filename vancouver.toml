@@ -236,14 +236,6 @@ criteria = "no-sus-blobs"
 version = "0.2.4"
 criteria = "skimmed"
 
-[[exempt.displaydoc]]
-version = "0.2.5"
-criteria = "no-sus-blobs"
-
-[[exempt.displaydoc]]
-version = "0.2.5"
-criteria = "skimmed"
-
 [[exempt.dunce]]
 version = "1.0.5"
 criteria = "no-sus-blobs"
@@ -1022,22 +1014,6 @@ criteria = "no-sus-blobs"
 
 [[exempt.writeable]]
 version = "0.6.1"
-criteria = "skimmed"
-
-[[exempt.yoke]]
-version = "0.8.0"
-criteria = "no-sus-blobs"
-
-[[exempt.yoke]]
-version = "0.8.0"
-criteria = "skimmed"
-
-[[exempt.yoke-derive]]
-version = "0.8.0"
-criteria = "no-sus-blobs"
-
-[[exempt.yoke-derive]]
-version = "0.8.0"
 criteria = "skimmed"
 
 [[exempt.zerocopy]]
