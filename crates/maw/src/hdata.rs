@@ -3,7 +3,8 @@
 // SPDX-License-Identifier: MPL-2.0
 
 use std::{
-    io::{Read, Write},
+    fs::File,
+    io::{BufReader, Read, Write},
     path::{Path, PathBuf},
 };
 
@@ -150,42 +151,49 @@ fn tokenize(inp: &[u8]) -> Vec<Token<'_>> {
 }
 
 fn read_to_vec(path: &Path) -> std::io::Result<Vec<u8>> {
-    let mut file = std::fs::File::open(path)?;
+    let mut file = File::open(path)?;
     let mut out = vec![];
     file.read_to_end(&mut out)?;
     Ok(out)
 }
 
-struct BitIter<'a> {
+struct BitIter<I> {
+    inner: I,
     head: u8,
-    tail: &'a [u8],
     curbit: u8,
 }
 
-impl Iterator for BitIter<'_> {
-    type Item = bool;
+impl<I, E> Iterator for BitIter<I>
+where
+    I: Iterator<Item = Result<u8, E>>,
+{
+    type Item = Result<bool, E>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.curbit == 0 {
-            let (&new, rest) = self.tail.split_first()?;
+            let new = match self.inner.next()? {
+                Ok(n) => n,
+                Err(e) => return Some(Err(e)),
+            };
             self.head = new;
-            self.tail = rest;
             self.curbit = 8;
         }
         self.curbit -= 1;
-        Some(self.head & (1 << self.curbit) != 0)
+        Some(Ok(self.head & (1 << self.curbit) != 0))
     }
 }
 
 #[test]
 fn check_bits() {
     let bititer = BitIter {
+        inner: [0xac, 0xab]
+            .into_iter()
+            .map(Result::<u8, std::convert::Infallible>::Ok),
         head: 0,
-        tail: &[0xac, 0xab],
         curbit: 0,
     };
     assert_eq!(
-        &bititer.collect::<Vec<_>>(),
+        &bititer.collect::<Result<Vec<_>, _>>().unwrap(),
         &[
             true, false, true, false, true, true, false, false, true, false, true, false, true,
             false, true, true
@@ -218,10 +226,10 @@ pub fn run(args: &Args) {
     let mut stdout = std::io::stdout().lock();
 
     if let Some(data) = &args.data {
-        let data = read_to_vec(data).unwrap();
+        let data = BufReader::new(File::open(data).unwrap()).bytes();
         let mut dataiter = BitIter {
+            inner: data,
             head: 0,
-            tail: &data,
             curbit: 0,
         };
 
@@ -233,7 +241,7 @@ pub fn run(args: &Args) {
                     for &b in *i {
                         let c = if !b.is_ascii_alphabetic() {
                             b
-                        } else if dataiter.next().unwrap_or(false) {
+                        } else if dataiter.next().unwrap_or(Ok(false)).unwrap() {
                             b.to_ascii_uppercase()
                         } else {
                             b.to_ascii_lowercase()
