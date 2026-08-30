@@ -2162,6 +2162,14 @@ criteria = "no-sus-blobs"
 delta = "2.0.106 -> 3.0.3"
 criteria = "skimmed"
 
+[[audits.syn]]
+delta = "3.0.3 -> 3.0.4"
+criteria = "no-sus-blobs"
+
+[[audits.syn]]
+delta = "3.0.3 -> 3.0.4"
+criteria = "skimmed"
+
 [[audits.zerovec-derive]]
 delta = "0.11.1 -> 0.11.6"
 criteria = "no-sus-blobs"
