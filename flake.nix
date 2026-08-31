@@ -122,10 +122,10 @@
         };
 
         packages = members // {
-          default = pkgs.symlinkJoin {
-            name = "default";
-            paths = attrValues members;
-          };
+          default = crane'.buildPackage (common // {
+            inherit cargoArtifacts;
+            doCheck = false; # tests are run as a flake check
+          });
           doc = crane'.cargoDoc (common // {
             inherit cargoArtifacts;
             cargoDocExtraArgs = "";
