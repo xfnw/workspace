@@ -124,6 +124,10 @@
         packages = members // {
           default = crane'.buildPackage (common // {
             inherit cargoArtifacts;
+            src = fileset.toSource {
+              root = ./.;
+              fileset = fileset.union commonFileSet ./crates;
+            };
             doCheck = false; # tests are run as a flake check
           });
           doc = crane'.cargoDoc (common // {
