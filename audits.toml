@@ -813,6 +813,14 @@ criteria = "no-sus-blobs"
 delta = "0.2.16 -> 0.2.17"
 criteria = "skimmed"
 
+[[audits.getrandom]]
+version = "0.4.3"
+criteria = "no-sus-blobs"
+
+[[audits.getrandom]]
+version = "0.4.3"
+criteria = "skimmed"
+
 [[audits.generic-array]]
 delta = "0.14.7 -> 0.14.9"
 criteria = "no-sus-blobs"
