@@ -308,14 +308,6 @@ criteria = "no-sus-blobs"
 version = "0.2.16"
 criteria = "skimmed"
 
-[[exempt.getrandom]]
-version = "0.3.3"
-criteria = "no-sus-blobs"
-
-[[exempt.getrandom]]
-version = "0.3.3"
-criteria = "skimmed"
-
 [[exempt.glob]]
 version = "0.3.3"
 criteria = "no-sus-blobs"
@@ -904,14 +896,6 @@ criteria = "no-sus-blobs"
 version = "0.11.1+wasi-snapshot-preview1"
 criteria = "skimmed"
 
-[[exempt.wasip2]]
-version = "1.0.1+wasi-0.2.4"
-criteria = "no-sus-blobs"
-
-[[exempt.wasip2]]
-version = "1.0.1+wasi-0.2.4"
-criteria = "skimmed"
-
 [[exempt.windows-sys]]
 version = "0.52.0"
 criteria = "no-sus-blobs"
@@ -998,14 +982,6 @@ criteria = "no-sus-blobs"
 
 [[exempt.winnow]]
 version = "0.7.13"
-criteria = "skimmed"
-
-[[exempt.wit-bindgen]]
-version = "0.46.0"
-criteria = "blobs-ok"
-
-[[exempt.wit-bindgen]]
-version = "0.46.0"
 criteria = "skimmed"
 
 [[exempt.writeable]]
