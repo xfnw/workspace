@@ -866,7 +866,7 @@ criteria = "skimmed"
 
 [[exempt.unicode-ident]]
 version = "1.0.19"
-criteria = "no-sus-blobs"
+criteria = "blobs-ok"
 
 [[exempt.unicode-ident]]
 version = "1.0.19"

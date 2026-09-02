@@ -196,6 +196,10 @@ criteria = "skimmed"
 violation = "0.4.13"
 criteria = "no-sus-blobs"
 
+[[audits.regex-automata]]
+violation = "0.4.11"
+criteria = "no-sus-blobs"
+
 [[audits.regex]]
 delta = "1.11.2 -> 1.11.3"
 criteria = "skimmed"
@@ -1064,6 +1068,10 @@ criteria = "skimmed"
 violation = "1.15.1"
 criteria = "no-sus-blobs"
 
+[[audits.rustls-pki-types]]
+violation = "1.14.0"
+criteria = "no-sus-blobs"
+
 [[audits.lazy-regex]]
 delta = "3.4.1 -> 3.4.2"
 criteria = "no-sus-blobs"
@@ -1258,6 +1266,14 @@ criteria = "skimmed"
 
 [[audits.unicode-ident]]
 violation = "1.0.22"
+criteria = "no-sus-blobs"
+
+[[audits.unicode-ident]]
+violation = "1.0.19"
+criteria = "no-sus-blobs"
+
+[[audits.unicode-ident]]
+violation = "1.0.24"
 criteria = "no-sus-blobs"
 
 [[audits.axum-core]]
@@ -2027,6 +2043,10 @@ criteria = "skimmed"
 violation = "0.11.0"
 criteria = "no-sus-blobs"
 
+[[audits.sha2]]
+violation = "0.10.9"
+criteria = "no-sus-blobs"
+
 [[audits.block-buffer]]
 version = "0.12.1"
 criteria = "no-sus-blobs"
@@ -2249,3 +2269,51 @@ criteria = "no-sus-blobs"
 [[audits.jobserver]]
 delta = "0.1.34 -> 0.1.35"
 criteria = "skimmed"
+
+[[audits.async-compression]]
+violation = "0.4.41"
+criteria = "no-sus-blobs"
+
+[[audits.async-compression]]
+violation = "0.4.42"
+criteria = "no-sus-blobs"
+
+[[audits.async_zip]]
+violation = "0.0.18"
+criteria = "no-sus-blobs"
+
+[[audits.blake2]]
+violation = "0.10.6"
+criteria = "no-sus-blobs"
+
+[[audits.bzip2]]
+violation = "0.6.1"
+criteria = "no-sus-blobs"
+
+[[audits.chacha20]]
+violation = "0.10.1"
+criteria = "no-sus-blobs"
+
+[[audits.flate2]]
+violation = "1.1.9"
+criteria = "no-sus-blobs"
+
+[[audits.hkdf]]
+violation = "0.13.0"
+criteria = "no-sus-blobs"
+
+[[audits.hmac]]
+violation = "0.13.0"
+criteria = "no-sus-blobs"
+
+[[audits.md]]
+violation = "5-0.11.0"
+criteria = "no-sus-blobs"
+
+[[audits.sha1]]
+violation = "0.11.0"
+criteria = "no-sus-blobs"
+
+[[audits.sqlx]]
+violation = "0.9.0"
+criteria = "no-sus-blobs"
