@@ -2306,14 +2306,14 @@ criteria = "no-sus-blobs"
 violation = "0.13.0"
 criteria = "no-sus-blobs"
 
-[[audits.md]]
-violation = "5-0.11.0"
-criteria = "no-sus-blobs"
-
 [[audits.sha1]]
 violation = "0.11.0"
 criteria = "no-sus-blobs"
 
 [[audits.sqlx]]
 violation = "0.9.0"
+criteria = "no-sus-blobs"
+
+[[audits.md-5]]
+violation = "0.11.0"
 criteria = "no-sus-blobs"
