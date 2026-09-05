@@ -16,10 +16,46 @@ pub struct Args {
     /// count the number of letters we can hide bits in
     #[argh(switch)]
     count: bool,
+    /// number of bits to care about per byte
+    #[argh(option, default = "NumBits::default()")]
+    bits: NumBits,
     #[argh(positional)]
     html: PathBuf,
     #[argh(positional)]
     data: Option<PathBuf>,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct NumBits(u8);
+
+impl Default for NumBits {
+    fn default() -> Self {
+        Self(8)
+    }
+}
+
+impl std::convert::TryFrom<u8> for NumBits {
+    type Error = &'static str;
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        if (1..=8).contains(&value) {
+            return Ok(Self(value));
+        }
+        Err("out of range (1..=8 expected)")
+    }
+}
+
+impl std::str::FromStr for NumBits {
+    type Err = &'static str;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let num: u8 = s.parse().map_err(|_| "failed to parse number")?;
+        Self::try_from(num)
+    }
+}
+
+impl From<NumBits> for u8 {
+    fn from(value: NumBits) -> Self {
+        value.0
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -161,6 +197,7 @@ struct BitIter<I> {
     inner: I,
     head: u8,
     curbit: u8,
+    bpb: NumBits,
 }
 
 impl<I, E> Iterator for BitIter<I>
@@ -176,7 +213,7 @@ where
                 Err(e) => return Some(Err(e)),
             };
             self.head = new;
-            self.curbit = 8;
+            self.curbit = self.bpb.into();
         }
         self.curbit -= 1;
         Some(Ok(self.head & (1 << self.curbit) != 0))
@@ -191,6 +228,7 @@ fn check_bits() {
             .map(Result::<u8, std::convert::Infallible>::Ok),
         head: 0,
         curbit: 0,
+        bpb: NumBits::default(),
     };
     assert_eq!(
         &bititer.collect::<Result<Vec<_>, _>>().unwrap(),
@@ -198,6 +236,23 @@ fn check_bits() {
             true, false, true, false, true, true, false, false, true, false, true, false, true,
             false, true, true
         ]
+    );
+}
+
+#[test]
+fn check_bits_one_bpb() {
+    let bititer = BitIter {
+        inner: b"0101001"
+            .iter()
+            .copied()
+            .map(Result::<u8, std::convert::Infallible>::Ok),
+        head: 0,
+        curbit: 0,
+        bpb: NumBits::try_from(1).unwrap(),
+    };
+    assert_eq!(
+        &bititer.collect::<Result<Vec<_>, _>>().unwrap(),
+        &[false, true, false, true, false, false, true]
     );
 }
 
@@ -218,7 +273,7 @@ pub fn run(args: &Args) {
             .sum();
         println!(
             "you can fit {} bytes ({bits} bits) into this html",
-            bits / 8
+            bits / u8::from(args.bits) as usize
         );
         return;
     }
@@ -231,6 +286,7 @@ pub fn run(args: &Args) {
             inner: data,
             head: 0,
             curbit: 0,
+            bpb: args.bits,
         };
 
         for token in &tokens {
@@ -255,14 +311,14 @@ pub fn run(args: &Args) {
         return;
     }
 
-    let mut bitbuf = Vec::with_capacity(8);
+    let mut bitbuf = Vec::with_capacity(u8::from(args.bits) as usize);
 
     for token in &tokens {
         if let Token::Identifier(i) = token {
             for b in *i {
                 if b.is_ascii_alphabetic() {
                     bitbuf.push(b.is_ascii_uppercase());
-                    if bitbuf.len() == 8 {
+                    if bitbuf.len() == u8::from(args.bits) as usize {
                         let mut o: u8 = 0;
                         for &b in &bitbuf {
                             o <<= 1;
@@ -278,7 +334,11 @@ pub fn run(args: &Args) {
 
     if !bitbuf.is_empty() {
         let mut o: u8 = 0;
-        for &b in bitbuf.iter().chain(std::iter::repeat(&false)).take(8) {
+        for &b in bitbuf
+            .iter()
+            .chain(std::iter::repeat(&false))
+            .take(u8::from(args.bits) as usize)
+        {
             o <<= 1;
             o |= u8::from(b);
         }
