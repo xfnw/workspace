@@ -597,7 +597,7 @@ struct Directory {
 struct DirEntry {
     #[serde(rename = "href")]
     name: String,
-    #[serde(rename = "sz")]
+    #[serde(default, rename = "sz")]
     size: u64,
 }
 
