@@ -374,7 +374,7 @@ impl Bot {
 
     async fn do_list(&self, target: &[u8], num: &str) -> Result<(), Error> {
         let mut url = self.get_url(num)?;
-        if !url.path().ends_with('/') {
+        if !(url.path().is_empty() || url.path().ends_with('/')) {
             return Err(Error::NotADirectory(url));
         }
         let path = self
@@ -415,7 +415,7 @@ impl Bot {
 
     async fn do_send(&self, target: &[u8], num: &str) -> Result<(), Error> {
         let mut url = self.get_url(num)?;
-        if url.path().ends_with('/') {
+        if url.path().is_empty() || url.path().ends_with('/') {
             url.set_query(Some("zip=crc"));
         }
         let resp = self.http_get(url.clone(), self.auth.as_ref()).await?;
