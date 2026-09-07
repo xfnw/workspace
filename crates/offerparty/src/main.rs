@@ -88,7 +88,6 @@ enum Error {
     Json(serde_json::Error),
     MyHost,
     ExtractFrame,
-    CannotBeBase,
     #[err(from)]
     TokioJoin(tokio::task::JoinError),
     HostlessUrl,
@@ -381,7 +380,7 @@ impl Bot {
         let path = self
             .copyparty_url
             .make_relative(&url)
-            .ok_or(Error::CannotBeBase)?;
+            .unwrap_or_else(|| url.to_string());
         // ask copyparty for json
         url.set_query(Some("ls"));
         let resp = self.http_get(url.clone(), self.auth.as_ref()).await?;
@@ -400,7 +399,9 @@ impl Bot {
 
         for entry in dir.dirs.iter().chain(dir.files.iter()) {
             let fullurl = url.join(&entry.name)?;
-            let relurl = url.make_relative(&fullurl).ok_or(Error::CannotBeBase)?;
+            let relurl = url
+                .make_relative(&fullurl)
+                .unwrap_or_else(|| fullurl.to_string());
             let id = self.paths.lock().unwrap().generate_id(&fullurl);
             self.send_message(
                 target.to_vec(),
