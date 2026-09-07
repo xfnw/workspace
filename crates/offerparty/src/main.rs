@@ -77,7 +77,7 @@ enum Error {
     #[err(from)]
     ParseInt(std::num::ParseIntError),
     UnknownId,
-    NotADirectory(String),
+    NotADirectory(Url),
     #[err(from)]
     UrlParse(url::ParseError),
     #[err(from)]
@@ -88,7 +88,7 @@ enum Error {
     Json(serde_json::Error),
     MyHost,
     ExtractFrame,
-    Base,
+    CannotBeBase,
     #[err(from)]
     TokioJoin(tokio::task::JoinError),
     HostlessUrl,
@@ -109,7 +109,7 @@ struct Bot {
     copyparty_url: Url,
     castore: RootCertStore,
     myhost: RwLock<Option<IpAddr>>,
-    paths: Mutex<PathIdStore>,
+    paths: Mutex<UrlIdStore>,
 }
 
 impl Bot {
@@ -148,10 +148,10 @@ impl Bot {
             autojoin,
             auth,
             desc: desc.unwrap_or_else(|| format!("stuff from {copyparty_url}")),
-            copyparty_url,
+            copyparty_url: copyparty_url.clone(),
             castore,
             myhost: RwLock::new(None),
-            paths: Mutex::new(PathIdStore::new()),
+            paths: Mutex::new(UrlIdStore::new(copyparty_url)),
         })
     }
 
@@ -358,7 +358,7 @@ impl Bot {
         }
     }
 
-    fn get_path(&self, num: &str) -> Result<String, Error> {
+    fn get_url(&self, num: &str) -> Result<Url, Error> {
         let num = if num.is_empty() {
             0
         } else {
@@ -368,20 +368,23 @@ impl Bot {
         self.paths
             .lock()
             .unwrap()
-            .get_path(num)
-            .map(str::to_string)
+            .get_url(num)
+            .cloned()
             .ok_or(Error::UnknownId)
     }
 
     async fn do_list(&self, target: &[u8], num: &str) -> Result<(), Error> {
-        let path = self.get_path(num)?;
-        if !path.is_empty() && !path.ends_with('/') {
-            return Err(Error::NotADirectory(path));
+        let mut url = self.get_url(num)?;
+        if !url.path().ends_with('/') {
+            return Err(Error::NotADirectory(url));
         }
-        let mut url = self.copyparty_url.join(&path)?;
+        let path = self
+            .copyparty_url
+            .make_relative(&url)
+            .ok_or(Error::CannotBeBase)?;
         // ask copyparty for json
         url.set_query(Some("ls"));
-        let resp = self.http_get(url, self.auth.as_ref()).await?;
+        let resp = self.http_get(url.clone(), self.auth.as_ref()).await?;
         let body = resp.collect().await?.aggregate();
         let dir: Directory = serde_json::from_reader(body.reader())?;
 
@@ -396,11 +399,12 @@ impl Bot {
         )?;
 
         for entry in dir.dirs.iter().chain(dir.files.iter()) {
-            let fullpath = format!("{path}{}", entry.name);
-            let id = self.paths.lock().unwrap().generate_id(&fullpath);
+            let fullurl = url.join(&entry.name)?;
+            let relurl = url.make_relative(&fullurl).ok_or(Error::CannotBeBase)?;
+            let id = self.paths.lock().unwrap().generate_id(&fullurl);
             self.send_message(
                 target.to_vec(),
-                format!("#{id} [{}] {fullpath}", Human(entry.size)).into_bytes(),
+                format!("#{id} [{}] {relurl}", Human(entry.size)).into_bytes(),
             )?;
             tokio::time::sleep(self.delay).await;
         }
@@ -409,15 +413,11 @@ impl Bot {
     }
 
     async fn do_send(&self, target: &[u8], num: &str) -> Result<(), Error> {
-        let path = self.get_path(num)?;
-        let mut url = self.copyparty_url.join(&path)?;
-        if path.is_empty() {
-            return Err(Error::Base);
-        }
-        if path.ends_with('/') {
+        let mut url = self.get_url(num)?;
+        if url.path().ends_with('/') {
             url.set_query(Some("zip=crc"));
         }
-        let resp = self.http_get(url, self.auth.as_ref()).await?;
+        let resp = self.http_get(url.clone(), self.auth.as_ref()).await?;
         if resp.status() != StatusCode::OK {
             return Err(Error::HttpStatus(resp.status()));
         }
@@ -429,7 +429,7 @@ impl Bot {
             return Err(Error::MyHost);
         };
 
-        let mut segments = path.rsplit('/');
+        let mut segments = url.path().rsplit('/');
         let name = segments.next().unwrap_or("unknown");
         let name = if name.is_empty() {
             let dirname = match segments.next() {
@@ -560,29 +560,29 @@ impl Message {
     }
 }
 
-struct PathIdStore {
-    by_path: HashMap<String, usize>,
-    by_id: Vec<String>,
+struct UrlIdStore {
+    by_url: HashMap<Url, usize>,
+    by_id: Vec<Url>,
 }
 
-impl PathIdStore {
-    fn new() -> Self {
-        let mut by_path = HashMap::new();
-        by_path.insert(String::new(), 0);
-        let by_id = vec![String::new()];
-        Self { by_path, by_id }
+impl UrlIdStore {
+    fn new(url: Url) -> Self {
+        let mut by_url = HashMap::new();
+        by_url.insert(url.clone(), 0);
+        let by_id = vec![url];
+        Self { by_url, by_id }
     }
-    fn generate_id(&mut self, path: &str) -> usize {
-        if let Some(&id) = self.by_path.get(path) {
+    fn generate_id(&mut self, url: &Url) -> usize {
+        if let Some(&id) = self.by_url.get(url) {
             return id;
         }
         let new_id = self.by_id.len();
-        self.by_path.insert(path.to_string(), new_id);
-        self.by_id.push(path.to_string());
+        self.by_url.insert(url.clone(), new_id);
+        self.by_id.push(url.clone());
         new_id
     }
-    fn get_path(&self, id: usize) -> Option<&str> {
-        self.by_id.get(id).map(String::as_str)
+    fn get_url(&self, id: usize) -> Option<&Url> {
+        self.by_id.get(id)
     }
 }
 
