@@ -1546,6 +1546,14 @@ criteria = "no-sus-blobs"
 version = "0.3.32"
 criteria = "skimmed"
 
+[[audits.pkg-config]]
+delta = "0.3.32 -> 0.3.34"
+criteria = "no-sus-blobs"
+
+[[audits.pkg-config]]
+delta = "0.3.32 -> 0.3.34"
+criteria = "skimmed"
+
 [[audits.redox_syscall]]
 version = "0.5.18"
 criteria = "blobs-ok"
