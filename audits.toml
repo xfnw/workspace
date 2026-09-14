@@ -1587,6 +1587,14 @@ criteria = "no-sus-blobs"
 delta = "0.11.1 -> 0.12.1"
 criteria = "skimmed"
 
+[[audits.hashlink]]
+delta = "0.12.1 -> 0.12.2"
+criteria = "no-sus-blobs"
+
+[[audits.hashlink]]
+delta = "0.12.1 -> 0.12.2"
+criteria = "skimmed"
+
 [[audits.crc-catalog]]
 version = "2.4.0"
 criteria = "skimmed"
