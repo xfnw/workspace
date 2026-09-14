@@ -122,6 +122,14 @@ criteria = "no-sus-blobs"
 delta = "0.26.4 -> 0.26.5"
 criteria = "skimmed"
 
+[[audits.tokio-rustls]]
+version = "0.26.5"
+criteria = "no-sus-blobs"
+
+[[audits.tokio-rustls]]
+version = "0.26.5"
+criteria = "skimmed"
+
 [[audits.cc]]
 delta = "1.2.38 -> 1.2.39"
 criteria = "blobs-ok"
