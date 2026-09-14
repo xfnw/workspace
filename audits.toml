@@ -412,6 +412,14 @@ notes = "adds a test that has some der stuff in an array"
 delta = "0.103.10 -> 0.103.13"
 criteria = "skimmed"
 
+[[audits.rustls-webpki]]
+delta = "0.103.13 -> 0.103.15"
+criteria = "no-sus-blobs"
+
+[[audits.rustls-webpki]]
+delta = "0.103.13 -> 0.103.15"
+criteria = "skimmed"
+
 [[audits.find-msvc-tools]]
 version = "0.1.3"
 criteria = "blobs-ok"
