@@ -114,6 +114,14 @@ notes = "pem files in tests not touched"
 delta = "0.26.3 -> 0.26.4"
 criteria = "skimmed"
 
+[[audits.tokio-rustls]]
+delta = "0.26.4 -> 0.26.5"
+criteria = "no-sus-blobs"
+
+[[audits.tokio-rustls]]
+delta = "0.26.4 -> 0.26.5"
+criteria = "skimmed"
+
 [[audits.cc]]
 delta = "1.2.38 -> 1.2.39"
 criteria = "blobs-ok"
