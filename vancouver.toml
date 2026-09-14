@@ -804,10 +804,6 @@ criteria = "no-sus-blobs"
 version = "2.5.0"
 criteria = "skimmed"
 
-[[exempt.tokio-rustls]]
-version = "0.26.3"
-criteria = "skimmed"
-
 [[exempt.tokio-socks]]
 version = "0.5.2"
 criteria = "no-sus-blobs"
