@@ -47,7 +47,7 @@ pub fn run(args: &Args) {
     let xor = XorIter { bufs };
 
     for b in xor {
-        stdout.write(&[b]).unwrap();
+        stdout.write_all(&[b]).unwrap();
     }
 
     stdout.flush().unwrap();
