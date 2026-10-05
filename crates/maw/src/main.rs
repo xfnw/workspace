@@ -13,6 +13,7 @@ mod rank;
 mod sort;
 mod uni;
 mod uwu;
+mod xor;
 mod yap;
 
 /// some random utilities
@@ -31,10 +32,11 @@ enum Cmds {
     Hdata(hdata::Args),
     Human(human::Args),
     Now(now::Args),
+    Rank(rank::Args),
     Sort(sort::Args),
     Uni(uni::Args),
-    Rank(rank::Args),
     Uwu(uwu::Args),
+    Xor(xor::Args),
     Yap(yap::Args),
 }
 
@@ -47,10 +49,11 @@ fn main() {
         Cmds::Hdata(args) => hdata::run(args),
         Cmds::Human(args) => human::run(args),
         Cmds::Now(args) => now::run(args),
+        Cmds::Rank(args) => rank::run(args),
         Cmds::Sort(args) => sort::run(args),
         Cmds::Uni(args) => uni::run(args),
         Cmds::Uwu(args) => uwu::run(args),
         Cmds::Yap(args) => yap::run(args),
-        Cmds::Rank(args) => rank::run(args),
+        Cmds::Xor(args) => xor::run(args),
     }
 }
