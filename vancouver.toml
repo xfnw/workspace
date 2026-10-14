@@ -1084,14 +1084,6 @@ criteria = "no-sus-blobs"
 version = "0.5.5"
 criteria = "skimmed"
 
-[[exempt.futures-channel]]
-version = "0.3.31"
-criteria = "no-sus-blobs"
-
-[[exempt.futures-channel]]
-version = "0.3.31"
-criteria = "skimmed"
-
 [[exempt.http]]
 version = "1.4.0"
 criteria = "no-sus-blobs"
