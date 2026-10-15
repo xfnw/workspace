@@ -2171,6 +2171,20 @@ criteria = "no-sus-blobs"
 violation = "0.10.9"
 criteria = "no-sus-blobs"
 
+[[audits.sha2]]
+violation = "0.11.1"
+criteria = "no-sus-blobs"
+notes = "binary test data"
+
+[[audits.sha2]]
+delta = "0.11.0 -> 0.11.1"
+criteria = "no-sus-blobs"
+notes = "binary test data unchanged"
+
+[[audits.sha2]]
+delta = "0.11.0 -> 0.11.1"
+criteria = "skimmed"
+
 [[audits.block-buffer]]
 version = "0.12.1"
 criteria = "no-sus-blobs"
