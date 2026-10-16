@@ -308,14 +308,6 @@ criteria = "no-sus-blobs"
 version = "0.2.16"
 criteria = "skimmed"
 
-[[exempt.glob]]
-version = "0.3.3"
-criteria = "no-sus-blobs"
-
-[[exempt.glob]]
-version = "0.3.3"
-criteria = "skimmed"
-
 [[exempt.half]]
 version = "2.6.0"
 criteria = "no-sus-blobs"
@@ -714,14 +706,6 @@ criteria = "no-sus-blobs"
 
 [[exempt.shlex]]
 version = "1.3.0"
-criteria = "skimmed"
-
-[[exempt.siphasher]]
-version = "1.0.1"
-criteria = "no-sus-blobs"
-
-[[exempt.siphasher]]
-version = "1.0.1"
 criteria = "skimmed"
 
 [[exempt.smallvec]]
