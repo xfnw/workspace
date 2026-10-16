@@ -2487,3 +2487,11 @@ criteria = "no-sus-blobs"
 [[audits.siphasher]]
 version = "1.0.4"
 criteria = "skimmed"
+
+[[audits.glob]]
+version = "0.3.4"
+criteria = "no-sus-blobs"
+
+[[audits.glob]]
+version = "0.3.4"
+criteria = "skimmed"
