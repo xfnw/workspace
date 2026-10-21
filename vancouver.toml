@@ -740,14 +740,6 @@ criteria = "no-sus-blobs"
 version = "2.0.106"
 criteria = "skimmed"
 
-[[exempt.synstructure]]
-version = "0.13.2"
-criteria = "no-sus-blobs"
-
-[[exempt.synstructure]]
-version = "0.13.2"
-criteria = "skimmed"
-
 [[exempt.thiserror]]
 version = "1.0.69"
 criteria = "no-sus-blobs"
@@ -993,14 +985,6 @@ version = "0.1.6"
 criteria = "no-sus-blobs"
 
 [[exempt.zerofrom]]
-version = "0.1.6"
-criteria = "skimmed"
-
-[[exempt.zerofrom-derive]]
-version = "0.1.6"
-criteria = "no-sus-blobs"
-
-[[exempt.zerofrom-derive]]
 version = "0.1.6"
 criteria = "skimmed"
 
