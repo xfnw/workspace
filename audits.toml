@@ -2397,6 +2397,14 @@ criteria = "no-sus-blobs"
 delta = "0.1.6 -> 0.1.7"
 criteria = "skimmed"
 
+[[audits.zerofrom-derive]]
+version = "0.1.8"
+criteria = "no-sus-blobs"
+
+[[audits.zerofrom-derive]]
+version = "0.1.8"
+criteria = "skimmed"
+
 [[audits.ring]]
 violation = "0.17.14"
 criteria = "no-sus-blobs"
