@@ -1911,12 +1911,28 @@ criteria = "no-sus-blobs"
 delta = "0.3.31 -> 0.3.32"
 criteria = "skimmed"
 
+[[audits.futures-util]]
+delta = "0.3.32 -> 0.3.34"
+criteria = "no-sus-blobs"
+
+[[audits.futures-util]]
+delta = "0.3.32 -> 0.3.34"
+criteria = "skimmed"
+
 [[audits.futures-task]]
 delta = "0.3.31 -> 0.3.32"
 criteria = "no-sus-blobs"
 
 [[audits.futures-task]]
 delta = "0.3.31 -> 0.3.32"
+criteria = "skimmed"
+
+[[audits.futures-task]]
+delta = "0.3.32 -> 0.3.34"
+criteria = "no-sus-blobs"
+
+[[audits.futures-task]]
+delta = "0.3.32 -> 0.3.34"
 criteria = "skimmed"
 
 [[audits.futures-sink]]
@@ -1927,6 +1943,15 @@ criteria = "no-sus-blobs"
 delta = "0.3.31 -> 0.3.32"
 criteria = "skimmed"
 
+[[audits.futures-sink]]
+delta = "0.3.32 -> 0.3.34"
+criteria = "no-sus-blobs"
+
+[[audits.futures-sink]]
+delta = "0.3.32 -> 0.3.34"
+criteria = "skimmed"
+notes = "no code change"
+
 [[audits.futures-core]]
 delta = "0.3.31 -> 0.3.32"
 criteria = "no-sus-blobs"
@@ -1935,12 +1960,29 @@ criteria = "no-sus-blobs"
 delta = "0.3.31 -> 0.3.32"
 criteria = "skimmed"
 
+[[audits.futures-core]]
+delta = "0.3.32 -> 0.3.34"
+criteria = "no-sus-blobs"
+
+[[audits.futures-core]]
+delta = "0.3.32 -> 0.3.34"
+criteria = "skimmed"
+notes = "no code change"
+
 [[audits.futures-macro]]
 version = "0.3.32"
 criteria = "no-sus-blobs"
 
 [[audits.futures-macro]]
 version = "0.3.32"
+criteria = "skimmed"
+
+[[audits.futures-macro]]
+delta = "0.3.32 -> 0.3.34"
+criteria = "no-sus-blobs"
+
+[[audits.futures-macro]]
+delta = "0.3.32 -> 0.3.34"
 criteria = "skimmed"
 
 [[audits.cfg_aliases]]
