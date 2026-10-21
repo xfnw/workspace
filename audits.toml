@@ -2421,6 +2421,14 @@ criteria = "no-sus-blobs"
 version = "0.8.2"
 criteria = "skimmed"
 
+[[audits.yoke-derive]]
+delta = "0.8.2 -> 0.8.4"
+criteria = "no-sus-blobs"
+
+[[audits.yoke-derive]]
+delta = "0.8.2 -> 0.8.4"
+criteria = "skimmed"
+
 [[audits.yoke]]
 version = "0.8.3"
 criteria = "no-sus-blobs"
