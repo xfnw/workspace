@@ -2653,3 +2653,11 @@ criteria = "no-sus-blobs"
 [[audits.zstd]]
 delta = "0.13.3 -> 0.14.3"
 criteria = "skimmed"
+
+[[audits.zstd-safe]]
+delta = "7.3.0 -> 8.2.0"
+criteria = "no-sus-blobs"
+
+[[audits.zstd-safe]]
+delta = "7.3.0 -> 8.2.0"
+criteria = "skimmed"
