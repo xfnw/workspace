@@ -2511,6 +2511,20 @@ criteria = "no-sus-blobs"
 violation = "0.4.42"
 criteria = "no-sus-blobs"
 
+[[audits.async-compression]]
+delta = "0.4.44 -> 0.4.51"
+criteria = "no-sus-blobs"
+notes = "binary test data unchanged"
+
+[[audits.async-compression]]
+delta = "0.4.44 -> 0.4.51"
+criteria = "skimmed"
+
+[[audits.async-compression]]
+violation = "0.4.51"
+criteria = "no-sus-blobs"
+notes = "binary test data"
+
 [[audits.async_zip]]
 violation = "0.0.18"
 criteria = "no-sus-blobs"
