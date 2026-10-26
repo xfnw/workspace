@@ -2637,3 +2637,11 @@ criteria = "no-sus-blobs"
 delta = "0.4.33 -> 0.4.34"
 criteria = "skimmed"
 notes = "no code change"
+
+[[audits.ctutils]]
+delta = "0.4.2 -> 0.4.6"
+criteria = "no-sus-blobs"
+
+[[audits.ctutils]]
+delta = "0.4.2 -> 0.4.6"
+criteria = "skimmed"
