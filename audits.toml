@@ -2628,3 +2628,12 @@ criteria = "no-sus-blobs"
 [[audits.compression-codecs]]
 delta = "0.4.39 -> 0.4.46"
 criteria = "skimmed"
+
+[[audits.compression-core]]
+delta = "0.4.33 -> 0.4.34"
+criteria = "no-sus-blobs"
+
+[[audits.compression-core]]
+delta = "0.4.33 -> 0.4.34"
+criteria = "skimmed"
+notes = "no code change"
