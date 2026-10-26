@@ -2620,3 +2620,11 @@ criteria = "no-sus-blobs"
 [[audits.winnow]]
 delta = "0.7.15 -> 1.0.4"
 criteria = "skimmed"
+
+[[audits.compression-codecs]]
+delta = "0.4.39 -> 0.4.46"
+criteria = "no-sus-blobs"
+
+[[audits.compression-codecs]]
+delta = "0.4.39 -> 0.4.46"
+criteria = "skimmed"
