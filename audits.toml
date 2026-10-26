@@ -2661,3 +2661,11 @@ criteria = "no-sus-blobs"
 [[audits.zstd-safe]]
 delta = "7.3.0 -> 8.2.0"
 criteria = "skimmed"
+
+[[audits.zstd-sys]]
+delta = "2.1.0+zstd.1.5.7 -> 2.1.2+zstd.1.5.7"
+criteria = "no-sus-blobs"
+
+[[audits.zstd-sys]]
+delta = "2.1.0+zstd.1.5.7 -> 2.1.2+zstd.1.5.7"
+criteria = "skimmed"
