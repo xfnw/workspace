@@ -1009,6 +1009,14 @@ criteria = "no-sus-blobs"
 delta = "1.47.1 -> 1.48.0"
 criteria = "skimmed"
 
+[[audits.tokio]]
+delta = "1.52.1 -> 1.54.1"
+criteria = "no-sus-blobs"
+
+[[audits.tokio]]
+delta = "1.52.1 -> 1.54.1"
+criteria = "skimmed"
+
 [[audits.rustls]]
 delta = "0.23.32 -> 0.23.33"
 criteria = "no-sus-blobs"
