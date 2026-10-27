@@ -1991,6 +1991,14 @@ criteria = "no-sus-blobs"
 version = "0.1.8"
 criteria = "skimmed"
 
+[[audits.append-only-vec]]
+delta = "0.1.8 -> 0.1.10"
+criteria = "no-sus-blobs"
+
+[[audits.append-only-vec]]
+delta = "0.1.8 -> 0.1.10"
+criteria = "skimmed"
+
 [[audits.try-lock]]
 version = "0.2.4"
 criteria = "no-sus-blobs"
