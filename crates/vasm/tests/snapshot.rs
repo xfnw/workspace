@@ -22,7 +22,7 @@ fn snapshot(name: &str, h: u16) {
         .unwrap();
 
     assert!(output.status.success());
-    assert!(output.stderr.is_empty());
+    assert_eq!(output.stderr, []);
 
     let output = String::from_utf8(output.stdout).unwrap();
     let mut lines = output.lines();
@@ -56,12 +56,12 @@ fn roundtrip(name: &str, h: u16) {
         .unwrap();
 
     assert!(dis.status.success());
-    assert!(dis.stderr.is_empty());
+    assert_eq!(dis.stderr, []);
 
     let output = ass.wait_with_output().unwrap();
 
     assert!(output.status.success());
-    assert!(output.stderr.is_empty());
+    assert_eq!(output.stderr, []);
 
     let output = String::from_utf8(output.stdout).unwrap();
     let mut lines = output.lines();
@@ -117,7 +117,7 @@ fn dis_odd() {
     let output = dis.wait_with_output().unwrap();
 
     assert!(output.status.success());
-    assert!(output.stderr.is_empty());
+    assert_eq!(output.stderr, []);
 
     assert_eq!(
         str::from_utf8(&output.stdout).unwrap(),
