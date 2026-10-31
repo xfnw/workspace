@@ -19,6 +19,9 @@ pub struct Args {
     /// number of bits to care about per byte
     #[argh(option, default = "NumBits::default()")]
     bits: NumBits,
+    /// treat input as all case insensitive instead of html
+    #[argh(switch)]
+    raw: bool,
     #[argh(positional)]
     html: PathBuf,
     #[argh(positional)]
@@ -258,7 +261,11 @@ fn check_bits_one_bpb() {
 
 pub fn run(args: &Args) {
     let html = read_to_vec(&args.html).unwrap();
-    let tokens = tokenize(&html);
+    let tokens = if args.raw {
+        vec![Token::Identifier(&html)]
+    } else {
+        tokenize(&html)
+    };
 
     if args.count {
         let bits: usize = tokens
