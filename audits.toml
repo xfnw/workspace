@@ -2782,3 +2782,11 @@ notes = "test data"
 violation = "0.7.3"
 criteria = "no-sus-blobs"
 notes = "test data"
+
+[[audits.version_check]]
+version = "0.9.5"
+criteria = "no-sus-blobs"
+
+[[audits.version_check]]
+version = "0.9.5"
+criteria = "skimmed"
