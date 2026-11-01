@@ -142,7 +142,7 @@
             buildPhaseCargoCommand = "cargo test";
             installPhaseCommand = ''
               ${pkgs.grcov}/bin/grcov "$TMPDIR/prof" \
-                --llvm --llvm-path ${pkgs.llvm}/bin \
+                --llvm --llvm-path ${pkgs.rustc.llvm}/bin \
                 --binary-path target/debug/deps \
                 -s . -t html -o $out
             '';
