@@ -2622,6 +2622,7 @@ criteria = "no-sus-blobs"
 [[audits.sha1]]
 violation = "0.11.0"
 criteria = "no-sus-blobs"
+notes = "test data"
 
 [[audits.sqlx]]
 violation = "0.9.0"
@@ -2751,3 +2752,33 @@ criteria = "no-sus-blobs"
 [[audits.tempfile]]
 version = "3.27.0"
 criteria = "skimmed"
+
+[[audits.der]]
+violation = "0.7.10"
+criteria = "no-sus-blobs"
+notes = "test data"
+
+[[audits.pem-rfc7468]]
+violation = "0.7.0"
+criteria = "no-sus-blobs"
+notes = "test data"
+
+[[audits.pkcs1]]
+violation = "0.7.5"
+criteria = "no-sus-blobs"
+notes = "test data"
+
+[[audits.pkcs8]]
+violation = "0.10.2"
+criteria = "no-sus-blobs"
+notes = "test data"
+
+[[audits.rsa]]
+violation = "0.9.10"
+criteria = "no-sus-blobs"
+notes = "test data"
+
+[[audits.spki]]
+violation = "0.7.3"
+criteria = "no-sus-blobs"
+notes = "test data"
