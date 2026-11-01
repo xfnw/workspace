@@ -1571,6 +1571,14 @@ criteria = "no-sus-blobs"
 version = "0.9.8"
 criteria = "skimmed"
 
+[[audits.spin]]
+delta = "0.9.8 -> 0.9.9"
+criteria = "no-sus-blobs"
+
+[[audits.spin]]
+delta = "0.9.8 -> 0.9.9"
+criteria = "skimmed"
+
 [[audits.slab]]
 version = "0.4.12"
 criteria = "no-sus-blobs"
