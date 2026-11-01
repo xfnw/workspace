@@ -2735,3 +2735,11 @@ criteria = "no-sus-blobs"
 [[audits.zstd-sys]]
 delta = "2.1.0+zstd.1.5.7 -> 2.1.2+zstd.1.5.7"
 criteria = "skimmed"
+
+[[audits.memmap2]]
+version = "0.9.12"
+criteria = "no-sus-blobs"
+
+[[audits.memmap2]]
+version = "0.9.12"
+criteria = "skimmed"
