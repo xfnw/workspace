@@ -2743,3 +2743,11 @@ criteria = "no-sus-blobs"
 [[audits.memmap2]]
 version = "0.9.12"
 criteria = "skimmed"
+
+[[audits.tempfile]]
+version = "3.27.0"
+criteria = "no-sus-blobs"
+
+[[audits.tempfile]]
+version = "3.27.0"
+criteria = "skimmed"
