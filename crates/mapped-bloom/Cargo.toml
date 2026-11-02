@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: 2026 xfnw
+#
+# SPDX-License-Identifier: CC0-1.0
+
+[package]
+name = "mapped-bloom"
+version = "0.1.0"
+edition = "2024"
+license = "CC0-1.0"
+repository.workspace = true
+
+[dependencies]
+memmap2 = "0.9.12"
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+tempfile = "3.27.0"
