@@ -2934,6 +2934,14 @@ criteria = "no-sus-blobs"
 version = "2.2.0"
 criteria = "skimmed"
 
+[[audits.signature]]
+delta = "2.2.0 -> 3.0.0"
+criteria = "no-sus-blobs"
+
+[[audits.signature]]
+delta = "2.2.0 -> 3.0.0"
+criteria = "skimmed"
+
 [[audits.base64ct]]
 version = "1.8.3"
 criteria = "no-sus-blobs"
