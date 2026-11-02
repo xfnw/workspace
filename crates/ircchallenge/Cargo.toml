@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: 2026 xfnw
+#
+# SPDX-License-Identifier: MIT
+
+[package]
+name = "ircchallenge"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+repository.workspace = true
+
+[dependencies]
+base64ct = { version = "1.8.3", features = ["alloc"] }
+rsa = "0.10.0-rc.19"
+sha1 = "0.11.0"
+
+[lints]
+workspace = true
