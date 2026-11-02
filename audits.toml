@@ -2910,3 +2910,11 @@ criteria = "skimmed"
 [[audits.linux-raw-sys]]
 version = "0.12.1"
 criteria = "too-big-to-fail"
+
+[[audits.lazy_static]]
+version = "1.5.1"
+criteria = "no-sus-blobs"
+
+[[audits.lazy_static]]
+version = "1.5.1"
+criteria = "skimmed"
