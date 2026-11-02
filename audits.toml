@@ -3077,3 +3077,16 @@ criteria = "skimmed"
 [[audits.crypto-bigint]]
 version = "0.7.10"
 criteria = "too-big-to-fail"
+
+[[audits.crypto-primes]]
+violation = "0.7.2"
+criteria = "no-sus-blobs"
+notes = "too many funny numbers"
+
+[[audits.crypto-primes]]
+version = "0.7.2"
+criteria = "blobs-ok"
+
+[[audits.crypto-primes]]
+version = "0.7.2"
+criteria = "skimmed"
