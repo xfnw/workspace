@@ -2891,6 +2891,14 @@ violation = "0.10.0-rc.19"
 criteria = "no-sus-blobs"
 notes = "test data"
 
+[[audits.rsa]]
+version = "0.10.0-rc.19"
+criteria = "blobs-ok"
+
+[[audits.rsa]]
+version = "0.10.0-rc.19"
+criteria = "skimmed"
+
 [[audits.spki]]
 violation = "0.7.3"
 criteria = "no-sus-blobs"
