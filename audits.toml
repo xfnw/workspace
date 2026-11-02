@@ -3065,3 +3065,11 @@ criteria = "no-sus-blobs"
 [[audits.base16ct]]
 version = "1.0.0"
 criteria = "skimmed"
+
+[[audits.cmov]]
+version = "0.5.4"
+criteria = "no-sus-blobs"
+
+[[audits.cmov]]
+version = "0.5.4"
+criteria = "skimmed"
