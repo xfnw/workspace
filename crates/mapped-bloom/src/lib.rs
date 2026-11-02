@@ -36,6 +36,8 @@ impl BloomFilter {
         let map = map.len(size.try_into().map_err(io::Error::other)?);
         let map = unsafe { map.map_mut(&file)? };
 
+        map.advise(memmap2::Advice::Random)?;
+
         Ok(Self {
             _file: file,
             map,
