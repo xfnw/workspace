@@ -10,12 +10,20 @@ use std::{
 
 use memmap2::{MmapMut, MmapOptions};
 
+/// a bloom filter that is memory mapped onto a file
 pub struct BloomFilter<const HASHES: u8, const SIZE: u64> {
     _file: File,
     map: MmapMut,
 }
 
 impl<const HASHES: u8, const SIZE: u64> BloomFilter<HASHES, SIZE> {
+    /// create a new [`BloomFilter`] from a file
+    /// 
+    /// the file should be both readable and writeable
+    ///
+    /// # Errors
+    /// this will error if the file cannot be locked, the `SIZE` const
+    /// parameter is an unsuitable size, or if the map cannot be created
     pub fn new(file: File) -> io::Result<Self> {
         file.try_lock()?;
         file.set_len(SIZE)?;
@@ -37,18 +45,30 @@ impl<const HASHES: u8, const SIZE: u64> BloomFilter<HASHES, SIZE> {
         self.map[(byte % SIZE) as usize] |= flag;
     }
 
+    /// returns `true` if the bloom filter possibly contains value
     pub fn contains<H: Hash>(&self, value: H) -> bool {
         Hashes::<HASHES, H>::new(value).all(|hash| self.get_bit(hash))
     }
 
+    /// add a value to the bloom filter
     pub fn insert<H: Hash>(&mut self, value: H) {
         Hashes::<HASHES, H>::new(value).for_each(|hash| self.set_bit(hash));
     }
 
+    /// flush mapping to disk, blocking until completion
+    /// 
+    /// # Errors
+    /// returns an error if changes might not have been saved
     pub fn flush(&self) -> io::Result<()> {
         self.map.flush()
     }
 
+    /// flush mapping to disk without waiting
+    ///
+    /// this is a no-op on linux since 2.6.19
+    /// 
+    /// # Errors
+    /// returns an error if saving changes failed to be scheduled
     pub fn flush_async(&self) -> io::Result<()> {
         self.map.flush_async()
     }
