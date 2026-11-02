@@ -2806,3 +2806,11 @@ criteria = "no-sus-blobs"
 [[audits.version_check]]
 version = "0.9.5"
 criteria = "skimmed"
+
+[[audits.signature]]
+version = "2.2.0"
+criteria = "no-sus-blobs"
+
+[[audits.signature]]
+version = "2.2.0"
+criteria = "skimmed"
