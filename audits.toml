@@ -2855,6 +2855,14 @@ violation = "0.8.0-rc.5"
 criteria = "no-sus-blobs"
 notes = "test data"
 
+[[audits.pkcs1]]
+delta = "0.7.5 -> 0.8.0-rc.5"
+criteria = "blobs-ok"
+
+[[audits.pkcs1]]
+delta = "0.7.5 -> 0.8.0-rc.5"
+criteria = "skimmed"
+
 [[audits.pkcs8]]
 violation = "0.10.2"
 criteria = "no-sus-blobs"
