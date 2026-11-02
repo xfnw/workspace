@@ -2791,6 +2791,14 @@ violation = "0.7.3"
 criteria = "no-sus-blobs"
 notes = "test data"
 
+[[audits.spki]]
+version = "0.7.3"
+criteria = "blobs-ok"
+
+[[audits.spki]]
+version = "0.7.3"
+criteria = "skimmed"
+
 [[audits.version_check]]
 version = "0.9.5"
 criteria = "no-sus-blobs"
