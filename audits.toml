@@ -3049,3 +3049,11 @@ criteria = "no-sus-blobs"
 [[audits.rand_core]]
 version = "0.10.1"
 criteria = "skimmed"
+
+[[audits.cpubits]]
+version = "0.1.1"
+criteria = "no-sus-blobs"
+
+[[audits.cpubits]]
+version = "0.1.1"
+criteria = "skimmed"
