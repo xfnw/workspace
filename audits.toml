@@ -920,6 +920,14 @@ criteria = "no-sus-blobs"
 delta = "0.14.7 -> 0.14.9"
 criteria = "skimmed"
 
+[[audits.generic-array]]
+version = "0.14.7"
+criteria = "no-sus-blobs"
+
+[[audits.generic-array]]
+version = "0.14.7"
+criteria = "skimmed"
+
 [[audits.regex-syntax]]
 delta = "0.8.6 -> 0.8.8"
 criteria = "no-sus-blobs"
