@@ -3017,3 +3017,11 @@ criteria = "no-sus-blobs"
 [[audits.serdect]]
 version = "0.4.3"
 criteria = "skimmed"
+
+[[audits.rand_core]]
+version = "0.10.1"
+criteria = "no-sus-blobs"
+
+[[audits.rand_core]]
+version = "0.10.1"
+criteria = "skimmed"
