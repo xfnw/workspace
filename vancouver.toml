@@ -92,6 +92,27 @@ require-all = ["blobs-ok", "skimmed"]
 [policy.wit-bindgen]
 require-all = ["blobs-ok", "skimmed"]
 
+[policy.der]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.pem-rfc7468]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.pkcs1]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.pkcs8]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.rsa]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.sha1]
+require-all = ["blobs-ok", "skimmed"]
+
+[policy.spki]
+require-all = ["blobs-ok", "skimmed"]
+
 [[exempt.aho-corasick]]
 version = "1.1.3"
 criteria = "no-sus-blobs"
