@@ -2873,6 +2873,14 @@ violation = "0.11.0"
 criteria = "no-sus-blobs"
 notes = "test data"
 
+[[audits.pkcs8]]
+delta = "0.10.2 -> 0.11.0"
+criteria = "blobs-ok"
+
+[[audits.pkcs8]]
+delta = "0.10.2 -> 0.11.0"
+criteria = "skimmed"
+
 [[audits.rsa]]
 violation = "0.9.10"
 criteria = "no-sus-blobs"
