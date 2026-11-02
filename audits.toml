@@ -3073,3 +3073,7 @@ criteria = "no-sus-blobs"
 [[audits.cmov]]
 version = "0.5.4"
 criteria = "skimmed"
+
+[[audits.crypto-bigint]]
+version = "0.7.10"
+criteria = "too-big-to-fail"
