@@ -3057,3 +3057,11 @@ criteria = "no-sus-blobs"
 [[audits.cpubits]]
 version = "0.1.1"
 criteria = "skimmed"
+
+[[audits.base16ct]]
+version = "1.0.0"
+criteria = "no-sus-blobs"
+
+[[audits.base16ct]]
+version = "1.0.0"
+criteria = "skimmed"
