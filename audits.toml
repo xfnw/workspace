@@ -2830,3 +2830,7 @@ criteria = "no-sus-blobs"
 [[audits.base64ct]]
 version = "1.8.3"
 criteria = "skimmed"
+
+[[audits.rustix]]
+version = "1.1.6"
+criteria = "too-big-to-fail"
