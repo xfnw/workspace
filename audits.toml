@@ -2795,6 +2795,14 @@ violation = "0.7.0"
 criteria = "no-sus-blobs"
 notes = "test data"
 
+[[audits.pem-rfc7468]]
+version = "0.7.0"
+criteria = "blobs-ok"
+
+[[audits.pem-rfc7468]]
+version = "0.7.0"
+criteria = "skimmed"
+
 [[audits.pkcs1]]
 violation = "0.7.5"
 criteria = "no-sus-blobs"
