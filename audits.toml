@@ -2375,6 +2375,14 @@ criteria = "skimmed"
 violation = "0.11.3"
 criteria = "no-sus-blobs"
 
+[[audits.digest]]
+version = "0.10.7"
+criteria = "no-sus-blobs"
+
+[[audits.digest]]
+version = "0.10.7"
+criteria = "skimmed"
+
 [[audits.event-listener]]
 delta = "5.4.1 -> 5.4.2"
 criteria = "no-sus-blobs"
