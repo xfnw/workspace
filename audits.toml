@@ -2906,3 +2906,7 @@ criteria = "no-sus-blobs"
 [[audits.num-bigint-dig]]
 version = "0.8.6"
 criteria = "skimmed"
+
+[[audits.linux-raw-sys]]
+version = "0.12.1"
+criteria = "too-big-to-fail"
