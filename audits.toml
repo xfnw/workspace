@@ -2761,6 +2761,14 @@ criteria = "no-sus-blobs"
 delta = "0.4.2 -> 0.4.6"
 criteria = "skimmed"
 
+[[audits.ctutils]]
+version = "0.4.7"
+criteria = "no-sus-blobs"
+
+[[audits.ctutils]]
+version = "0.4.7"
+criteria = "skimmed"
+
 [[audits.zstd]]
 delta = "0.13.3 -> 0.14.3"
 criteria = "no-sus-blobs"
