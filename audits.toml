@@ -2898,3 +2898,11 @@ criteria = "no-sus-blobs"
 [[audits.num-integer]]
 version = "0.1.47"
 criteria = "skimmed"
+
+[[audits.num-bigint-dig]]
+version = "0.8.6"
+criteria = "no-sus-blobs"
+
+[[audits.num-bigint-dig]]
+version = "0.8.6"
+criteria = "skimmed"
