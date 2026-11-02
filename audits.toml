@@ -2632,6 +2632,14 @@ violation = "0.11.0"
 criteria = "no-sus-blobs"
 notes = "test data"
 
+[[audits.sha1]]
+version = "0.11.0"
+criteria = "blobs-ok"
+
+[[audits.sha1]]
+version = "0.11.0"
+criteria = "skimmed"
+
 [[audits.sqlx]]
 violation = "0.9.0"
 criteria = "no-sus-blobs"
