@@ -2909,6 +2909,15 @@ violation = "0.8.1"
 criteria = "no-sus-blobs"
 notes = "test data"
 
+[[audits.spki]]
+delta = "0.7.3 -> 0.8.1"
+criteria = "no-sus-blobs"
+notes = "test data unchanged"
+
+[[audits.spki]]
+delta = "0.7.3 -> 0.8.1"
+criteria = "skimmed"
+
 [[audits.version_check]]
 version = "0.9.5"
 criteria = "no-sus-blobs"
