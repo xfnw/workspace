@@ -2806,6 +2806,14 @@ violation = "0.7.10"
 criteria = "no-sus-blobs"
 notes = "test data"
 
+[[audits.der]]
+version = "0.7.10"
+criteria = "blobs-ok"
+
+[[audits.der]]
+version = "0.7.10"
+criteria = "skimmed"
+
 [[audits.pem-rfc7468]]
 violation = "0.7.0"
 criteria = "no-sus-blobs"
