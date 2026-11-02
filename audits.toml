@@ -2950,3 +2950,7 @@ criteria = "no-sus-blobs"
 [[audits.fastrand]]
 version = "2.5.0"
 criteria = "skimmed"
+
+[[audits.libm]]
+version = "0.2.16"
+criteria = "too-big-to-fail"
