@@ -2926,3 +2926,11 @@ criteria = "no-sus-blobs"
 [[audits.lazy_static]]
 version = "1.5.1"
 criteria = "skimmed"
+
+[[audits.fastrand]]
+version = "2.5.0"
+criteria = "no-sus-blobs"
+
+[[audits.fastrand]]
+version = "2.5.0"
+criteria = "skimmed"
