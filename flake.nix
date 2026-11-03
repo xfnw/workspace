@@ -128,6 +128,7 @@
               root = ./.;
               fileset = fileset.union commonFileSet ./crates;
             };
+            cargoBuildExtraArgs = "--bins";
             doCheck = false; # tests are run as a flake check
           });
           doc = crane'.cargoDoc (common // {
