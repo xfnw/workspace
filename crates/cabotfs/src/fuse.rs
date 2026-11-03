@@ -23,7 +23,6 @@ use std::{
     time::{Duration, UNIX_EPOCH},
 };
 use tokio::sync::RwLock;
-use zerocopy::{Immutable, IntoBytes};
 
 const TTL: Duration = Duration::from_secs(1);
 
@@ -514,23 +513,7 @@ impl<const D: usize, F: FileStore<D>> Filesystem for CaFilesystem<D, F> {
             return Err(libc::ENODATA.into());
         }
         if size == 0 {
-            // FIXME: remove after fuse3 > 0.9.0
-            // workaround for https://github.com/Sherlock-Holo/fuse3/issues/130
-            #[derive(IntoBytes, Immutable)]
-            #[repr(C)]
-            struct fuse_getxattr_out {
-                size: u32,
-                _padding: u32,
-            }
-            return Ok(ReplyXAttr::Data(
-                fuse_getxattr_out {
-                    size: 32,
-                    _padding: 0,
-                }
-                .as_bytes()
-                .into(),
-            ));
-            //return Ok(ReplyXAttr::Size(32));
+            return Ok(ReplyXAttr::Size(32));
         }
         if size < 32 {
             return Err(libc::ERANGE.into());

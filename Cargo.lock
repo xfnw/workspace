@@ -246,7 +246,6 @@ dependencies = [
  "futures-util",
  "libc",
  "tokio",
- "zerocopy",
 ]
 
 [[package]]

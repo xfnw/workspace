@@ -17,7 +17,6 @@ fuse3 = { version = "0.10", features = ["tokio-runtime", "unprivileged"] }
 futures-util = "0.3.32"
 libc = "0.2.186"
 tokio = { version = "1.48", default-features = false, features = ["sync", "time"] }
-zerocopy = "0.8.48"
 
 [lints]
 workspace = true
