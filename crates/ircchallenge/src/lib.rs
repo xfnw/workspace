@@ -9,7 +9,7 @@
 //! [jess' ircchallenge python library]: https://github.com/jesopo/ircchallenge
 //!
 //! # security concerns
-//! the rsa library this uses has some timing side channels issues. if you
+//! the rsa library this uses has some timing side channel issues. if you
 //! do a bunch of challenges, this might leak your private key or
 //! something. in my (uneducated, not a cryptographer) opinion, this
 //! probably does not particularly matter for normal use, given it is
