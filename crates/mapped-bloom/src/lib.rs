@@ -23,8 +23,8 @@ impl BloomFilter {
     /// the file should be both readable and writeable
     ///
     /// # Errors
-    /// this will error if the file cannot be locked, the `SIZE` const
-    /// parameter is an unsuitable size, or if the map cannot be created
+    /// this will error if the file cannot be locked, the size parameter
+    /// is an unsuitable size, or if the mmap cannot be created
     pub fn new(file: File, num_hashes: u8, size: u64) -> io::Result<Self> {
         if size < 1 {
             return Err(io::Error::other("size must be at least 1"));
