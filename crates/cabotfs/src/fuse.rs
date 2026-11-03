@@ -132,9 +132,7 @@ impl<const D: usize, F: FileStore<D>> CaFilesystem<D, F> {
 
 impl<const D: usize, F: FileStore<D>> Filesystem for CaFilesystem<D, F> {
     fn init(&self, _req: Request) -> impl Future<Output = fuse3::Result<ReplyInit>> {
-        ready(Ok(ReplyInit {
-            max_write: NonZeroU32::new(16 * 1024).unwrap(),
-        }))
+        ready(Ok(ReplyInit::new(NonZeroU32::new(16 * 1024).unwrap())))
     }
 
     async fn destroy(&self, _req: Request) {
