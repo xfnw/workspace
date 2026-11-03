@@ -25,15 +25,15 @@ impl BloomFilter {
     /// # Errors
     /// this will error if the file cannot be locked, the size parameter
     /// is an unsuitable size, or if the mmap cannot be created
-    pub fn new(file: File, num_hashes: u8, size: u64) -> io::Result<Self> {
+    pub fn new(file: File, num_hashes: u8, size: usize) -> io::Result<Self> {
         if size < 1 {
             return Err(io::Error::other("size must be at least 1"));
         }
 
         file.try_lock()?;
-        file.set_len(size)?;
+        file.set_len(size as u64)?;
         let mut map = MmapOptions::new();
-        let map = map.len(size.try_into().map_err(io::Error::other)?);
+        let map = map.len(size);
         let map = unsafe { map.map_mut(&file)? };
 
         map.advise(memmap2::Advice::Random)?;
