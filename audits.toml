@@ -2912,6 +2912,20 @@ criteria = "blobs-ok"
 delta = "0.7.5 -> 0.8.0-rc.5"
 criteria = "skimmed"
 
+[[audits.pkcs1]]
+violation = "0.8.0"
+criteria = "no-sus-blobs"
+notes = "test data"
+
+[[audits.pkcs1]]
+delta = "0.8.0-rc.5 -> 0.8.0"
+criteria = "no-sus-blobs"
+notes = "binary test data unchanged"
+
+[[audits.pkcs1]]
+delta = "0.8.0-rc.5 -> 0.8.0"
+criteria = "skimmed"
+
 [[audits.pkcs8]]
 violation = "0.10.2"
 criteria = "no-sus-blobs"
