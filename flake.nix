@@ -104,6 +104,7 @@
         checks = {
           clippy = crane'.cargoClippy (common // {
             inherit cargoArtifacts;
+            doInstallCargoArtifacts = false;
             cargoClippyExtraArgs = "--all-targets -- -D warnings";
           });
           doc = crane'.cargoDoc (common // {
@@ -112,6 +113,7 @@
           });
           test = crane'.cargoTest (common // {
             inherit cargoArtifacts;
+            doInstallCargoArtifacts = false;
           });
           fmt = crane'.cargoFmt common;
           reuse = pkgs.runCommand "workspace-reuse" { } ''
