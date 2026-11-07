@@ -7,6 +7,7 @@ name = "ircchallenge"
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
+description = "port of jess' ircchallenge python library, for doing ratbox-style challenges"
 repository.workspace = true
 
 [dependencies]
