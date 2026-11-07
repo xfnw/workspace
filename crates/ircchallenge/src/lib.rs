@@ -9,33 +9,24 @@
 //! [jess' ircchallenge python library]: https://github.com/jesopo/ircchallenge
 //!
 //! # security concerns
-//! the rsa library this uses has some timing side channel issues. if you
-//! do a bunch of challenges, this might leak your private key or
-//! something. in my (uneducated, not a cryptographer) opinion, this
-//! probably does not particularly matter for normal use, given it is
-//! intended to be used once per long-lived irc connection, rather than
-//! millions of times per second or whatever, so it'd probably take quite
-//! a while to leak anything. but, uh, you've been warned.
-//!
-//! also another reason not to trust this: we're using some random release
-//! candidate of the rsa crate, because the last actual release pulls in a
-//! bunch of old stuff :(
+//! we're using some random release candidate of the rsa crate, because the last actual release has
+//! some timing leaks and pulls in a bunch of old stuff :(
 
 use base64ct::{Base64, Encoding};
-use rsa::{Oaep, RsaPrivateKey};
+use rsa::{Oaep, PrivateKey};
 use sha1::{Digest, Sha1};
 use std::fmt;
 
 /// do a ratbox-style challenge
 pub struct Challenge {
-    key: RsaPrivateKey,
+    key: PrivateKey,
     buf: Vec<u8>,
 }
 
 impl Challenge {
     /// create a new [`Challenge`]
     #[must_use]
-    pub fn new(key: RsaPrivateKey) -> Self {
+    pub fn new(key: PrivateKey) -> Self {
         Self { key, buf: vec![] }
     }
 
@@ -88,11 +79,11 @@ impl std::error::Error for Error {}
 #[cfg(test)]
 mod tests {
     use super::Challenge;
-    use rsa::{RsaPrivateKey, pkcs1::DecodeRsaPrivateKey};
+    use rsa::{PrivateKey, pkcs1::DecodeRsaPrivateKey};
 
     #[test]
     fn chunks() {
-        let key = RsaPrivateKey::read_pkcs1_pem_file(concat!(
+        let key = PrivateKey::read_pkcs1_pem_file(concat!(
             env!("CARGO_MANIFEST_DIR"),
             "/tests/data/chunks.key"
         ))
