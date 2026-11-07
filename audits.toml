@@ -2978,6 +2978,18 @@ criteria = "blobs-ok"
 version = "0.10.0-rc.19"
 criteria = "skimmed"
 
+[[audits.rsa]]
+violation = "0.10.0-rc.22"
+criteria = "no-sus-blobs"
+
+[[audits.rsa]]
+delta = "0.10.0-rc.19 -> 0.10.0-rc.22"
+criteria = "blobs-ok"
+
+[[audits.rsa]]
+delta = "0.10.0-rc.19 -> 0.10.0-rc.22"
+criteria = "skimmed"
+
 [[audits.spki]]
 violation = "0.7.3"
 criteria = "no-sus-blobs"
