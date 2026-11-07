@@ -31,6 +31,9 @@ impl Challenge {
     }
 
     /// add chunk of base64 challenge contents
+    ///
+    /// this should only be given valid base64. do not include the `:` or
+    /// `\r\n` from the irc line, nor any other whitespace.
     pub fn push<T: AsRef<[u8]>>(&mut self, base64: T) {
         self.buf.extend_from_slice(base64.as_ref());
     }
@@ -53,6 +56,7 @@ impl Challenge {
         Ok(Base64::encode_string(&hashed))
     }
 
+    /// reset state in order to do another challenge
     pub fn reset(&mut self) {
         self.buf.clear();
     }
