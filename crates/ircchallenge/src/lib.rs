@@ -13,6 +13,8 @@ use rsa::{Oaep, PrivateKey};
 use sha1::{Digest, Sha1};
 use std::fmt;
 
+pub use rsa;
+
 /// do a ratbox-style challenge
 pub struct Challenge {
     key: PrivateKey,
