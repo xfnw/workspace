@@ -2990,6 +2990,20 @@ criteria = "blobs-ok"
 delta = "0.10.0-rc.19 -> 0.10.0-rc.22"
 criteria = "skimmed"
 
+[[audits.rsa]]
+delta = "0.10.0-rc.22 -> 0.10.0"
+criteria = "no-sus-blobs"
+notes = "binary test data unchanged"
+
+[[audits.rsa]]
+violation = "0.10.0"
+criteria = "no-sus-blobs"
+notes = "binary test data"
+
+[[audits.rsa]]
+delta = "0.10.0-rc.22 -> 0.10.0"
+criteria = "skimmed"
+
 [[audits.spki]]
 violation = "0.7.3"
 criteria = "no-sus-blobs"
