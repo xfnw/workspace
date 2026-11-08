@@ -3145,6 +3145,14 @@ criteria = "skimmed"
 version = "0.7.10"
 criteria = "too-big-to-fail"
 
+[[audits.crypto-bigint]]
+delta = "0.7.10 -> 0.7.11"
+criteria = "no-sus-blobs"
+
+[[audits.crypto-bigint]]
+delta = "0.7.10 -> 0.7.11"
+criteria = "skimmed"
+
 [[audits.crypto-primes]]
 violation = "0.7.2"
 criteria = "no-sus-blobs"
