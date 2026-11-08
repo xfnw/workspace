@@ -7,10 +7,6 @@
 //! ratbox-style challenges
 //!
 //! [jess' ircchallenge python library]: https://github.com/jesopo/ircchallenge
-//!
-//! # security concerns
-//! we're using some random release candidate of the rsa crate, because the last actual release has
-//! some timing leaks and pulls in a bunch of old stuff :(
 
 use base64ct::{Base64, Encoding};
 use rsa::{Oaep, PrivateKey};
