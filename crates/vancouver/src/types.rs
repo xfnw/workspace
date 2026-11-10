@@ -133,13 +133,13 @@ impl VersionPart {
                 let p = r
                     .iter()
                     .position(|&c| !c.is_ascii_digit())
-                    .map_or_else(|| inp.len(), |p| p + 1);
+                    .map_or(inp.len(), |p| p + 1);
                 return Some((Self::Number(inp[..p].to_string()), &inp[p..]));
             }
             let p = r
                 .iter()
                 .position(|&c| c.is_ascii_digit() || c == b'-')
-                .map_or_else(|| inp.len(), |p| p + 1);
+                .map_or(inp.len(), |p| p + 1);
             return Some((Self::String(inp[..p].to_string()), &inp[p..]));
         }
 
