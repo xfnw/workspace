@@ -67,7 +67,7 @@ fn run(opt: &Opt) -> Result<(), Error> {
                 let file = BufReader::new(File::open(f)?);
                 h16::parse(file.bytes().scan((), |(), i| i.ok()), start)?
             } else {
-                let stdin = BufReader::new(std::io::stdin());
+                let stdin = std::io::stdin().lock();
                 h16::parse(stdin.bytes().scan((), |(), i| i.ok()), start)?
             }
         } else if let Some(f) = &opt.file {
