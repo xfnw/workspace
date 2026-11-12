@@ -146,7 +146,7 @@
             installPhaseCommand = ''
               ${pkgs.grcov}/bin/grcov "$TMPDIR/prof" \
                 --llvm --llvm-path ${pkgs.rustc.llvm}/bin \
-                --binary-path target/debug/deps \
+                --binary-path target/debug \
                 -s . -t html -o $out
             '';
             env = {
