@@ -383,7 +383,7 @@ impl Bot {
             .unwrap_or_else(|| url.to_string());
         // ask copyparty for json
         url.set_query(Some("ls"));
-        let resp = self.http_get(url.clone(), self.auth.as_ref()).await?;
+        let resp = self.http_get(url.clone()).await?;
         let body = resp.collect().await?.aggregate();
         let dir: Directory = serde_json::from_reader(body.reader())?;
 
@@ -418,7 +418,7 @@ impl Bot {
         if url.path().is_empty() || url.path().ends_with('/') {
             url.set_query(Some("zip=crc"));
         }
-        let resp = self.http_get(url.clone(), self.auth.as_ref()).await?;
+        let resp = self.http_get(url.clone()).await?;
         if resp.status() != StatusCode::OK {
             return Err(Error::HttpStatus(resp.status()));
         }
@@ -480,11 +480,7 @@ impl Bot {
         Ok(())
     }
 
-    async fn http_get(
-        &self,
-        mut url: Url,
-        auth: Option<&HeaderValue>,
-    ) -> Result<Response<Incoming>, Error> {
+    async fn http_get(&self, mut url: Url) -> Result<Response<Incoming>, Error> {
         if !url.has_host() {
             return Err(Error::HostlessUrl);
         }
@@ -533,7 +529,11 @@ impl Bot {
                 concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION")),
             );
 
-        let req = if let Some(auth) = auth {
+        let req = if let Some(auth) = &self.auth
+            && url.scheme() == self.copyparty_url.scheme()
+            && url.host() == self.copyparty_url.host()
+            && url.port() == self.copyparty_url.port()
+        {
             req.header(hyper::header::AUTHORIZATION, auth)
         } else {
             req
