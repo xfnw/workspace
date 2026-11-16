@@ -93,7 +93,6 @@
           doCheck = false; # tests are run as a flake check
         });
         members = {
-          cabot = buildPackage "cabot" [ "fixed-hex" "cabotfs" "foxerror" "irc-connect" ];
           gekker = buildPackage "gekker" [ "irc-connect" ];
           maw = buildPackage "maw" [ ];
           offerparty = buildPackage "offerparty" [ "foxerror" "irc-connect" ];
