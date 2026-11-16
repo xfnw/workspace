@@ -1191,22 +1191,6 @@ criteria = "no-sus-blobs"
 version = "0.3.3"
 criteria = "skimmed"
 
-[[exempt.tracing]]
-version = "0.1.44"
-criteria = "no-sus-blobs"
-
-[[exempt.tracing]]
-version = "0.1.44"
-criteria = "skimmed"
-
-[[exempt.tracing-core]]
-version = "0.1.35"
-criteria = "no-sus-blobs"
-
-[[exempt.tracing-core]]
-version = "0.1.35"
-criteria = "skimmed"
-
 [[exempt.tokio-stream]]
 version = "0.1.17"
 criteria = "no-sus-blobs"
@@ -1229,12 +1213,4 @@ criteria = "no-sus-blobs"
 
 [[exempt.tokio-util]]
 version = "0.7.17"
-criteria = "skimmed"
-
-[[exempt.event-listener]]
-version = "5.4.1"
-criteria = "no-sus-blobs"
-
-[[exempt.event-listener]]
-version = "5.4.1"
 criteria = "skimmed"
