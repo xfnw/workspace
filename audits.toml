@@ -3203,3 +3203,11 @@ criteria = "no-sus-blobs"
 [[audits.powerfmt]]
 version = "0.2.1"
 criteria = "skimmed"
+
+[[audits.time-core]]
+version = "0.1.9"
+criteria = "no-sus-blobs"
+
+[[audits.time-core]]
+version = "0.1.9"
+criteria = "skimmed"
