@@ -3,13 +3,13 @@
 // SPDX-License-Identifier: MPL-2.0
 
 use base64::prelude::{BASE64_STANDARD, Engine as _};
-use chrono::{DateTime, offset::Utc};
 use rayon::prelude::*;
 use sha2::{Digest, Sha256};
 use std::{
     net::{IpAddr, Ipv6Addr},
-    time::{Duration, SystemTime, UNIX_EPOCH},
+    time::SystemTime,
 };
+use time::UtcDateTime;
 
 /// helper tool for yap
 #[derive(Debug, argh::FromArgs)]
@@ -120,8 +120,15 @@ fn show(token: &str) {
     let nonce = u64::from_be_bytes(decoded[0..8].try_into().unwrap());
     println!("nonce: {nonce:016x}");
     let time = u64::from_le_bytes(decoded[8..16].try_into().unwrap());
-    let ptime: DateTime<Utc> = (UNIX_EPOCH + Duration::from_secs(time)).into();
-    let etime: DateTime<Utc> = (UNIX_EPOCH + Duration::from_secs(time + 604_800)).into();
+    let ptime = i64::try_from(time)
+        .ok()
+        .and_then(|t| UtcDateTime::from_unix_timestamp(t).ok())
+        .map_or_else(|| "???".to_string(), |t| t.to_string());
+    let etime = time
+        .checked_add(604_800)
+        .and_then(|t| i64::try_from(t).ok())
+        .and_then(|t| UtcDateTime::from_unix_timestamp(t).ok())
+        .map_or_else(|| "???".to_string(), |t| t.to_string());
     println!(
         "time: {time} ({}, not before {ptime}, not after {etime})",
         if unixtime().checked_sub(time).unwrap_or(621_926) > 604_800 {

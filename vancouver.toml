@@ -207,14 +207,6 @@ criteria = "no-sus-blobs"
 version = "1.0.3"
 criteria = "skimmed"
 
-[[exempt.chrono]]
-version = "0.4.42"
-criteria = "no-sus-blobs"
-
-[[exempt.chrono]]
-version = "0.4.42"
-criteria = "skimmed"
-
 [[exempt.clang-sys]]
 version = "1.8.1"
 criteria = "no-sus-blobs"
@@ -1213,4 +1205,12 @@ criteria = "no-sus-blobs"
 
 [[exempt.tokio-util]]
 version = "0.7.17"
+criteria = "skimmed"
+
+[[exempt.time]]
+version = "0.3.55"
+criteria = "no-sus-blobs"
+
+[[exempt.time]]
+version = "0.3.55"
 criteria = "skimmed"

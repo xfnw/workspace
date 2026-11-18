@@ -5,8 +5,8 @@
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::unreadable_literal)]
 
-use chrono::{DateTime, offset::Utc};
 use std::time::{SystemTime, UNIX_EPOCH};
+use time::UtcDateTime;
 
 /// cursed time format
 #[derive(Debug, argh::FromArgs)]
@@ -44,7 +44,7 @@ struct EncodeAction {
 #[argh(help_triggers("-h", "--help"))]
 struct ConvertAction {
     #[argh(positional)]
-    timestamp: DateTime<Utc>,
+    timestamp: ParseableDateTime,
 }
 
 /// decode the time to a normal format
@@ -78,6 +78,16 @@ impl std::str::FromStr for Accuracy {
                 return Err("accuracy should be second, minute, hour, day, or week");
             }
         })
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+struct ParseableDateTime(UtcDateTime);
+
+impl std::str::FromStr for ParseableDateTime {
+    type Err = time::error::Parse;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        UtcDateTime::parse(s, &time::format_description::well_known::Rfc3339).map(Self)
     }
 }
 
@@ -157,7 +167,7 @@ pub fn run(args: &Args) {
             println!("{}", b32(ob));
         }
         Action::Convert(ConvertAction { timestamp }) => {
-            let unix = timestamp.timestamp();
+            let unix = timestamp.0.unix_timestamp();
             #[allow(clippy::cast_sign_loss)]
             let ob = fe(u128::from(unix as u64), args.seed);
             println!("{}", b32(ob));
@@ -166,7 +176,7 @@ pub fn run(args: &Args) {
             let ob = unb32(blob).expect("not in alphabet");
             let unix: u64 = unfe(ob, args.seed).try_into().expect("not a time");
             #[allow(clippy::cast_possible_wrap)]
-            let time = DateTime::from_timestamp(unix as i64, 0).unwrap();
+            let time = UtcDateTime::from_unix_timestamp(unix as i64).unwrap();
             println!("{time}");
         }
     }
