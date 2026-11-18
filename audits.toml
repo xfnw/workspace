@@ -3179,3 +3179,11 @@ criteria = "blobs-ok"
 [[audits.crypto-primes]]
 version = "0.7.2"
 criteria = "skimmed"
+
+[[audits.deranged]]
+version = "0.5.9"
+criteria = "no-sus-blobs"
+
+[[audits.deranged]]
+version = "0.5.9"
+criteria = "skimmed"
