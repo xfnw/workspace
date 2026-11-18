@@ -9,7 +9,7 @@ use std::{
     net::{IpAddr, Ipv6Addr},
     time::SystemTime,
 };
-use time::UtcDateTime;
+use time::{UtcDateTime, format_description::well_known::Rfc3339};
 
 /// helper tool for yap
 #[derive(Debug, argh::FromArgs)]
@@ -123,12 +123,12 @@ fn show(token: &str) {
     let ptime = i64::try_from(time)
         .ok()
         .and_then(|t| UtcDateTime::from_unix_timestamp(t).ok())
-        .map_or_else(|| "???".to_string(), |t| t.to_string());
+        .map_or_else(|| "???".to_string(), |t| t.format(&Rfc3339).unwrap());
     let etime = time
         .checked_add(604_800)
         .and_then(|t| i64::try_from(t).ok())
         .and_then(|t| UtcDateTime::from_unix_timestamp(t).ok())
-        .map_or_else(|| "???".to_string(), |t| t.to_string());
+        .map_or_else(|| "???".to_string(), |t| t.format(&Rfc3339).unwrap());
     println!(
         "time: {time} ({}, not before {ptime}, not after {etime})",
         if unixtime().checked_sub(time).unwrap_or(621_926) > 604_800 {

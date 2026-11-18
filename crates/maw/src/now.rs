@@ -177,7 +177,11 @@ pub fn run(args: &Args) {
             let unix: u64 = unfe(ob, args.seed).try_into().expect("not a time");
             #[allow(clippy::cast_possible_wrap)]
             let time = UtcDateTime::from_unix_timestamp(unix as i64).unwrap();
-            println!("{time}");
+            println!(
+                "{}",
+                time.format(&time::format_description::well_known::Rfc3339)
+                    .unwrap()
+            );
         }
     }
 }
