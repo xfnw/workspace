@@ -3187,3 +3187,11 @@ criteria = "no-sus-blobs"
 [[audits.deranged]]
 version = "0.5.9"
 criteria = "skimmed"
+
+[[audits.num-conv]]
+version = "0.2.2"
+criteria = "no-sus-blobs"
+
+[[audits.num-conv]]
+version = "0.2.2"
+criteria = "skimmed"
