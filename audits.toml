@@ -3195,3 +3195,11 @@ criteria = "no-sus-blobs"
 [[audits.num-conv]]
 version = "0.2.2"
 criteria = "skimmed"
+
+[[audits.powerfmt]]
+version = "0.2.1"
+criteria = "no-sus-blobs"
+
+[[audits.powerfmt]]
+version = "0.2.1"
+criteria = "skimmed"
