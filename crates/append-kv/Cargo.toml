@@ -1,0 +1,21 @@
+# SPDX-FileCopyrightText: 2026 xfnw
+#
+# SPDX-License-Identifier: MIT
+
+[package]
+name = "append-kv"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+repository.workspace = true
+
+[dependencies]
+patricia_tree = "0.10.2"
+tokio = { version = "1.54.1", features = ["io-util", "sync"] }
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+tempfile = "3.27.0"
+tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread", "fs", "io-std"] }
