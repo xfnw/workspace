@@ -3219,3 +3219,11 @@ criteria = "no-sus-blobs"
 [[audits.time-macros]]
 version = "0.2.32"
 criteria = "skimmed"
+
+[[audits.patricia_tree]]
+version = "0.10.2"
+criteria = "no-sus-blobs"
+
+[[audits.patricia_tree]]
+version = "0.10.2"
+criteria = "skimmed"
