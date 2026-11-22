@@ -35,7 +35,7 @@ impl AppendKV {
         let mut next_offset = 0;
 
         loop {
-            file.seek(SeekFrom::Start(next_offset)).await?;
+            assert_eq!(file.seek(SeekFrom::Start(next_offset)).await?, next_offset);
 
             let key_len = match file.read_u64().await {
                 Ok(l) => l,
@@ -79,7 +79,7 @@ impl AppendKV {
             return Err(io::Error::new(io::ErrorKind::NotFound, "key not found"));
         };
 
-        file.seek(SeekFrom::Start(offset)).await?;
+        assert_eq!(file.seek(SeekFrom::Start(offset)).await?, offset);
         let length = file.read_u64().await?;
 
         Ok(length)
@@ -106,7 +106,11 @@ impl AppendKV {
     where
         F: AsyncWrite + AsyncSeek + Unpin,
     {
-        file.seek(SeekFrom::Start(*next_offset)).await?;
+        assert_eq!(
+            file.seek(SeekFrom::Start(*next_offset)).await?,
+            *next_offset
+        );
+
         file.write_u64(key.len() as u64).await?;
         file.write_all(&key).await?;
         file.write_u64(size).await?;
