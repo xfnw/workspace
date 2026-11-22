@@ -194,7 +194,7 @@ mod tests {
     use std::io;
 
     use crate::AppendKV;
-    use tempfile::tempfile;
+    use tempfile::{NamedTempFile, tempfile};
     use tokio::{
         fs::File,
         io::{AsyncWriteExt, BufWriter},
@@ -250,5 +250,34 @@ mod tests {
                 b"wisteria noise".as_ref()
             ]
         );
+    }
+
+    #[tokio::test]
+    async fn partial_concurrency() {
+        let temp = NamedTempFile::new().unwrap();
+
+        {
+            let mut file1 = File::from_std(temp.reopen().unwrap());
+            let kv = AppendKV::open(&mut file1).await.unwrap();
+            kv.insert(&mut file1, b"one".to_vec(), 4).await.unwrap();
+            let mut file2 = BufWriter::new(File::from_std(temp.reopen().unwrap()));
+            kv.insert(&mut file2, b"two".to_vec(), 9).await.unwrap();
+            let mut file3 = File::from_std(temp.reopen().unwrap());
+            kv.insert(&mut file3, b"three".to_vec(), 6).await.unwrap();
+
+            file3.write_all(b"squeak").await.unwrap();
+            file2.write_all(b"boops you").await.unwrap();
+            file1.write_all(b"meow").await.unwrap();
+
+            file3.flush().await.unwrap();
+            file1.flush().await.unwrap();
+            file2.flush().await.unwrap();
+        }
+
+        let mut file = File::from_std(temp.into_file());
+        let kv = AppendKV::open(&mut file).await.unwrap();
+        assert_eq!(kv.get_vec(&mut file, b"one").await.unwrap(), b"meow");
+        assert_eq!(kv.get_vec(&mut file, b"two").await.unwrap(), b"boops you");
+        assert_eq!(kv.get_vec(&mut file, b"three").await.unwrap(), b"squeak");
     }
 }
