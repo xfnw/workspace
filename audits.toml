@@ -1463,6 +1463,14 @@ criteria = "no-sus-blobs"
 delta = "2.5.7 -> 2.5.8"
 criteria = "skimmed"
 
+[[audits.url]]
+delta = "2.5.8 -> 2.5.9"
+criteria = "no-sus-blobs"
+
+[[audits.url]]
+delta = "2.5.8 -> 2.5.9"
+criteria = "skimmed"
+
 [[audits.argh]]
 delta = "0.1.13 -> 0.1.14"
 criteria = "no-sus-blobs"
