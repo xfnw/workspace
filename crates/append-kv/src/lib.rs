@@ -17,9 +17,30 @@ use std::{
     sync::RwLock,
 };
 use tokio::{
-    io::{AsyncRead, AsyncReadExt, AsyncSeek, AsyncSeekExt, AsyncWrite, AsyncWriteExt},
+    fs::File,
+    io::{AsyncRead, AsyncReadExt, AsyncSeek, AsyncSeekExt, AsyncWrite, AsyncWriteExt, BufWriter},
     sync::{Mutex, MutexGuard},
 };
+
+pub trait AsyncSetLen {
+    fn set_len(&mut self, size: u64) -> impl Future<Output = io::Result<()>>;
+}
+
+impl AsyncSetLen for File {
+    fn set_len(&mut self, size: u64) -> impl Future<Output = io::Result<()>> {
+        Self::set_len(self, size)
+    }
+}
+
+impl<T> AsyncSetLen for BufWriter<T>
+where
+    T: AsyncWrite + AsyncSetLen + Unpin,
+{
+    async fn set_len(&mut self, size: u64) -> io::Result<()> {
+        self.flush().await?;
+        self.get_mut().set_len(size).await
+    }
+}
 
 pub struct AppendKV {
     offsets: RwLock<PatriciaMap<u64>>,
@@ -104,8 +125,9 @@ impl AppendKV {
         mut next_offset: MutexGuard<'_, u64>,
     ) -> Result<(), io::Error>
     where
-        F: AsyncWrite + AsyncSeek + Unpin,
+        F: AsyncWrite + AsyncSeek + AsyncSetLen + Unpin,
     {
+        file.set_len(*next_offset).await?;
         assert_eq!(
             file.seek(SeekFrom::Start(*next_offset)).await?,
             *next_offset
@@ -125,7 +147,7 @@ impl AppendKV {
 
     pub async fn insert<F>(&self, file: &mut F, key: Vec<u8>, size: u64) -> io::Result<()>
     where
-        F: AsyncWrite + AsyncSeek + Unpin,
+        F: AsyncWrite + AsyncSeek + AsyncSetLen + Unpin,
     {
         let next_offset = self.next_offset.lock().await;
 
@@ -136,7 +158,7 @@ impl AppendKV {
 
     pub async fn insert_slice<F>(&self, file: &mut F, key: Vec<u8>, value: &[u8]) -> io::Result<()>
     where
-        F: AsyncWrite + AsyncSeek + Unpin,
+        F: AsyncWrite + AsyncSeek + AsyncSetLen + Unpin,
     {
         self.insert(file, key, value.len() as u64).await?;
         file.write_all(value).await?;
@@ -145,7 +167,7 @@ impl AppendKV {
 
     pub async fn try_insert<F>(&self, file: &mut F, key: Vec<u8>, size: u64) -> io::Result<()>
     where
-        F: AsyncWrite + AsyncSeek + Unpin,
+        F: AsyncWrite + AsyncSeek + AsyncSetLen + Unpin,
     {
         let next_offset = self.next_offset.lock().await;
 
@@ -168,7 +190,7 @@ impl AppendKV {
         value: &[u8],
     ) -> io::Result<()>
     where
-        F: AsyncWrite + AsyncSeek + Unpin,
+        F: AsyncWrite + AsyncSeek + AsyncSetLen + Unpin,
     {
         self.try_insert(file, key, value.len() as u64).await?;
         file.write_all(value).await?;
@@ -182,39 +204,48 @@ mod tests {
 
     use crate::AppendKV;
     use tempfile::tempfile;
-    use tokio::fs::File;
+    use tokio::{
+        fs::File,
+        io::{AsyncWriteExt, BufWriter},
+    };
 
     #[tokio::test]
     async fn round_trip() {
         let file = tempfile().unwrap();
         let mut file = File::from_std(file);
 
-        {
-            let kv = AppendKV::open(&mut file).await.unwrap();
-            kv.try_insert_slice(&mut file, b"meow".to_vec(), b"woof")
+        let kv = AppendKV::open(&mut file).await.unwrap();
+        kv.try_insert_slice(&mut file, b"meow".to_vec(), b"woof")
+            .await
+            .unwrap();
+        assert_eq!(
+            kv.try_insert_slice(&mut file, b"meow".to_vec(), b"yip")
                 .await
-                .unwrap();
-            assert_eq!(
-                kv.try_insert_slice(&mut file, b"meow".to_vec(), b"yip")
-                    .await
-                    .unwrap_err()
-                    .kind(),
-                io::ErrorKind::AlreadyExists
-            );
-            kv.insert_slice(&mut file, b"wisteria noise".to_vec(), b"woem")
-                .await
-                .unwrap();
-            kv.insert_slice(&mut file, b"wisteria noise".to_vec(), b"meow")
-                .await
-                .unwrap();
-        }
+                .unwrap_err()
+                .kind(),
+            io::ErrorKind::AlreadyExists
+        );
 
+        let mut buffered = BufWriter::new(file);
+        kv.insert_slice(&mut buffered, b"wisteria noise".to_vec(), b"woem")
+            .await
+            .unwrap();
+        kv.insert_slice(&mut buffered, b"wisteria noise".to_vec(), b"meow")
+            .await
+            .unwrap();
+        buffered.flush().await.unwrap();
+
+        let mut file = buffered.into_inner();
         let kv = AppendKV::open(&mut file).await.unwrap();
         assert_eq!(
             kv.get_vec(&mut file, b"wisteria noise").await.unwrap(),
             b"meow"
         );
         assert_eq!(kv.get_vec(&mut file, b"meow").await.unwrap(), b"woof");
+        assert_eq!(
+            kv.get_vec(&mut file, b"mow").await.unwrap_err().kind(),
+            io::ErrorKind::NotFound
+        );
 
         assert_eq!(
             kv.inner().keys().collect::<Vec<_>>(),
