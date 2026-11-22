@@ -131,6 +131,8 @@ impl AppendKV {
         file.write_all(&key).await?;
         file.write_u64(size).await?;
 
+        file.flush().await?;
+
         self.offsets.write().unwrap().insert(key, *next_offset);
         *next_offset = new_len;
         Ok(())
@@ -153,6 +155,7 @@ impl AppendKV {
     {
         self.insert(file, key, value.len() as u64).await?;
         file.write_all(value).await?;
+        file.flush().await?;
         Ok(())
     }
 
@@ -185,6 +188,7 @@ impl AppendKV {
     {
         self.try_insert(file, key, value.len() as u64).await?;
         file.write_all(value).await?;
+        file.flush().await?;
         Ok(())
     }
 }
