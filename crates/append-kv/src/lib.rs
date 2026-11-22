@@ -120,7 +120,8 @@ impl AppendKV {
     where
         F: AsyncWrite + AsyncSeek + AsyncSetLen + Unpin,
     {
-        file.set_len(*next_offset).await?;
+        let new_len = *next_offset + key.len() as u64 + size + 16;
+        file.set_len(new_len).await?;
         assert_eq!(
             file.seek(SeekFrom::Start(*next_offset)).await?,
             *next_offset
@@ -130,11 +131,8 @@ impl AppendKV {
         file.write_all(&key).await?;
         file.write_u64(size).await?;
 
-        *next_offset += 8 + key.len() as u64;
-        let value_offset = *next_offset;
-        *next_offset += 8 + size;
-
-        self.offsets.write().unwrap().insert(key, value_offset);
+        self.offsets.write().unwrap().insert(key, *next_offset);
+        *next_offset = new_len;
         Ok(())
     }
 
@@ -226,6 +224,9 @@ mod tests {
         kv.insert_slice(&mut buffered, b"wisteria noise".to_vec(), b"meow")
             .await
             .unwrap();
+        kv.insert(&mut buffered, b"empty".to_vec(), 6)
+            .await
+            .unwrap();
         buffered.flush().await.unwrap();
 
         let mut file = buffered.into_inner();
@@ -235,6 +236,7 @@ mod tests {
             b"meow"
         );
         assert_eq!(kv.get_vec(&mut file, b"meow").await.unwrap(), b"woof");
+        assert_eq!(kv.get_vec(&mut file, b"empty").await.unwrap(), [0; 6]);
         assert_eq!(
             kv.get_vec(&mut file, b"mow").await.unwrap_err().kind(),
             io::ErrorKind::NotFound
@@ -242,7 +244,11 @@ mod tests {
 
         assert_eq!(
             kv.inner().keys().collect::<Vec<_>>(),
-            [b"meow".as_ref(), b"wisteria noise".as_ref()]
+            [
+                b"empty".as_ref(),
+                b"meow".as_ref(),
+                b"wisteria noise".as_ref()
+            ]
         );
     }
 }
