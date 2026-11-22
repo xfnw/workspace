@@ -3227,3 +3227,11 @@ criteria = "no-sus-blobs"
 [[audits.patricia_tree]]
 version = "0.10.2"
 criteria = "skimmed"
+
+[[audits.form_urlencoded]]
+version = "1.2.3"
+criteria = "no-sus-blobs"
+
+[[audits.form_urlencoded]]
+version = "1.2.3"
+criteria = "skimmed"
