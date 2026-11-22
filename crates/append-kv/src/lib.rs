@@ -52,21 +52,14 @@ impl AppendKV {
     where
         F: AsyncRead + AsyncSeek + Unpin,
     {
+        let end = file.seek(SeekFrom::End(0)).await?;
         let mut offsets = PatriciaMap::new();
         let mut next_offset = 0;
 
-        loop {
+        while next_offset < end {
             assert_eq!(file.seek(SeekFrom::Start(next_offset)).await?, next_offset);
 
-            let key_len = match file.read_u64().await {
-                Ok(l) => l,
-                Err(e) => {
-                    if e.kind() == io::ErrorKind::UnexpectedEof {
-                        break;
-                    }
-                    return Err(e);
-                }
-            };
+            let key_len = file.read_u64().await?;
             next_offset += 8 + key_len;
             let mut key = vec![0; key_len as usize];
             file.read_exact(&mut key).await?;
