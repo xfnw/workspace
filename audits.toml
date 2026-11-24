@@ -3259,3 +3259,11 @@ criteria = "no-sus-blobs"
 [[audits.mime_guess]]
 version = "2.0.5"
 criteria = "skimmed"
+
+[[audits.unicase]]
+version = "2.10.0"
+criteria = "no-sus-blobs"
+
+[[audits.unicase]]
+version = "2.10.0"
+criteria = "skimmed"
