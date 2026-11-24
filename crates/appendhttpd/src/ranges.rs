@@ -62,6 +62,8 @@ pub fn parse(range: &HeaderValue, len: u64) -> Option<RangeInclusive<u64>> {
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::unreadable_literal)]
+
     use super::*;
 
     macro_rules! assert_parse {
