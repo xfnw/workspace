@@ -144,7 +144,7 @@ impl Server {
         let guess;
         let res = Response::builder().header(
             "content-type",
-            if path.ends_with(b"/") {
+            if path.is_empty() || path.ends_with(b"/") {
                 "text/html"
             } else {
                 guess = mime_guess::from_ext(
