@@ -3251,3 +3251,11 @@ criteria = "no-sus-blobs"
 [[audits.form_urlencoded]]
 version = "1.2.3"
 criteria = "skimmed"
+
+[[audits.mime_guess]]
+version = "2.0.5"
+criteria = "no-sus-blobs"
+
+[[audits.mime_guess]]
+version = "2.0.5"
+criteria = "skimmed"
