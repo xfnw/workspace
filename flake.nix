@@ -93,6 +93,7 @@
           doCheck = false; # tests are run as a flake check
         });
         members = {
+          appendhttpd = buildPackage "appendhttpd" [ "append-kv" ];
           gekker = buildPackage "gekker" [ "irc-connect" ];
           maw = buildPackage "maw" [ ];
           offerparty = buildPackage "offerparty" [ "foxerror" "irc-connect" ];
