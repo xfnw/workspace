@@ -120,7 +120,8 @@ impl AppendKV {
     where
         F: AsyncWrite + AsyncSeek + AsyncSetLen + Unpin,
     {
-        let new_len = *next_offset + key.len() as u64 + size + 16;
+        let data_offset = *next_offset + key.len() as u64 + 8;
+        let new_len = data_offset + size + 8;
         file.set_len(new_len).await?;
         assert_eq!(
             file.seek(SeekFrom::Start(*next_offset)).await?,
@@ -133,7 +134,7 @@ impl AppendKV {
 
         file.flush().await?;
 
-        self.offsets.write().unwrap().insert(key, *next_offset);
+        self.offsets.write().unwrap().insert(key, data_offset);
         *next_offset = new_len;
         Ok(())
     }
@@ -234,6 +235,8 @@ mod tests {
         buffered.flush().await.unwrap();
 
         let mut file = buffered.into_inner();
+        assert_eq!(kv.get_vec(&mut file, b"meow").await.unwrap(), b"woof");
+
         let kv = AppendKV::open(&mut file).await.unwrap();
         assert_eq!(
             kv.get_vec(&mut file, b"wisteria noise").await.unwrap(),
