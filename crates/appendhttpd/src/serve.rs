@@ -288,8 +288,7 @@ impl Server {
         let mut db_file = BufWriter::new(File::options().write(true).open(&self.db_path).await?);
         self.db
             .insert_consistent(&mut db_file, path, size, async move |f| {
-                tokio::io::copy(&mut temp, f).await?;
-                f.flush().await
+                tokio::io::copy(&mut temp, f).await
             })
             .await??;
         Ok(())

@@ -140,8 +140,6 @@ impl AppendKV {
         file.write_all(key).await?;
         file.write_u64(size).await?;
 
-        file.flush().await?;
-
         **next_offset = new_len;
         Ok(data_offset)
     }
@@ -151,9 +149,14 @@ impl AppendKV {
         F: AsyncWrite + AsyncSeek + AsyncSetLen + Unpin,
         K: AsRef<[u8]>,
     {
-        let data_offset = self
-            .insert_at(file, key.as_ref(), size, &mut self.next_offset.lock().await)
-            .await?;
+        let data_offset = {
+            let mut next_offset = self.next_offset.lock().await;
+            let data_offset = self
+                .insert_at(file, key.as_ref(), size, &mut next_offset)
+                .await?;
+            file.flush().await?;
+            data_offset
+        };
 
         self.offsets.write().unwrap().insert(key, data_offset);
 
@@ -178,6 +181,8 @@ impl AppendKV {
 
         let out = callback(file).await;
 
+        file.flush().await?;
+
         self.offsets.write().unwrap().insert(key, data_offset);
 
         Ok(out)
@@ -189,8 +194,7 @@ impl AppendKV {
         K: AsRef<[u8]>,
     {
         self.insert_consistent(file, key, value.len() as u64, async |f| {
-            f.write_all(value).await?;
-            f.flush().await
+            f.write_all(value).await
         })
         .await?
     }
@@ -214,6 +218,9 @@ impl AppendKV {
         let data_offset = self
             .insert_at(file, key.as_ref(), size, &mut next_offset)
             .await?;
+
+        file.flush().await?;
+
         self.offsets.write().unwrap().insert(key, data_offset);
 
         Ok(())
