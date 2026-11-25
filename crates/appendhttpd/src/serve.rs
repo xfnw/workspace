@@ -42,9 +42,6 @@ pub struct Args {
     /// max upload size in MiB (default 1024)
     #[argh(option, default = "1024")]
     limit: u64,
-    /// allow PUTs for paths that already exist
-    #[argh(switch)]
-    shadow: bool,
     #[argh(positional)]
     database: PathBuf,
 }
@@ -54,16 +51,10 @@ struct Server {
     db_path: PathBuf,
     token_handler: Option<TokenHandler>,
     limit: u64,
-    shadow: bool,
 }
 
 impl Server {
-    async fn new(
-        db_path: PathBuf,
-        key_file: Option<&Path>,
-        limit: u64,
-        shadow: bool,
-    ) -> std::io::Result<Self> {
+    async fn new(db_path: PathBuf, key_file: Option<&Path>, limit: u64) -> std::io::Result<Self> {
         let db = AppendKV::open(&mut BufReader::new(
             File::options()
                 .read(true)
@@ -85,7 +76,6 @@ impl Server {
             db_path,
             token_handler,
             limit,
-            shadow,
         })
     }
 
@@ -276,11 +266,7 @@ impl Server {
         }
 
         let mut db_file = BufWriter::new(File::options().write(true).open(&self.db_path).await?);
-        if self.shadow {
-            self.db.insert(&mut db_file, path, size).await?;
-        } else {
-            self.db.try_insert(&mut db_file, path, size).await?;
-        }
+        self.db.insert(&mut db_file, path, size).await?;
         temp.rewind().await?;
         tokio::io::copy(&mut temp, &mut db_file).await?;
         db_file.flush().await?;
@@ -294,7 +280,6 @@ pub async fn serve(args: Args) -> Result<(), Box<dyn Error>> {
             args.database,
             args.key_file.as_deref(),
             args.limit * (1 << 20),
-            args.shadow,
         )
         .await?,
     );
