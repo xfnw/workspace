@@ -255,11 +255,11 @@ mod tests {
         let mut file = File::from_std(file);
 
         let kv = AppendKV::open(&mut file).await.unwrap();
-        kv.try_insert_slice(&mut file, b"meow".to_vec(), b"woof")
+        kv.try_insert_slice(&mut file, b"meow", b"woof")
             .await
             .unwrap();
         assert_eq!(
-            kv.try_insert_slice(&mut file, b"meow".to_vec(), b"yip")
+            kv.try_insert_slice(&mut file, b"meow", b"yip")
                 .await
                 .unwrap_err()
                 .kind(),
@@ -267,15 +267,13 @@ mod tests {
         );
 
         let mut buffered = BufWriter::new(file);
-        kv.insert_slice(&mut buffered, b"wisteria noise".to_vec(), b"woem")
+        kv.insert_slice(&mut buffered, b"wisteria noise", b"woem")
             .await
             .unwrap();
-        kv.insert_slice(&mut buffered, b"wisteria noise".to_vec(), b"meow")
+        kv.insert_slice(&mut buffered, b"wisteria noise", b"meow")
             .await
             .unwrap();
-        kv.insert(&mut buffered, b"empty".to_vec(), 6)
-            .await
-            .unwrap();
+        kv.insert(&mut buffered, b"empty", 6).await.unwrap();
         buffered.flush().await.unwrap();
 
         let mut file = buffered.into_inner();
@@ -310,11 +308,11 @@ mod tests {
         {
             let mut file1 = File::from_std(temp.reopen().unwrap());
             let kv = AppendKV::open(&mut file1).await.unwrap();
-            kv.insert(&mut file1, b"one".to_vec(), 4).await.unwrap();
+            kv.insert(&mut file1, b"one", 4).await.unwrap();
             let mut file2 = BufWriter::new(File::from_std(temp.reopen().unwrap()));
-            kv.insert(&mut file2, b"two".to_vec(), 9).await.unwrap();
+            kv.insert(&mut file2, b"two", 9).await.unwrap();
             let mut file3 = File::from_std(temp.reopen().unwrap());
-            kv.insert(&mut file3, b"three".to_vec(), 6).await.unwrap();
+            kv.insert(&mut file3, b"three", 6).await.unwrap();
 
             file3.write_all(b"squeak").await.unwrap();
             file2.write_all(b"boops you").await.unwrap();
