@@ -84,7 +84,7 @@ impl AppendKV {
         self.offsets.read().unwrap()
     }
 
-    pub async fn get<F, K>(&self, file: &mut F, key: K) -> io::Result<u64>
+    pub async fn get_pos<F, K>(&self, file: &mut F, key: K) -> io::Result<(u64, u64)>
     where
         F: AsyncRead + AsyncSeek + Unpin,
         K: AsRef<[u8]>,
@@ -96,7 +96,15 @@ impl AppendKV {
         assert_eq!(file.seek(SeekFrom::Start(offset)).await?, offset);
         let length = file.read_u64().await?;
 
-        Ok(length)
+        Ok((offset + 8, length))
+    }
+
+    pub async fn get<F, K>(&self, file: &mut F, key: K) -> io::Result<u64>
+    where
+        F: AsyncRead + AsyncSeek + Unpin,
+        K: AsRef<[u8]>,
+    {
+        Ok(self.get_pos(file, key).await?.1)
     }
 
     pub async fn get_vec<F, K>(&self, file: &mut F, key: K) -> io::Result<Vec<u8>>
@@ -231,7 +239,7 @@ mod tests {
     use tempfile::{NamedTempFile, tempfile};
     use tokio::{
         fs::File,
-        io::{AsyncWriteExt, BufWriter},
+        io::{AsyncSeekExt, AsyncWriteExt, BufWriter},
     };
 
     #[tokio::test]
@@ -315,5 +323,24 @@ mod tests {
         assert_eq!(kv.get_vec(&mut file, b"one").await.unwrap(), b"meow");
         assert_eq!(kv.get_vec(&mut file, b"two").await.unwrap(), b"boops you");
         assert_eq!(kv.get_vec(&mut file, b"three").await.unwrap(), b"squeak");
+    }
+
+    #[tokio::test]
+    async fn position() {
+        let file = tempfile().unwrap();
+        let mut file = File::from_std(file);
+        let kv = AppendKV::open(&mut file).await.unwrap();
+
+        kv.insert_slice(&mut file, "yip", b"yap").await.unwrap();
+        kv.insert_slice(&mut file, "meow", b"woof").await.unwrap();
+
+        assert_eq!(
+            kv.get_pos(&mut file, "yip").await.unwrap().0,
+            file.stream_position().await.unwrap()
+        );
+        assert_eq!(
+            kv.get_pos(&mut file, "meow").await.unwrap().0,
+            file.stream_position().await.unwrap()
+        );
     }
 }
