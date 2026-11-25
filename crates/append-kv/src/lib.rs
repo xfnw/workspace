@@ -143,11 +143,10 @@ impl AppendKV {
         F: AsyncWrite + AsyncSeek + AsyncSetLen + Unpin,
         K: AsRef<[u8]>,
     {
-        let mut next_offset = self.next_offset.lock().await;
-
         let data_offset = self
-            .insert_at(file, key.as_ref(), size, &mut next_offset)
+            .insert_at(file, key.as_ref(), size, &mut self.next_offset.lock().await)
             .await?;
+
         self.offsets.write().unwrap().insert(key, data_offset);
 
         Ok(())
