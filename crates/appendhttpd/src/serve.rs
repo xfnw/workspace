@@ -13,7 +13,7 @@ use std::{
 
 use crate::{body::BufReadExactBody, token::TokenHandler};
 use append_kv::AppendKV;
-use http_body_util::{BodyExt, Full, combinators::BoxBody};
+use http_body_util::{BodyExt, Empty, Full, combinators::BoxBody};
 use hyper::{
     Method, Request, Response, StatusCode,
     body::{Body, Bytes, Incoming},
@@ -102,6 +102,7 @@ impl Server {
         }
     }
 
+    #[expect(clippy::too_many_lines)]
     async fn handle_get(
         &self,
         req: Request<Incoming>,
@@ -131,6 +132,32 @@ impl Server {
             }
         };
 
+        let pos = match file.stream_position().await {
+            Ok(p) => p,
+            Err(e) => {
+                return Response::builder()
+                    .status(StatusCode::INTERNAL_SERVER_ERROR)
+                    .header("content-type", "text/plain; charset=UTF-8")
+                    .body(
+                        Full::new(Bytes::from_owner(format!("oh noes: {e}\n")))
+                            .map_err(|e| match e {})
+                            .boxed(),
+                    );
+            }
+        };
+        let etag = format!("\"{pos}\"");
+
+        if req.headers().get("if-none-match").is_some_and(|h| {
+            h.as_bytes()
+                .split(|&b| b == b',')
+                .any(|v| v.trim_ascii() == etag.as_bytes())
+        }) {
+            return Response::builder()
+                .status(StatusCode::NOT_MODIFIED)
+                .header("etag", etag)
+                .body(Empty::new().map_err(|e| match e {}).boxed());
+        }
+
         let guess;
         let res = Response::builder().header(
             "content-type",
@@ -148,7 +175,12 @@ impl Server {
             },
         );
 
-        let (res, len) = if let Some(range) = req.headers().get("range") {
+        let (res, len) = if req
+            .headers()
+            .get("if-range")
+            .is_none_or(|r| r == etag.as_bytes())
+            && let Some(range) = req.headers().get("range")
+        {
             let Some((range, start)) = crate::ranges::parse(range, len)
                 .and_then(|r| i64::try_from(*r.start()).ok().map(|s| (r, s)))
             else {
@@ -186,7 +218,8 @@ impl Server {
 
         let body = BufReadExactBody::new(file, len).boxed();
 
-        res.header("accept-ranges", "bytes")
+        res.header("etag", etag)
+            .header("accept-ranges", "bytes")
             .header("access-control-allow-origin", "*")
             .body(body)
     }
