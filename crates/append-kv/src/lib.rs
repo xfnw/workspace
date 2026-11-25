@@ -152,14 +152,38 @@ impl AppendKV {
         Ok(())
     }
 
+    pub async fn insert_consistent<F, K, C, O>(
+        &self,
+        file: &mut F,
+        key: K,
+        size: u64,
+        callback: C,
+    ) -> io::Result<O>
+    where
+        F: AsyncWrite + AsyncSeek + AsyncSetLen + Unpin,
+        K: AsRef<[u8]>,
+        C: AsyncFnOnce(&mut F) -> O,
+    {
+        let data_offset = self
+            .insert_at(file, key.as_ref(), size, &mut self.next_offset.lock().await)
+            .await?;
+
+        let out = callback(file).await;
+
+        self.offsets.write().unwrap().insert(key, data_offset);
+
+        Ok(out)
+    }
+
     pub async fn insert_slice<F>(&self, file: &mut F, key: Vec<u8>, value: &[u8]) -> io::Result<()>
     where
         F: AsyncWrite + AsyncSeek + AsyncSetLen + Unpin,
     {
-        self.insert(file, key, value.len() as u64).await?;
-        file.write_all(value).await?;
-        file.flush().await?;
-        Ok(())
+        self.insert_consistent(file, key, value.len() as u64, async |f| {
+            f.write_all(value).await?;
+            f.flush().await
+        })
+        .await?
     }
 
     pub async fn try_insert<F, K>(&self, file: &mut F, key: K, size: u64) -> io::Result<()>
