@@ -110,42 +110,45 @@ impl AppendKV {
         Ok(out)
     }
 
-    async fn insert_with<F>(
+    async fn insert_at<F>(
         &self,
         file: &mut F,
-        key: Vec<u8>,
+        key: &[u8],
         size: u64,
-        mut next_offset: MutexGuard<'_, u64>,
-    ) -> Result<(), io::Error>
+        next_offset: &mut MutexGuard<'_, u64>,
+    ) -> Result<u64, io::Error>
     where
         F: AsyncWrite + AsyncSeek + AsyncSetLen + Unpin,
     {
-        let data_offset = *next_offset + key.len() as u64 + 8;
+        let data_offset = **next_offset + key.len() as u64 + 8;
         let new_len = data_offset + size + 8;
         file.set_len(new_len).await?;
         assert_eq!(
-            file.seek(SeekFrom::Start(*next_offset)).await?,
-            *next_offset
+            file.seek(SeekFrom::Start(**next_offset)).await?,
+            **next_offset
         );
 
         file.write_u64(key.len() as u64).await?;
-        file.write_all(&key).await?;
+        file.write_all(key).await?;
         file.write_u64(size).await?;
 
         file.flush().await?;
 
-        self.offsets.write().unwrap().insert(key, data_offset);
-        *next_offset = new_len;
-        Ok(())
+        **next_offset = new_len;
+        Ok(data_offset)
     }
 
-    pub async fn insert<F>(&self, file: &mut F, key: Vec<u8>, size: u64) -> io::Result<()>
+    pub async fn insert<F, K>(&self, file: &mut F, key: K, size: u64) -> io::Result<()>
     where
         F: AsyncWrite + AsyncSeek + AsyncSetLen + Unpin,
+        K: AsRef<[u8]>,
     {
-        let next_offset = self.next_offset.lock().await;
+        let mut next_offset = self.next_offset.lock().await;
 
-        self.insert_with(file, key, size, next_offset).await?;
+        let data_offset = self
+            .insert_at(file, key.as_ref(), size, &mut next_offset)
+            .await?;
+        self.offsets.write().unwrap().insert(key, data_offset);
 
         Ok(())
     }
@@ -160,12 +163,15 @@ impl AppendKV {
         Ok(())
     }
 
-    pub async fn try_insert<F>(&self, file: &mut F, key: Vec<u8>, size: u64) -> io::Result<()>
+    pub async fn try_insert<F, K>(&self, file: &mut F, key: K, size: u64) -> io::Result<()>
     where
         F: AsyncWrite + AsyncSeek + AsyncSetLen + Unpin,
+        K: AsRef<[u8]>,
     {
-        let next_offset = self.next_offset.lock().await;
+        let mut next_offset = self.next_offset.lock().await;
 
+        // not leaving self.offsets locked here is fine since
+        // the next_offset lock already prevents new inserts
         if self.contains_key(&key) {
             return Err(io::Error::new(
                 io::ErrorKind::AlreadyExists,
@@ -173,7 +179,10 @@ impl AppendKV {
             ));
         }
 
-        self.insert_with(file, key, size, next_offset).await?;
+        let data_offset = self
+            .insert_at(file, key.as_ref(), size, &mut next_offset)
+            .await?;
+        self.offsets.write().unwrap().insert(key, data_offset);
 
         Ok(())
     }
