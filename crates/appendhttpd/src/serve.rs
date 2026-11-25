@@ -102,7 +102,6 @@ impl Server {
         }
     }
 
-    #[expect(clippy::too_many_lines)]
     async fn handle_get(
         &self,
         req: Request<Incoming>,
@@ -110,7 +109,7 @@ impl Server {
         let path = Cow::from(percent_decode_str(req.uri().path()));
         let path = path.strip_prefix(b"/").unwrap_or(&path);
 
-        let (mut file, len) = match self.get_file(path).await {
+        let (mut file, pos, len) = match self.get_file(path).await {
             Ok(f) => f,
             Err(e) => {
                 return Response::builder()
@@ -132,19 +131,6 @@ impl Server {
             }
         };
 
-        let pos = match file.stream_position().await {
-            Ok(p) => p,
-            Err(e) => {
-                return Response::builder()
-                    .status(StatusCode::INTERNAL_SERVER_ERROR)
-                    .header("content-type", "text/plain; charset=UTF-8")
-                    .body(
-                        Full::new(Bytes::from_owner(format!("oh noes: {e}\n")))
-                            .map_err(|e| match e {})
-                            .boxed(),
-                    );
-            }
-        };
         let etag = format!("\"{pos}\"");
 
         if req.headers().get("if-none-match").is_some_and(|h| {
@@ -224,11 +210,11 @@ impl Server {
             .body(body)
     }
 
-    async fn get_file(&self, path: &[u8]) -> Result<(BufReader<File>, u64), Box<dyn Error>> {
+    async fn get_file(&self, path: &[u8]) -> Result<(BufReader<File>, u64, u64), Box<dyn Error>> {
         let mut db_file = BufReader::new(File::options().read(true).open(&self.db_path).await?);
-        let len = self.db.get(&mut db_file, path).await?;
+        let (pos, len) = self.db.get_pos(&mut db_file, path).await?;
 
-        Ok((db_file, len))
+        Ok((db_file, pos, len))
     }
 
     async fn handle_put(
