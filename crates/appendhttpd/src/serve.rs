@@ -277,11 +277,9 @@ impl Server {
 
         let mut db_file = BufWriter::new(File::options().write(true).open(&self.db_path).await?);
         if self.shadow {
-            self.db.insert(&mut db_file, path.to_vec(), size).await?;
+            self.db.insert(&mut db_file, path, size).await?;
         } else {
-            self.db
-                .try_insert(&mut db_file, path.to_vec(), size)
-                .await?;
+            self.db.try_insert(&mut db_file, path, size).await?;
         }
         temp.rewind().await?;
         tokio::io::copy(&mut temp, &mut db_file).await?;
