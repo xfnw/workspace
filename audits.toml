@@ -2217,6 +2217,14 @@ criteria = "skimmed"
 version = "0.0.1"
 criteria = "no-sus-blobs"
 
+[[audits.boilerplate-parser]]
+delta = "0.0.1 -> 0.0.2"
+criteria = "no-sus-blobs"
+
+[[audits.boilerplate-parser]]
+delta = "0.0.1 -> 0.0.2"
+criteria = "skimmed"
+
 [[audits.darling]]
 delta = "0.20.11 -> 0.23.0"
 criteria = "skimmed"
