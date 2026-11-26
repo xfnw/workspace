@@ -2177,6 +2177,14 @@ criteria = "no-sus-blobs"
 delta = "1.2.1 -> 1.2.2"
 criteria = "skimmed"
 
+[[audits.boilerplate]]
+delta = "1.2.2 -> 1.3.0"
+criteria = "no-sus-blobs"
+
+[[audits.boilerplate]]
+delta = "1.2.2 -> 1.3.0"
+criteria = "skimmed"
+
 [[audits.boilerplate-macros]]
 version = "0.0.3"
 criteria = "skimmed"
