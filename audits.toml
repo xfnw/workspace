@@ -3321,3 +3321,11 @@ criteria = "no-sus-blobs"
 [[audits.unicase]]
 version = "2.10.0"
 criteria = "skimmed"
+
+[[audits.shlex]]
+version = "2.0.1"
+criteria = "no-sus-blobs"
+
+[[audits.shlex]]
+version = "2.0.1"
+criteria = "skimmed"
