@@ -84,6 +84,7 @@ mod tests {
     use rsa::{PrivateKey, pkcs1::DecodeRsaPrivateKey};
 
     #[test]
+    #[cfg_attr(miri, ignore)] // FIXME: maybe get the key some other way that miri is okay with?
     fn chunks() {
         let key = PrivateKey::read_pkcs1_pem_file(concat!(
             env!("CARGO_MANIFEST_DIR"),

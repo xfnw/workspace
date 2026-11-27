@@ -250,6 +250,7 @@ mod tests {
     };
 
     #[tokio::test]
+    #[cfg_attr(miri, ignore)]
     async fn round_trip() {
         let file = tempfile().unwrap();
         let mut file = File::from_std(file);
@@ -302,6 +303,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[cfg_attr(miri, ignore)]
     async fn partial_concurrency() {
         let temp = NamedTempFile::new().unwrap();
 
@@ -331,6 +333,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[cfg_attr(miri, ignore)]
     async fn position() {
         let file = tempfile().unwrap();
         let mut file = File::from_std(file);

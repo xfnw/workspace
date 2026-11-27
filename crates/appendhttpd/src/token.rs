@@ -113,6 +113,7 @@ mod tests {
     use std::time::Duration;
 
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn generate_verify() {
         let handler = TokenHandler::new(b"meowmeow");
 
@@ -124,6 +125,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn hardcoded() {
         let handler = TokenHandler::new(b"hunter2");
 

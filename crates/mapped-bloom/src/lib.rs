@@ -124,6 +124,7 @@ mod tests {
     use std::io;
 
     #[test]
+    #[cfg_attr(miri, ignore)]
     fn it_works() -> Result<(), io::Error> {
         let file = tempfile::tempfile()?;
         let mut bloom = BloomFilter::new(file, 4, 8192)?;
