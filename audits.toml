@@ -478,6 +478,14 @@ criteria = "no-sus-blobs"
 delta = "0.1.4 -> 0.1.5"
 criteria = "skimmed"
 
+[[audits.find-msvc-tools]]
+delta = "0.1.5 -> 0.1.16"
+criteria = "no-sus-blobs"
+
+[[audits.find-msvc-tools]]
+delta = "0.1.5 -> 0.1.16"
+criteria = "skimmed"
+
 [[audits.typenum]]
 delta = "1.18.0 -> 1.19.0"
 criteria = "blobs-ok"
